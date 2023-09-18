@@ -4,50 +4,29 @@ from typing import Union
 import datetime
 from zoneinfo import ZoneInfo
 
-from neuroconv.utils import load_dict_from_file, dict_deep_update
+from neuroconv.utils import load_dict_from_file, dict_deep_update, FolderPathType, FilePathType
 
 from turner_lab_to_nwb.asap_embargo import AsapEmbargoNWBConverter
 
 
-def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, Path], stub_test: bool = False):
-
-    data_dir_path = Path(data_dir_path)
-    output_dir_path = Path(output_dir_path)
-    if stub_test:
-        output_dir_path = output_dir_path / "nwb_stub"
-    output_dir_path.mkdir(parents=True, exist_ok=True)
-
-    session_id = "subject_identifier_usually"
-    nwbfile_path = output_dir_path / f"{session_id}.nwb"
+def session_to_nwb(
+    ecephys_folder_path: FolderPathType,
+    nwbfile_path: FilePathType,
+    stub_test: bool = False,
+):
+    ecephys_folder_path = Path(ecephys_folder_path)
 
     source_data = dict()
     conversion_options = dict()
 
     # Add Recording
-    source_data.update(dict(Recording=dict()))
-    conversion_options.update(dict(Recording=dict()))
-
-    # Add LFP
-    source_data.update(dict(LFP=dict()))
-    conversion_options.update(dict(LFP=dict()))
-
-    # Add Sorting
-    source_data.update(dict(Sorting=dict()))
-    conversion_options.update(dict(Sorting=dict()))
-
-    # Add Behavior
-    source_data.update(dict(Behavior=dict()))
-    conversion_options.update(dict(Behavior=dict()))
+    source_data.update(dict(Recording=dict(folder_path=str(ecephys_folder_path))))
+    conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
     converter = AsapEmbargoNWBConverter(source_data=source_data)
 
-    # Add datetime to conversion
     metadata = converter.get_metadata()
-    datetime.datetime(
-        year=2020, month=1, day=1, tzinfo=ZoneInfo("US/Eastern")
-    )
-    date = datetime.datetime.today()  # TO-DO: Get this from author
-    metadata["NWBFile"]["session_start_time"] = date
+    metadata["NWBFile"].update(session_id=ecephys_folder_path.stem.replace("_", "-"))
 
     # Update default metadata with the editable in the corresponding yaml file
     editable_metadata_path = Path(__file__).parent / "asap_embargo_metadata.yaml"
@@ -59,13 +38,13 @@ def session_to_nwb(data_dir_path: Union[str, Path], output_dir_path: Union[str, 
 
 
 if __name__ == "__main__":
-
     # Parameters for conversion
-    data_dir_path = Path("/Directory/With/Raw/Formats/")
-    output_dir_path = Path("~/conversion_nwb/")
+    data_dir_path = Path("/Users/weian/data/L_230905_125344")
+    nwbfile_path = Path("/Volumes/t7-ssd/nwbfiles/L_230905_125344.nwb")
     stub_test = False
 
-    session_to_nwb(data_dir_path=data_dir_path,
-                    output_dir_path=output_dir_path,
-                    stub_test=stub_test,
-                    )
+    session_to_nwb(
+        ecephys_folder_path=data_dir_path,
+        nwbfile_path=nwbfile_path,
+        stub_test=stub_test,
+    )
