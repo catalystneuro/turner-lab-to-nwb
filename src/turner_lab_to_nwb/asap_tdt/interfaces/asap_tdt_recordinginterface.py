@@ -113,20 +113,3 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         )
 
         return metadata
-
-
-#
-# interface = ASAPTdtRecordingInterface(
-#     file_path="/Users/weian/data/Previous_PD_Project_sample/I_160615/Gaia_I_160615_1.tev",
-#     electrode_metadata_file_path="/Users/weian/data/Previous_PD_Project_sample/Isis_DataList_160615.xlsx"
-# )
-# metadata = interface.get_metadata()
-# metadata["NWBFile"].update(session_start_time=datetime.utcnow())
-# interface.run_conversion(nwbfile_path="test.nwb", metadata=metadata, stub_test=True, overwrite=True)
-#
-# from pynwb import NWBHDF5IO
-
-# io=NWBHDF5IO("test.nwb", "r")
-# nwbfile = io.read()
-#
-# print("x")
