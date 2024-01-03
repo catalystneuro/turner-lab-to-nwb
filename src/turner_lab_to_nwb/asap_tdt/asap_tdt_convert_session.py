@@ -95,7 +95,7 @@ if __name__ == "__main__":
         nwbfile_path=nwbfile_path,
         tdt_tank_file_path=tank_file_path,
         data_list_file_path=data_list_file_path,
-        VL_plexon_file_path=vl_plexon_file_path,
-        GPi_plexon_file_path=gpi_plexon_file_path,
+        vl_plexon_file_path=vl_plexon_file_path,
+        gpi_plexon_file_path=gpi_plexon_file_path,
         stub_test=stub_test,
     )
