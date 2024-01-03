@@ -11,8 +11,8 @@ def session_to_nwb(
     nwbfile_path: FilePathType,
     tdt_tank_file_path: FilePathType,
     data_list_file_path: FilePathType,
-    VL_plexon_file_path: FilePathType,
-    GPi_plexon_file_path: FilePathType,
+    vl_plexon_file_path: FilePathType,
+    gpi_plexon_file_path: FilePathType,
     stub_test: bool = False,
 ):
     """
@@ -24,6 +24,10 @@ def session_to_nwb(
         The path that points to a TDT Tank file (.Tbk).
     data_list_file_path : FilePathType
         The path that points to the electrode metadata file (.xlsx).
+    vl_plexon_file_path : FilePathType
+        The path to Plexon file (.plx) containing the spike sorted data from VL.
+    gpi_plexon_file_path : FilePathType
+        The path to Plexon file (.plx) containing the spike sorted data from GPi.
     stub_test : bool, optional
         Whether to run the conversion in stub test mode, by default False.
     """
@@ -41,8 +45,8 @@ def session_to_nwb(
     # Add Sorting
     source_data.update(
         dict(
-            SortingVL=dict(file_path=str(VL_plexon_file_path)),
-            SortingGPi=dict(file_path=str(GPi_plexon_file_path)),
+            SortingVL=dict(file_path=str(vl_plexon_file_path)),
+            SortingGPi=dict(file_path=str(gpi_plexon_file_path)),
         )
     )
     conversion_options.update(
@@ -78,20 +82,20 @@ if __name__ == "__main__":
     # Parameters for conversion
     folder_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/I_160615")
 
-    tank_file_path = folder_path / "Gaia_I_160615_1.Tbk"
+    tank_file_path = folder_path / "Gaia_I_160615_2.Tbk"
     data_list_file_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/Isis_DataList_temp.xlsx")
 
-    VL_plexon_file_path = folder_path / "I_160615_1_Chans_1_1.plx"
-    GPi_plexon_file_path = folder_path / "I_160615_1_Chans_17_32.plx"
+    vl_plexon_file_path = folder_path / "I_160615_2_Chans_1_1.plx"
+    gpi_plexon_file_path = folder_path / "I_160615_2_Chans_17_32.plx"
 
-    nwbfile_path = Path("/Volumes/t7-ssd/nwbfiles/stub_Gaia_I_160615_1.nwb")
+    nwbfile_path = Path("/Volumes/t7-ssd/nwbfiles/stub_Gaia_I_160615_2.nwb")
     stub_test = True
 
     session_to_nwb(
         nwbfile_path=nwbfile_path,
         tdt_tank_file_path=tank_file_path,
         data_list_file_path=data_list_file_path,
-        VL_plexon_file_path=VL_plexon_file_path,
-        GPi_plexon_file_path=GPi_plexon_file_path,
+        VL_plexon_file_path=vl_plexon_file_path,
+        GPi_plexon_file_path=gpi_plexon_file_path,
         stub_test=stub_test,
     )
