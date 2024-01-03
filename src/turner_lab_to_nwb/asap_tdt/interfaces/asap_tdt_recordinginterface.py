@@ -79,7 +79,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         metadata = super().get_metadata()
 
         metadata["NWBFile"].update(
-            session_start_time=datetime.strptime(str(self._electrode_metadata["Date"][0]), "%y%m%d"),
+            session_start_time=datetime.strptime(str(self._electrode_metadata["Date"].values[0]), "%y%m%d"),
         )
 
         ecephys_metadata = metadata["Ecephys"]
