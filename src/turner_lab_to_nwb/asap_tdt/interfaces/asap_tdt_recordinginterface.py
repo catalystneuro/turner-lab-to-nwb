@@ -48,8 +48,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
 
         # Tungsten electrode on channel 1 (channels 2-15 were grounded)
         # 16ch V-probe (tip-first contact length: 500 µm, inter-contact-interval: 150 µm) on channels 17-32
-        channel_ids = list(parent_recording.get_channel_ids())
-        sliced_channel_ids = [channel_ids[0]] + channel_ids[-16:]
+        # Note the channel map can be different from session to session
+        sliced_channel_ids = electrode_metadata["Chan#"].astype(str).values.tolist()
         super().__init__(
             parent_recording=parent_recording, channel_ids=sliced_channel_ids, verbose=verbose, es_key=es_key
         )
