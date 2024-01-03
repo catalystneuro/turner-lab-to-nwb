@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 import pandas as pd
 from neuroconv.datainterfaces.ecephys.baserecordingextractorinterface import BaseRecordingExtractorInterface
@@ -77,6 +78,10 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
     def get_metadata(self) -> dict:
         metadata = super().get_metadata()
 
+        metadata["NWBFile"].update(
+            session_start_time=datetime.strptime(str(self._electrode_metadata["Date"][0]), "%y%m%d"),
+        )
+
         ecephys_metadata = metadata["Ecephys"]
         device_metadata = ecephys_metadata["Device"][0]
         device_metadata.update(
@@ -101,6 +106,10 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             # SpikeInterface refers to this as 'brain_area', NeuroConv remaps to 'location'
             key="brain_area",
             values=self._electrode_metadata["Area"].values.tolist(),
+        )
+        self.recording_extractor.set_property(
+            key="location",
+            values=self._electrode_metadata[["ML", "AP", "Z"]].values,
         )
 
         # Add electrodes and electrode groups

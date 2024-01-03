@@ -78,7 +78,7 @@ if __name__ == "__main__":
     folder_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/I_160615")
 
     tank_file_path = folder_path / "Gaia_I_160615_1.Tbk"
-    data_list_file_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/Isis_DataList_160615.xlsx")
+    data_list_file_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/Isis_DataList_temp.xlsx")
 
     VL_plexon_file_path = folder_path / "I_160615_1_Chans_1_1.plx"
     GPi_plexon_file_path = folder_path / "I_160615_1_Chans_17_32.plx"

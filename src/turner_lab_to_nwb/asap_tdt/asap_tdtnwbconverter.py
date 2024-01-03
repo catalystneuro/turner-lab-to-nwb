@@ -25,20 +25,6 @@ class AsapTdtNWBConverter(NWBConverter):
         conversion_options: Optional[dict] = None,
     ) -> None:
 
-        recording_interface = self.data_interface_objects["Recording"]
-        electrode_metadata = recording_interface._electrode_metadata
-
-        # Set electrodes properties
-        recroding_extractor = recording_interface.recording_extractor
-        recroding_extractor.set_property(
-            key="brain_area",
-            values=electrode_metadata["Area"].values.tolist(),
-        )
-        recroding_extractor.set_property(
-            key="location",
-            values=electrode_metadata[["ML", "AP", "Z"]].values,
-        )
-
         # Rename unit properties to have descriptive names
         unit_properties_mapping = {
             "Area": "brain_area",
@@ -53,6 +39,7 @@ class AsapTdtNWBConverter(NWBConverter):
             B="good",
             C="not good enough to call single-unit",
         )
+        electrode_metadata = self.data_interface_objects["Recording"]._electrode_metadata
         electrode_metadata["Quality"] = electrode_metadata["Quality"].replace(quality_values_map)
         electrode_metadata["Quality (post-sorting)"] = electrode_metadata["Quality (post-sorting)"].replace(
             quality_values_map
