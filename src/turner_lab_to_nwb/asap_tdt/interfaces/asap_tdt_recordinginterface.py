@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 import pandas as pd
 from neuroconv.datainterfaces.ecephys.baserecordingextractorinterface import BaseRecordingExtractorInterface
@@ -7,7 +6,6 @@ from spikeinterface import ChannelSliceRecording
 
 
 class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
-
     Extractor = ChannelSliceRecording
 
     def __init__(
@@ -41,7 +39,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             f"The file {file_path} is not a valid TDT file." f"The file suffix must be one of {valid_suffices}."
         )
 
-        self._electrode_metadata = self._load_electrode_metadata(file_path=electrode_metadata_file_path)
+        electrode_metadata = self.load_electrode_metadata(file_path=electrode_metadata_file_path)
+        self._electrode_metadata = electrode_metadata.drop_duplicates(subset=["Chan#"])
         parent_recording = TdtRecordingExtractor(
             folder_path=str(self.file_path), stream_id=stream_id, all_annotations=True
         )
@@ -65,7 +64,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         channel_names = [name.replace("'", "")[1:] for name in channel_names]
         self.recording_extractor.set_property(key="channel_name", values=channel_names)
 
-    def _load_electrode_metadata(self, file_path: FilePathType):
+    def load_electrode_metadata(self, file_path: FilePathType):
         """Load the electrode metadata from the Excel file."""
         electrodes_metadata = pd.read_excel(file_path)
         # filter for this session
