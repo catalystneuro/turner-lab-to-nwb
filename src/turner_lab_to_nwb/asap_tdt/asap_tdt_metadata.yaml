@@ -5,3 +5,11 @@ NWBFile:
   lab: Turner
   experimenter:
     - Kase, Daisuke
+Ecephys:
+  UnitProperties:
+    - name: unit_quality
+      description: The quality metric for each unit.
+    - name: unit_quality_post_sorting
+      description: The quality of the unit after sorting.
+    - name: good_period
+      description: The period when the spike waveforms had good isolation.
