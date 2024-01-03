@@ -1,8 +1,7 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
 from pathlib import Path
-import datetime
-from zoneinfo import ZoneInfo
 
+from dateutil.tz import tz
 from neuroconv.utils import load_dict_from_file, dict_deep_update, FilePathType
 
 from turner_lab_to_nwb.asap_tdt import AsapTdtNWBConverter
@@ -56,10 +55,12 @@ def session_to_nwb(
     converter = AsapTdtNWBConverter(source_data=source_data)
 
     metadata = converter.get_metadata()
+    # For data provenance we can add the time zone information to the conversion if missing
+    session_start_time = metadata["NWBFile"]["session_start_time"]
+    tzinfo = tz.gettz("US/Pacific")
     metadata["NWBFile"].update(
         session_id=ecephys_file_path.stem.replace("_", "-"),
-        # todo: add session_start_time to metadata
-        session_start_time=datetime.datetime.now(tz=ZoneInfo("US/Pacific")),
+        session_start_time=session_start_time.replace(tzinfo=tzinfo),
     )
 
     # Update default metadata with the editable in the corresponding yaml file
