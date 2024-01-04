@@ -24,6 +24,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         ----------
         file_path : FilePathType
             The path to the TDT recording file.
+        electrode_metadata_file_path : FilePathType
+            The path to the TDT electrode metadata file.
         stream_id : FilePathType
             The stream of the data for spikeinterface, "3" by default.
         verbose : bool, default: True
