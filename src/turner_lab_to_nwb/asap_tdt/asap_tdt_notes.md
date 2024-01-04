@@ -1,5 +1,16 @@
 # Notes concerning the asap_tdt conversion
 
+## Experiment notes
+
+Based on the [manuscript](https://journals.plos.org/plosbiology/article?id=10.1371/journal.pbio.3000829) provided by the lab, the experiment was performed as follows:
+
+Extracellular spiking activity of neurons in globus pallidus-internus (GPi) and ventrolateral anterior nucleus (VLa) was recorded using multiple glass-insulated tungsten microelectrodes (0.5–1.5 MΩ, Alpha Omega)
+or 16-contact linear probes (0.5–1.0 MΩ, V-probe, Plexon) in monkeys while performing a choice reaction time reaching task.
+During a subset of data collection sessions, EMG activity was collected via either chronically implanted subcutaneous electrodes or electrodes inserted percutaneously immediately before the session.
+All recordings were performed with at least one electrode positioned in each of GPi and VLa.
+Some sessions also included stimulation of GPi using custom built stimulating electrodes implanted in the arm-related region of primary motor cortex and in the SCP at its decussation.
+The stored neuronal data were high-pass filtered (Fpass: 300 Hz, Matlab FIRPM) and thresholded, and candidate action potentials were sorted into clusters in principal components space (Off-line Sorter, Plexon).
+
 ## DataList spreadsheet
 
 The DataList spreadsheet contains information about the electrodes (e.g. the electrode number, the brain region, the depth, etc.)
