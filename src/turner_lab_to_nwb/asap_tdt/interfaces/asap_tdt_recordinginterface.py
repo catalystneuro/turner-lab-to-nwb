@@ -1,9 +1,10 @@
 from datetime import datetime
 from pathlib import Path
-import pandas as pd
 from neuroconv.datainterfaces.ecephys.baserecordingextractorinterface import BaseRecordingExtractorInterface
 from neuroconv.utils import FilePathType
 from spikeinterface import ChannelSliceRecording
+
+from turner_lab_to_nwb.asap_tdt.utils import load_session_metadata
 
 
 class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
@@ -12,7 +13,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
     def __init__(
         self,
         file_path: FilePathType,
-        electrode_metadata_file_path: FilePathType,
+        data_list_file_path: FilePathType,
         stream_id: str = "3",
         verbose: bool = True,
         es_key: str = "ElectricalSeries",
@@ -24,8 +25,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         ----------
         file_path : FilePathType
             The path to the TDT recording file.
-        electrode_metadata_file_path : FilePathType
-            The path to the TDT electrode metadata file.
+        data_list_file_path : FilePathType
+            The path that points to the electrode metadata file (.xlsx).
         stream_id : FilePathType
             The stream of the data for spikeinterface, "3" by default.
         verbose : bool, default: True
@@ -42,7 +43,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             f"The file {file_path} is not a valid TDT file." f"The file suffix must be one of {valid_suffices}."
         )
 
-        electrode_metadata = self.load_electrode_metadata(file_path=electrode_metadata_file_path)
+        _, filename = self.file_path.stem.split("_", maxsplit=1)
+        electrode_metadata = load_session_metadata(file_path=data_list_file_path, session_id=filename)
         self._electrode_metadata = electrode_metadata.drop_duplicates(subset=["Chan#"])
         parent_recording = TdtRecordingExtractor(
             folder_path=str(self.file_path), stream_id=stream_id, all_annotations=True
@@ -66,16 +68,6 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         channel_names = self.recording_extractor.get_property("channel_name")
         channel_names = [name.replace("'", "")[1:] for name in channel_names]
         self.recording_extractor.set_property(key="channel_name", values=channel_names)
-
-    def load_electrode_metadata(self, file_path: FilePathType):
-        """Load the electrode metadata from the Excel file."""
-        electrodes_metadata = pd.read_excel(file_path)
-        # filter for this session
-        _, filename = self.file_path.stem.split("_", maxsplit=1)
-        electrode_metadata = electrodes_metadata[electrodes_metadata["Filename"] == filename]
-        # todo: how to handle duplicated channel numbers? (e.g. channel 21 is duplicated)
-        electrode_metadata_without_duplicates = electrode_metadata.drop_duplicates(subset=["Chan#"])
-        return electrode_metadata_without_duplicates
 
     def get_metadata(self) -> dict:
         metadata = super().get_metadata()

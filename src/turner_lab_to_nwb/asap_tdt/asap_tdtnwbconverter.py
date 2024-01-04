@@ -46,7 +46,10 @@ class AsapTdtNWBConverter(NWBConverter):
         )
 
         num_units = 0
-        for interface_name in ["SortingVL", "SortingGPi"]:
+        sorting_interfaces = [
+            interface_name for interface_name in self.data_interface_objects if "Sorting" in interface_name
+        ]
+        for interface_name in sorting_interfaces:
             target_name = interface_name.replace("Sorting", "")
             sorting_metadata = electrode_metadata[electrode_metadata["Target"] == target_name]
 
