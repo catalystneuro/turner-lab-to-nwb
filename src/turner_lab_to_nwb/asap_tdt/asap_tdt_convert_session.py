@@ -1,5 +1,6 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
 from pathlib import Path
+from typing import Optional
 
 from dateutil.tz import tz
 from neuroconv.utils import load_dict_from_file, dict_deep_update, FilePathType
@@ -12,9 +13,8 @@ def session_to_nwb(
     tdt_tank_file_path: FilePathType,
     data_list_file_path: FilePathType,
     vl_plexon_file_path: FilePathType,
-    gpi_plexon_file_path: FilePathType,
     session_id: str,
-    stim_site: str,
+    gpi_plexon_file_path: Optional[FilePathType] = None,
     stub_test: bool = False,
 ):
     """
@@ -30,12 +30,10 @@ def session_to_nwb(
         The path that points to the electrode metadata file (.xlsx).
     vl_plexon_file_path : FilePathType
         The path to Plexon file (.plx) containing the spike sorted data from VL.
-    gpi_plexon_file_path : FilePathType
+    gpi_plexon_file_path : FilePathType, optional
         The path to Plexon file (.plx) containing the spike sorted data from GPi.
     session_id : str
         The unique identifier for the session.
-    stim_site : str
-        The name of the stimulation site (either None or "GPi").
     stub_test : bool, optional
         Whether to run the conversion in stub test mode, by default False.
     """
@@ -51,23 +49,16 @@ def session_to_nwb(
     conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
     # Add Sorting
+    source_data.update(dict(SortingVL=dict(file_path=str(vl_plexon_file_path))))
     conversion_options_sorting = dict(
         stub_test=stub_test,
         write_as="processing",
         units_description="The units were sorted using the Plexon Offline Sorter v3.",
     )
-    if stim_site is None:
-        source_data.update(
-            dict(
-                SortingVL=dict(file_path=str(vl_plexon_file_path)),
-                SortingGPi=dict(file_path=str(gpi_plexon_file_path)),
-            )
-        )
-        conversion_options.update(dict(SortingVL=conversion_options_sorting, SortingGPi=conversion_options_sorting))
-    # If stimulation site is GPi, we only have spike sorting date from VL region, the plexon file for GPi is empty
-    elif stim_site == "GPi":
-        source_data.update(dict(SortingVL=dict(file_path=str(vl_plexon_file_path))))
-        conversion_options.update(dict(SortingVL=conversion_options_sorting))
+    conversion_options.update(dict(SortingVL=conversion_options_sorting))
+    if gpi_plexon_file_path:
+        source_data.update(dict(SortingGPi=dict(file_path=str(gpi_plexon_file_path))))
+        conversion_options.update(dict(SortingGPi=conversion_options_sorting))
 
     converter = AsapTdtNWBConverter(source_data=source_data)
 
@@ -110,11 +101,10 @@ if __name__ == "__main__":
 
     # The plexon file with the spike sorted data from VL
     vl_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_1_16.plx"
-    # The plexon file with the spike sorted data from GPi
+    # The plexon file with the spike sorted data from GPi, optional
+    # When stimulation site is GPi, the plexon file is empty and this should be set to None
+    # gpi_plexon_file_path = None
     gpi_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_24_24.plx"
-
-    # The name of the stimulation site (either None or "GPi")
-    stim_site = "GPi"
 
     # The path to the NWB file to be created
     nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_Gaia_{session_id}.nwb")
@@ -129,6 +119,5 @@ if __name__ == "__main__":
         vl_plexon_file_path=vl_plexon_file_path,
         gpi_plexon_file_path=gpi_plexon_file_path,
         session_id=session_id,
-        stim_site=stim_site,
         stub_test=stub_test,
     )
