@@ -52,6 +52,15 @@ class AsapTdtNWBConverter(NWBConverter):
 
             sorting_interface = self.data_interface_objects[interface_name]
             sorting_extractor = sorting_interface.sorting_extractor
+
+            if len(sorting_metadata) != sorting_extractor.get_num_units():
+                # TODO: how to deal with the fact that the Vla data has 2 units but only one of them in the metadata
+                area_value = sorting_metadata["Area"].values[0]
+                sorting_extractor.set_property(
+                    key="brain_area",
+                    values=[area_value] * sorting_extractor.get_num_units(),
+                )
+                continue
             for property_name, renamed_property_name in unit_properties_mapping.items():
                 sorting_extractor.set_property(
                     key=renamed_property_name,
