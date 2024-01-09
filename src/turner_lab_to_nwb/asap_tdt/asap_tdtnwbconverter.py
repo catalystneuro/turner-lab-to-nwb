@@ -85,6 +85,12 @@ class AsapTdtNWBConverter(NWBConverter):
             sorting_extractor._main_ids = extractor_unit_ids + num_units
             num_units = len(extractor_unit_ids)
 
+        # Add stimulation events metadata
+        stimulation_site = electrode_metadata["Stim. site"].unique()[0]
+        if stimulation_site:
+            stimulation_depth = electrode_metadata["Stim. depth"].unique()[0]
+            metadata["StimulationEvents"].update(stimulation_site=stimulation_site, stimulation_depth=stimulation_depth)
+
         super().run_conversion(
             nwbfile_path=nwbfile_path,
             nwbfile=nwbfile,
