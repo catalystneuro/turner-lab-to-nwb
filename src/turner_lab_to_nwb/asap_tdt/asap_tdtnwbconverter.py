@@ -5,7 +5,7 @@ from neuroconv.datainterfaces import PlexonSortingInterface
 from neuroconv.utils import DeepDict
 from pynwb import NWBFile
 
-from turner_lab_to_nwb.asap_tdt.interfaces import ASAPTdtRecordingInterface
+from turner_lab_to_nwb.asap_tdt.interfaces import ASAPTdtRecordingInterface, ASAPTdtEventsInterface
 
 
 class AsapTdtNWBConverter(NWBConverter):
@@ -15,14 +15,15 @@ class AsapTdtNWBConverter(NWBConverter):
         Recording=ASAPTdtRecordingInterface,
         SortingVL=PlexonSortingInterface,
         SortingGPi=PlexonSortingInterface,
+        Events=ASAPTdtEventsInterface,
     )
 
     def get_metadata(self) -> DeepDict:
         metadata = super().get_metadata()
 
-        # Explicitly set session_start_time to recording start time
-        recording_interface = self.data_interface_objects["Recording"]
-        interface_metadata = recording_interface.get_metadata()
+        # Explicitly set session_start_time to the start time from events interface (most accurate)
+        events_interface = self.data_interface_objects["Events"]
+        interface_metadata = events_interface.get_metadata()
         metadata["NWBFile"].update(session_start_time=interface_metadata["NWBFile"]["session_start_time"])
 
         return metadata
