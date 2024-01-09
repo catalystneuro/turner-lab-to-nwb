@@ -2,6 +2,7 @@ from typing import Optional
 
 from neuroconv import NWBConverter
 from neuroconv.datainterfaces import PlexonSortingInterface
+from neuroconv.tools.nwb_helpers import get_default_backend_configuration, configure_backend
 from neuroconv.utils import DeepDict
 from pynwb import NWBFile
 
@@ -27,6 +28,12 @@ class AsapTdtNWBConverter(NWBConverter):
         metadata["NWBFile"].update(session_start_time=interface_metadata["NWBFile"]["session_start_time"])
 
         return metadata
+
+    def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None) -> None:
+        super().add_to_nwbfile(nwbfile=nwbfile, metadata=metadata, conversion_options=conversion_options)
+
+        backend_configuration = get_default_backend_configuration(nwbfile=nwbfile, backend="hdf5")
+        configure_backend(nwbfile=nwbfile, backend_configuration=backend_configuration)
 
     def run_conversion(
         self,
