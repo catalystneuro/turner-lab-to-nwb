@@ -1,0 +1,2 @@
+neuroconv[tdt,plexon]
+openpyxl==3.1.2
