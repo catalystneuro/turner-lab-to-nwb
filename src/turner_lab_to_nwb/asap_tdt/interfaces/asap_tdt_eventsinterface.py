@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
+import numpy as np
 from neuroconv import BaseDataInterface
 from neuroconv.utils import FilePathType, DeepDict
 from pymatreader import read_mat
@@ -42,6 +43,11 @@ class ASAPTdtEventsInterface(BaseDataInterface):
         session_start_time = start_date + days_timedelta
         metadata["NWBFile"].update(session_start_time=session_start_time)
 
+        metadata["StimulationEvents"] = dict(
+            name="StimulationEvents",
+            description="The container for stimulation events.",
+        )
+
         return metadata
 
     def add_trials(self, nwbfile: NWBFile, target_name_mapping: Optional[dict] = None):
@@ -68,14 +74,14 @@ class ASAPTdtEventsInterface(BaseDataInterface):
 
         # Use more descriptive names for the event types
         event_names_mapping = dict(
-            erroron="error_onset",
+            erroron="error_onset_time",
             rewardon="reward_start_time",
             rewardoff="reward_stop_time",
             mvt_onset="movement_start_time",
             mvt_end="movement_stop_time",
             return_onset="return_start_time",
             return_end="return_stop_time",
-            cue_onset="cue_onset",
+            cue_onset="cue_onset_time",
         )
         events_description_mapping = dict(
             erroron="The times of the error onset.",
@@ -89,6 +95,9 @@ class ASAPTdtEventsInterface(BaseDataInterface):
         )
 
         for event_name, mapped_event_name in event_names_mapping.items():
+            # if event type contains only NaNs, skip it
+            if np.isnan(events[event_name]).all():
+                continue
             nwbfile.add_trial_column(
                 name=mapped_event_name,
                 description=events_description_mapping[event_name],
@@ -104,5 +113,54 @@ class ASAPTdtEventsInterface(BaseDataInterface):
             data=target_data,
         )
 
+    def add_stimulation_events(self, nwbfile: NWBFile, metadata: dict):
+        """
+        Add stimulation events to the nwbfile
+
+        Parameters
+        ----------
+        nwbfile : NWBFile
+            The nwbfile to add the stimulation events to.
+        """
+        from ndx_events import AnnotatedEventsTable
+
+        stimulation_metadata = metadata["StimulationEvents"]
+        assert (
+            stimulation_metadata["name"] not in nwbfile.acquisition
+        ), f"The {stimulation_metadata['name']} is already in nwbfile. "
+        events = AnnotatedEventsTable(
+            name=stimulation_metadata["name"],
+            description=stimulation_metadata["description"],
+        )
+        event_type_kwargs = dict(
+            label="stimulation_onset",
+            event_description="The stimulation onset times.",
+            event_times=self._events_data["dbs"],
+        )
+        if "stimulation_depth" in stimulation_metadata:
+            events.add_column(
+                name="stimulation_depth",
+                description="The depth of stimulation in micrometers.",
+                index=True,
+            )
+            event_type_kwargs.update(stimulation_depth=[stimulation_metadata["stimulation_depth"]])
+        if "stimulation_site" in stimulation_metadata:
+            events.add_column(
+                name="stimulation_site",
+                description="The site of stimulation.",
+                index=True,
+            )
+            event_type_kwargs.update(stimulation_site=[stimulation_metadata["stimulation_site"]])
+
+        # add an event type (row) to the AnnotatedEventsTable instance
+        events.add_event_type(**event_type_kwargs)
+
+        nwbfile.add_acquisition(events)
+
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: dict, target_name_mapping: Optional[dict] = None):
         self.add_trials(nwbfile=nwbfile, target_name_mapping=target_name_mapping)
+
+        # 'dbs' is the structure containing the stimulation onset times
+        stimulation_structure_name = "dbs"
+        if stimulation_structure_name in self._events_data:
+            self.add_stimulation_events(nwbfile=nwbfile, metadata=metadata)
