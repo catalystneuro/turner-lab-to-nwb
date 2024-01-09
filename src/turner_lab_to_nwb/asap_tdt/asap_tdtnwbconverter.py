@@ -29,12 +29,6 @@ class AsapTdtNWBConverter(NWBConverter):
 
         return metadata
 
-    def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None) -> None:
-        super().add_to_nwbfile(nwbfile=nwbfile, metadata=metadata, conversion_options=conversion_options)
-
-        backend_configuration = get_default_backend_configuration(nwbfile=nwbfile, backend="hdf5")
-        configure_backend(nwbfile=nwbfile, backend_configuration=backend_configuration)
-
     def run_conversion(
         self,
         nwbfile_path: Optional[str] = None,
