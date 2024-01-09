@@ -54,17 +54,28 @@ def session_to_nwb(
     )
     conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
-    # Add Sorting
-    source_data.update(dict(SortingVL=dict(file_path=str(vl_plexon_file_path))))
+    # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
+    source_data.update(dict(PlexonSortingVL=dict(file_path=str(vl_plexon_file_path))))
     conversion_options_sorting = dict(
         stub_test=stub_test,
         write_as="processing",
         units_description="The units were sorted using the Plexon Offline Sorter v3.",
     )
-    conversion_options.update(dict(SortingVL=conversion_options_sorting))
+    conversion_options.update(dict(PlexonSortingVL=conversion_options_sorting))
     if gpi_plexon_file_path:
-        source_data.update(dict(SortingGPi=dict(file_path=str(gpi_plexon_file_path))))
-        conversion_options.update(dict(SortingGPi=conversion_options_sorting))
+        source_data.update(dict(PlexonSortingGPi=dict(file_path=str(gpi_plexon_file_path))))
+        conversion_options.update(dict(PlexonSortingGPi=conversion_options_sorting))
+
+    # Add Sorting (curated spike times from Plexon Offline Sorter v3, only include single units)
+    source_data.update(dict(CuratedSorting=dict(file_path=str(events_file_path))))
+    conversion_options.update(
+        dict(
+            CuratedSorting=dict(
+                stub_test=stub_test,
+                units_description="The curated single-units from the Plexon Offline Sorter v3, selected based on the quality of spike sorting.",
+            )
+        )
+    )
 
     # Add Events
     source_data.update(dict(Events=dict(file_path=str(events_file_path))))
