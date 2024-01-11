@@ -87,7 +87,7 @@ class AsapTdtNWBConverter(NWBConverter):
             num_units = len(extractor_unit_ids)
 
         # Add stimulation events metadata
-        stimulation_site = electrode_metadata["Stim. site"].unique()[0]
+        stimulation_site = electrode_metadata["Stim. site"].replace(np.nan, None).unique()[0]
         if stimulation_site:
             stimulation_depth = electrode_metadata["Stim. depth"].unique()[0]
             metadata["StimulationEvents"].update(stimulation_site=stimulation_site, stimulation_depth=stimulation_depth)
