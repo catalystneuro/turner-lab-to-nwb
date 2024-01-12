@@ -1,78 +1,44 @@
-from pathlib import Path
+from typing import Literal
 
-import pynwb
-from hdmf.backends.hdf5 import H5DataIO
-from neuroconv import BaseDataInterface
-from neuroconv.tools import get_module
+from neuroconv.datainterfaces.ecephys.baserecordingextractorinterface import BaseRecordingExtractorInterface
 from neuroconv.utils import FilePathType
-from pymatreader import read_mat
-from pynwb import NWBFile
+
+from turner_lab_to_nwb.asap_tdt.extractors import ASAPTdtFilteredRecordingExtractor
 
 
-class ASAPTdtFilteredRecordingInterface(BaseDataInterface):
+class ASAPTdtFilteredRecordingInterface(BaseRecordingExtractorInterface):
+    Extractor = ASAPTdtFilteredRecordingExtractor
+
     def __init__(
         self,
         file_path: FilePathType,
+        location: Literal["GPi", "VL"] = "GPi",
         es_key: str = "ElectricalSeriesProcessed",
-        brain_area: str = "GPi",
+        verbose: bool = True,
     ):
         """
-        Load processed ephys data from .mat file.
-        The data was high-pass filtered (Fpass: 300 Hz, Matlab FIRPM) and thresholded.
+        The interface to convert the high-pass filtered data from the ASAP TDT dataset.
 
         Parameters
         ----------
         file_path : FilePathType
-            The path to the .mat file containing the filtered electrical series data.
-        verbose : bool, default: True
-            Verbose
-        es_key : str, default: "ElectricalSeriesProcessed"
+            The path to the MAT file containing the high-pass filtered data.
+        location : Literal["GPi", "VL"], optional
+            The location of the probe, by default "GPi".
+        es_key : str, optional
+            The key to use for the ElectricalSeries, by default "ElectricalSeriesProcessed".
+        verbose : bool, optional
+            Allows for verbose output, by default True.
         """
-        file_path = Path(file_path)
-        assert file_path.exists(), f"The file {file_path} does not exist."
 
-        fft_data = read_mat(file_path)
-        assert "samplerate" in fft_data, f"The file {file_path} does not contain a 'samplerate' key."
-        assert "hp_cont" in fft_data, f"The file {file_path} does not contain a 'hp_cont' key."
-
-        self.es_key = es_key + brain_area
-        self.brain_area = brain_area
-        self._data = fft_data["hp_cont"]
-        self._sampling_frequency = fft_data["samplerate"]
+        es_key_with_location = es_key + location
+        self.location = location
+        super().__init__(es_key=es_key_with_location, verbose=verbose, file_path=file_path)
 
     def get_metadata(self) -> dict:
         metadata = super().get_metadata()
-        metadata["Ecephys"]["ElectrodeGroup"] = [dict(name=f"Group {self.brain_area}")]
+        metadata["Ecephys"]["ElectrodeGroup"] = [dict(name=f"Group {self.location}")]
+        metadata["Ecephys"][self.es_key].update(
+            description=f"High-pass filtered traces (200 Hz) from {self.location} region."
+        )
         return metadata
-
-    def add_to_nwbfile(self, nwbfile: NWBFile, metadata: dict, stub_test: bool = False) -> None:
-        # get electrode group
-        electrode_group_name = metadata["Ecephys"]["ElectrodeGroup"][0]["name"]
-        assert (
-            electrode_group_name in nwbfile.electrode_groups
-        ), f"The electrode group {electrode_group_name} is not in the NWBFile."
-
-        electrodes = nwbfile.electrodes.to_dataframe()
-        region = electrodes[electrodes["group_name"] == electrode_group_name].index.values
-        electrode_table_region = nwbfile.create_electrode_table_region(
-            region=list(region),
-            description=f"The electrodes of {self.brain_area}.",
-        )
-        ecephys_mod = get_module(
-            nwbfile=nwbfile,
-            name="ecephys",
-            description="Intermediate data from extracellular electrophysiology recordings, e.g., LFP.",
-        )
-        if "Processed" not in ecephys_mod.data_interfaces:
-            ecephys_mod.add(pynwb.ecephys.FilteredEphys(name="Processed"))
-
-        raw_electrical_series = nwbfile.electrical_series["ElectricalSeries"]
-        ecephys_mod["Processed"].create_electrical_series(
-            name=self.es_key,
-            description=f"The high-pass filtered (Fpass: 300 Hz, Matlab FIRPM) data from {self.brain_area}.",
-            data=H5DataIO(data=self._data, compression=True),
-            electrodes=electrode_table_region,
-            rate=self._sampling_frequency,
-            starting_time=raw_electrical_series.starting_time,
-            conversion=raw_electrical_series.conversion,
-        )
