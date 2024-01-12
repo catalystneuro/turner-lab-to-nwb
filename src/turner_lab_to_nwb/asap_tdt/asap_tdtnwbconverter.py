@@ -68,7 +68,6 @@ class AsapTdtNWBConverter(NWBConverter):
         # Set new channel ids
         new_channel_ids = raw_recording_extractor_properties["channel_ids"][indices]
         recording_interface.recording_extractor._main_ids = new_channel_ids
-        recording_interface.recording_extractor.set_property(key="group_name", ids=new_channel_ids, values=group_names)
 
         # Set aligned starting time with recording extractor
         starting_time = self.data_interface_objects["Recording"].get_timestamps()[0]
@@ -98,41 +97,27 @@ class AsapTdtNWBConverter(NWBConverter):
                 recording_interface_name=gpi_interface_name, electrode_metadata=electrode_metadata
             )
 
-        # location = self.data_interface_objects["ProcessedRecordingVL"].location
-        # group_names = [f"Group {location}"]
-        # self.data_interface_objects["ProcessedRecordingVL"].recording_extractor.set_property(key="group_name", ids=sliced_channel_ids, values=group_names)
-        # custom_names = self._electrode_metadata.apply(lambda row: f"{row['Electrode']}-{row['Chan#']}", axis=1).tolist()
-        # self.recording_extractor.set_property(key="custom_channel_name", ids=sliced_channel_ids, values=custom_names)
-        #
-        # # Fix channel name format
-        # channel_names = self.recording_extractor.get_property("channel_name")
-        # channel_names = [name.replace("'", "")[1:] for name in channel_names]
-        # self.recording_extractor.set_property(key="channel_name", values=channel_names)
-        #
-        # self.data_interface_objects["ProcessedRecordingVL"].recording_extractor._main_ids = self.data_interface_objects["Recording"].recording_extractor.get_channel_ids()
-        # self.data_interface_objects["ProcessedRecordingVL"].recording_extractor._properties = self.data_interface_objects["Recording"].recording_extractor._properties
+        num_units = 0
+        plexon_sorting_interfaces = [
+            interface_name for interface_name in self.data_interface_objects if "PlexonSorting" in interface_name
+        ]
+        for interface_name in plexon_sorting_interfaces:
+            target_name = interface_name.replace("PlexonSorting", "")
+            sorting_metadata = electrode_metadata[electrode_metadata["Target"] == target_name]
 
-        # num_units = 0
-        # plexon_sorting_interfaces = [
-        #     interface_name for interface_name in self.data_interface_objects if "PlexonSorting" in interface_name
-        # ]
-        # for interface_name in plexon_sorting_interfaces:
-        #     target_name = interface_name.replace("PlexonSorting", "")
-        #     sorting_metadata = electrode_metadata[electrode_metadata["Target"] == target_name]
-        #
-        #     sorting_interface = self.data_interface_objects[interface_name]
-        #     sorting_extractor = sorting_interface.sorting_extractor
-        #
-        #     # set unit properties
-        #     area_value = sorting_metadata["Area"].values[0]
-        #     sorting_extractor.set_property(
-        #         key="location",
-        #         values=[area_value] * sorting_extractor.get_num_units(),
-        #     )
-        #     extractor_unit_ids = sorting_extractor.get_unit_ids()
-        #     # unit_ids are not unique across sorting interfaces, so we are offsetting them here
-        #     sorting_extractor._main_ids = extractor_unit_ids + num_units
-        #     num_units = len(extractor_unit_ids)
+            sorting_interface = self.data_interface_objects[interface_name]
+            sorting_extractor = sorting_interface.sorting_extractor
+
+            # set unit properties
+            area_value = sorting_metadata["Area"].values[0]
+            sorting_extractor.set_property(
+                key="location",
+                values=[area_value] * sorting_extractor.get_num_units(),
+            )
+            extractor_unit_ids = sorting_extractor.get_unit_ids()
+            # unit_ids are not unique across sorting interfaces, so we are offsetting them here
+            sorting_extractor._main_ids = extractor_unit_ids + num_units
+            num_units = len(extractor_unit_ids)
 
         # Add stimulation events metadata
         stimulation_site = electrode_metadata["Stim. site"].unique()[0]
