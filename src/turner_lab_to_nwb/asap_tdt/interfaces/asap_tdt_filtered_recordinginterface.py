@@ -37,7 +37,7 @@ class ASAPTdtFilteredRecordingInterface(BaseRecordingExtractorInterface):
 
     def get_metadata(self) -> dict:
         metadata = super().get_metadata()
-        metadata["Ecephys"]["ElectrodeGroup"] = [dict(name=f"Group {self.location}")]
+        metadata["Ecephys"]["ElectrodeGroup"][0].update(name=f"Group {self.location}")
         metadata["Ecephys"][self.es_key].update(
             description=f"High-pass filtered traces (200 Hz) from {self.location} region."
         )

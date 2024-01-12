@@ -1,5 +1,6 @@
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 from neuroconv import NWBConverter
 from neuroconv.datainterfaces import PlexonSortingInterface
@@ -51,15 +52,21 @@ class AsapTdtNWBConverter(NWBConverter):
         Set properties for a recording interface based on electrode metadata.
         """
         recording_interface = self.data_interface_objects[recording_interface_name]
-        brain_area = recording_interface.location
-        electrode_metadata_per_brain_area = electrode_metadata[electrode_metadata["Target"] == brain_area]
+        group_name = f"Group {recording_interface.location}"
+        raw_recording_extractor_properties = self.data_interface_objects["Recording"].recording_extractor._properties
 
-        group_names = "Group " + electrode_metadata_per_brain_area["Target"]
-        new_channel_ids = electrode_metadata_per_brain_area["Chan#"].values
+        indices = np.where(raw_recording_extractor_properties["group_name"] == group_name)[0]
+        if len(indices) == 0:
+            return
+
         extractor_num_channels = recording_interface.recording_extractor.get_num_channels()
-        assert (
-            len(new_channel_ids) == extractor_num_channels
-        ), f"The number of channels in the electrode metadata does not match the number of channels in {recording_interface.source_data}."
+        assert len(indices) == extractor_num_channels
+        for property_name in raw_recording_extractor_properties:
+            values = raw_recording_extractor_properties[property_name][indices]
+            recording_interface.recording_extractor.set_property(key=property_name, ids=indices, values=values)
+
+        # Set new channel ids
+        new_channel_ids = raw_recording_extractor_properties["channel_ids"][indices]
         recording_interface.recording_extractor._main_ids = new_channel_ids
         recording_interface.recording_extractor.set_property(key="group_name", ids=new_channel_ids, values=group_names)
 
