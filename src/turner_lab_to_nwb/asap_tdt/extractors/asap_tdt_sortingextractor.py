@@ -50,7 +50,7 @@ class ASAPTdtSortingExtractor(BaseSorting):
         unit_properties_mapping = dict(
             uname="unit_name",
             sort="sort_label",
-            brain_area="brain_area",
+            brain_area="location",
             chan="channel_ids",
         )
         for property_name, renamed_property_name in unit_properties_mapping.items():

@@ -63,7 +63,7 @@ class AsapTdtNWBConverter(NWBConverter):
             # set unit properties
             area_value = sorting_metadata["Area"].values[0]
             sorting_extractor.set_property(
-                key="brain_area",
+                key="location",
                 values=[area_value] * sorting_extractor.get_num_units(),
             )
             extractor_unit_ids = sorting_extractor.get_unit_ids()
