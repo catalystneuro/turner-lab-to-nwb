@@ -45,13 +45,11 @@ class AsapTdtNWBConverter(NWBConverter):
     #     backend_configuration = get_default_backend_configuration(nwbfile=nwbfile, backend="hdf5")
     #     configure_backend(nwbfile=nwbfile, backend_configuration=backend_configuration)
 
-    def set_recording_interface_properties(
-        self, recording_interface_name: str, electrode_metadata: pd.DataFrame
-    ) -> None:
+    def set_processed_recording_interface_properties(self, interface_name: str) -> None:
         """
-        Set properties for a recording interface based on electrode metadata.
+        Set properties for a recording interface based on the raw recording interface.
         """
-        recording_interface = self.data_interface_objects[recording_interface_name]
+        recording_interface = self.data_interface_objects[interface_name]
         group_name = f"Group {recording_interface.location}"
         raw_recording_extractor_properties = self.data_interface_objects["Recording"].recording_extractor._properties
 
@@ -61,13 +59,14 @@ class AsapTdtNWBConverter(NWBConverter):
 
         extractor_num_channels = recording_interface.recording_extractor.get_num_channels()
         assert len(indices) == extractor_num_channels
-        for property_name in raw_recording_extractor_properties:
-            values = raw_recording_extractor_properties[property_name][indices]
-            recording_interface.recording_extractor.set_property(key=property_name, ids=indices, values=values)
 
         # Set new channel ids
         new_channel_ids = raw_recording_extractor_properties["channel_ids"][indices]
         recording_interface.recording_extractor._main_ids = new_channel_ids
+
+        for property_name in raw_recording_extractor_properties:
+            values = raw_recording_extractor_properties[property_name][indices]
+            recording_interface.recording_extractor.set_property(key=property_name, ids=new_channel_ids, values=values)
 
         # Set aligned starting time with recording extractor
         starting_time = self.data_interface_objects["Recording"].get_timestamps()[0]
@@ -87,13 +86,13 @@ class AsapTdtNWBConverter(NWBConverter):
 
         # Set processed recording interface properties to match with raw recording interface
         vl_interface_name = "ProcessedRecordingVL"
-        self.set_recording_interface_properties(
+        self.set_processed_recording_interface_properties(
             recording_interface_name=vl_interface_name, electrode_metadata=electrode_metadata
         )
 
         gpi_interface_name = "ProcessedRecordingGPi"
         if gpi_interface_name in self.data_interface_objects:
-            self.set_recording_interface_properties(
+            self.set_processed_recording_interface_properties(
                 recording_interface_name=gpi_interface_name, electrode_metadata=electrode_metadata
             )
 
