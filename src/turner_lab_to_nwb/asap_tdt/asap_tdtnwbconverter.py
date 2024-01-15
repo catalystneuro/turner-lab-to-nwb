@@ -86,15 +86,11 @@ class AsapTdtNWBConverter(NWBConverter):
 
         # Set processed recording interface properties to match with raw recording interface
         vl_interface_name = "ProcessedRecordingVL"
-        self.set_processed_recording_interface_properties(
-            recording_interface_name=vl_interface_name, electrode_metadata=electrode_metadata
-        )
+        self.set_processed_recording_interface_properties(interface_name=vl_interface_name)
 
         gpi_interface_name = "ProcessedRecordingGPi"
         if gpi_interface_name in self.data_interface_objects:
-            self.set_processed_recording_interface_properties(
-                recording_interface_name=gpi_interface_name, electrode_metadata=electrode_metadata
-            )
+            self.set_processed_recording_interface_properties(interface_name=gpi_interface_name)
 
         num_units = 0
         plexon_sorting_interfaces = [
