@@ -69,5 +69,6 @@ for index, metadata in enumerate(metadata_list):
         vl_plexon_file_path=vl_plexon_file_path,
         gpi_plexon_file_path=gpi_plexon_file_path,
         session_id=session_id,
+        subject_id=subject_id,
         stub_test=stub_test,
     )
