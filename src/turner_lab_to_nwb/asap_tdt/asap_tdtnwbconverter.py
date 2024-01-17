@@ -2,10 +2,11 @@ from typing import Optional
 
 from neuroconv import NWBConverter
 from neuroconv.datainterfaces import PlexonSortingInterface
+from neuroconv.tools.nwb_helpers import get_default_backend_configuration, configure_backend
 from neuroconv.utils import DeepDict
 from pynwb import NWBFile
 
-from turner_lab_to_nwb.asap_tdt.interfaces import ASAPTdtRecordingInterface
+from turner_lab_to_nwb.asap_tdt.interfaces import ASAPTdtRecordingInterface, ASAPTdtEventsInterface
 
 
 class AsapTdtNWBConverter(NWBConverter):
@@ -15,14 +16,15 @@ class AsapTdtNWBConverter(NWBConverter):
         Recording=ASAPTdtRecordingInterface,
         SortingVL=PlexonSortingInterface,
         SortingGPi=PlexonSortingInterface,
+        Events=ASAPTdtEventsInterface,
     )
 
     def get_metadata(self) -> DeepDict:
         metadata = super().get_metadata()
 
-        # Explicitly set session_start_time to recording start time
-        recording_interface = self.data_interface_objects["Recording"]
-        interface_metadata = recording_interface.get_metadata()
+        # Explicitly set session_start_time to the start time from events interface (most accurate)
+        events_interface = self.data_interface_objects["Events"]
+        interface_metadata = events_interface.get_metadata()
         metadata["NWBFile"].update(session_start_time=interface_metadata["NWBFile"]["session_start_time"])
 
         return metadata
@@ -83,6 +85,12 @@ class AsapTdtNWBConverter(NWBConverter):
             # unit_ids are not unique across sorting interfaces, so we are offsetting them here
             sorting_extractor._main_ids = extractor_unit_ids + num_units
             num_units = len(extractor_unit_ids)
+
+        # Add stimulation events metadata
+        stimulation_site = electrode_metadata["Stim. site"].replace(np.nan, None).unique()[0]
+        if stimulation_site:
+            stimulation_depth = electrode_metadata["Stim. depth"].unique()[0]
+            metadata["StimulationEvents"].update(stimulation_site=stimulation_site, stimulation_depth=stimulation_depth)
 
         super().run_conversion(
             nwbfile_path=nwbfile_path,

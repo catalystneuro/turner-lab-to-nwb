@@ -14,7 +14,9 @@ def session_to_nwb(
     data_list_file_path: FilePathType,
     vl_plexon_file_path: FilePathType,
     session_id: str,
+    events_file_path: FilePathType,
     gpi_plexon_file_path: Optional[FilePathType] = None,
+    target_name_mapping: Optional[dict] = None,
     stub_test: bool = False,
 ):
     """
@@ -34,6 +36,10 @@ def session_to_nwb(
         The path to Plexon file (.plx) containing the spike sorted data from GPi.
     session_id : str
         The unique identifier for the session.
+    events_file_path : FilePathType
+        The path that points to the .mat file containing the events, units data and optionally include the stimulation data.
+    target_name_mapping : Optional[dict], optional
+        A dictionary mapping the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
     stub_test : bool, optional
         Whether to run the conversion in stub test mode, by default False.
     """
@@ -59,6 +65,11 @@ def session_to_nwb(
     if gpi_plexon_file_path:
         source_data.update(dict(SortingGPi=dict(file_path=str(gpi_plexon_file_path))))
         conversion_options.update(dict(SortingGPi=conversion_options_sorting))
+
+    # Add Events
+    source_data.update(dict(Events=dict(file_path=str(events_file_path))))
+    if target_name_mapping:
+        conversion_options.update(dict(Events=dict(target_name_mapping=target_name_mapping)))
 
     converter = AsapTdtNWBConverter(source_data=source_data)
 
@@ -104,7 +115,12 @@ if __name__ == "__main__":
     # The plexon file with the spike sorted data from GPi, optional
     # When stimulation site is GPi, the plexon file is empty and this should be set to None
     # gpi_plexon_file_path = None
-    gpi_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_24_24.plx"
+    gpi_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_17_32.plx"
+
+    # The path to the .mat file containing the events, units data and optionally include the stimulation data
+    events_file_path = folder_path / f"I_{date_string}" / f"{session_id}.mat"
+    # The mapping of the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right"
+    target_name_mapping = {1: "Left", 3: "Right"}
 
     # The path to the NWB file to be created
     nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_Gaia_{session_id}.nwb")
@@ -119,5 +135,7 @@ if __name__ == "__main__":
         vl_plexon_file_path=vl_plexon_file_path,
         gpi_plexon_file_path=gpi_plexon_file_path,
         session_id=session_id,
+        events_file_path=events_file_path,
+        target_name_mapping=target_name_mapping,
         stub_test=stub_test,
     )

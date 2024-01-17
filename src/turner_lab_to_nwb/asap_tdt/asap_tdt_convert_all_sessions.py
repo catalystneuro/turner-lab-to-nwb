@@ -62,6 +62,10 @@ for index, metadata in enumerate(metadata_list):
         # If stimulation site is GPi, we only have spike sorting date from VL region, the plexon file for GPi is empty
         gpi_plexon_file_path = None
 
+    events_file_path = folder_path / f"I_{date_string}" / f"{session_id}.mat"
+    # The mapping of the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right"
+    target_name_mapping = {1: "Left", 3: "Right"}
+
     session_to_nwb(
         tdt_tank_file_path=metadata["source_data"]["recording"]["file_path"],
         nwbfile_path=output_dir_path / nwbfile_name,
@@ -69,5 +73,7 @@ for index, metadata in enumerate(metadata_list):
         vl_plexon_file_path=vl_plexon_file_path,
         gpi_plexon_file_path=gpi_plexon_file_path,
         session_id=session_id,
+        events_file_path=events_file_path,
+        target_name_mapping=target_name_mapping,
         stub_test=stub_test,
     )
