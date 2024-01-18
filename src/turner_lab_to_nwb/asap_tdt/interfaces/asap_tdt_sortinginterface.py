@@ -9,13 +9,13 @@ from turner_lab_to_nwb.asap_tdt.extractors import ASAPTdtSortingExtractor
 class ASAPTdtSortingInterface(BaseSortingExtractorInterface):
     Extractor = ASAPTdtSortingExtractor
 
-    def __init__(self, file_path: FilePathType, location: Literal["GPi", "VL"] = None, verbose: bool = True):
+    def __init__(self, file_path: FilePathType, location: Literal["GPi", "VL", None] = None, verbose: bool = True):
         """
         Parameters
         ----------
         file_path: FilePathType
             Path to the MAT file containing the spiking data.
-        location: Literal["GPi", "VL"], optional
+        location: Literal["GPi", "VL", None], optional
             The location of the probe, when specified allows to filter the units by location. By default None.
         verbose: bool, default: True
             Allows verbosity.

@@ -14,13 +14,13 @@ class ASAPTdtSortingExtractor(BaseSorting):
     installation_mesg = ""
     name = "tdtsorting"
 
-    def __init__(self, file_path: FilePathType, location: Literal["GPi", "VL"] = None):
+    def __init__(self, file_path: FilePathType, location: Literal["GPi", "VL", None] = None):
         """
         Parameters
         ----------
         file_path : FilePathType
             The file path to the MAT file containing the clustered spike times.
-        location: Literal["GPi", "VL"], optional
+        location: Literal["GPi", "VL", None], optional
             The location of the probe, when specified allows to filter the units by location. By default None.
         """
 

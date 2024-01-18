@@ -17,7 +17,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         file_path: FilePathType,
         data_list_file_path: FilePathType,
         stream_id: str = "3",
-        location: Literal["GPi", "VL"] = None,
+        location: Literal["GPi", "VL", None] = None,
         verbose: bool = True,
         es_key: str = "ElectricalSeries",
     ):
@@ -32,7 +32,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             The path that points to the electrode metadata file (.xlsx).
         stream_id : FilePathType
             The stream of the data for spikeinterface, "3" by default.
-        location : Literal["GPi", "VL"], optional
+        location : Literal["GPi", "VL", None], optional
             The location of the probe, when specified allows to filter the channels by location. By default None.
         verbose : bool, default: True
             Verbose
