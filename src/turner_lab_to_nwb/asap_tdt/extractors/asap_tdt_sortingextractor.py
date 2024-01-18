@@ -30,6 +30,7 @@ class ASAPTdtSortingExtractor(BaseSorting):
 
         # filter out units based on location
         if location is not None:
+            assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
             units_df = units_df[units_df["brain_area"].str.contains(location)]
             if units_df.empty:
                 raise ValueError(f"No units found in '{file_path}' for location '{location}'.")
