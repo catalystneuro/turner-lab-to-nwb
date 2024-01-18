@@ -13,3 +13,7 @@ Ecephys:
       description: The quality of the unit after sorting.
     - name: good_period
       description: The period when the spike waveforms had good isolation.
+    - name: channel_ids
+      description: The electrode channel ids for each unit.
+    - name: label
+      description: The sorting label for each unit.
