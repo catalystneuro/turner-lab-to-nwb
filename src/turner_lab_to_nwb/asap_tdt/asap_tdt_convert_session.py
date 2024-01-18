@@ -12,12 +12,13 @@ def session_to_nwb(
     nwbfile_path: FilePathType,
     tdt_tank_file_path: FilePathType,
     data_list_file_path: FilePathType,
-    vl_plexon_file_path: FilePathType,
     session_id: str,
     events_file_path: FilePathType,
-    vl_flt_file_path: FilePathType,
+    location: Optional[str] = None,
     gpi_flt_file_path: Optional[FilePathType] = None,
+    vl_flt_file_path: Optional[FilePathType] = None,
     gpi_plexon_file_path: Optional[FilePathType] = None,
+    vl_plexon_file_path: Optional[FilePathType] = None,
     target_name_mapping: Optional[dict] = None,
     stub_test: bool = False,
 ):
@@ -32,18 +33,20 @@ def session_to_nwb(
         The path that points to a TDT Tank file (.Tbk).
     data_list_file_path : FilePathType
         The path that points to the electrode metadata file (.xlsx).
-    vl_plexon_file_path : FilePathType
-        The path to Plexon file (.plx) containing the spike sorted data from VL.
-    gpi_plexon_file_path : FilePathType, optional
-        The path to Plexon file (.plx) containing the spike sorted data from GPi.
     session_id : str
         The unique identifier for the session.
     events_file_path : FilePathType
         The path that points to the .mat file containing the events, units data and optionally include the stimulation data.
-    vl_flt_file_path : FilePathType
-        The path to the high-pass filtered data from VL.
+    location : Optional[str], optional
+        The location of the probe, when specified allows to filter the channels by location. By default None.
     gpi_flt_file_path : FilePathType, optional
         The path to the high-pass filtered data from GPi.
+    vl_flt_file_path : FilePathType, optional
+        The path to the high-pass filtered data from VL.
+    gpi_plexon_file_path : FilePathType, optional
+        The path to Plexon file (.plx) containing the spike sorted data from GPi.
+    vl_plexon_file_path : FilePathType, optional
+        The path to Plexon file (.plx) containing the spike sorted data from VL.
     target_name_mapping : Optional[dict], optional
         A dictionary mapping the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
     stub_test : bool, optional
