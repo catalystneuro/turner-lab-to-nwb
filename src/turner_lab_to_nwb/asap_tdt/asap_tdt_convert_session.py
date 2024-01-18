@@ -58,7 +58,7 @@ def session_to_nwb(
     conversion_options = dict()
 
     # For embargo mode keep all channels, for public keep only "GPi" channels
-    if location is None:
+    if location is not None:
         assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
 
     # Add Recording
