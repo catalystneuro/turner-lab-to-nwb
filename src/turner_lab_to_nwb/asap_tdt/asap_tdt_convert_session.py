@@ -56,7 +56,7 @@ def session_to_nwb(
 
     # Add Recording
     source_data.update(
-        dict(Recording=dict(file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path)))
+        dict(Recording=dict(file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path), gain=1.0))
     )
     conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
@@ -157,7 +157,7 @@ if __name__ == "__main__":
     nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_Gaia_{session_id}.nwb")
 
     # For testing purposes, set stub_test to True to convert only a stub of the session
-    stub_test = False
+    stub_test = True
 
     session_to_nwb(
         nwbfile_path=nwbfile_path,
