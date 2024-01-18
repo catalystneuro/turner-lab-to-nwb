@@ -123,17 +123,21 @@ if __name__ == "__main__":
     # The root folder containing the sessions
     folder_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample")
 
-    # The output folder for the NWB files
-    output_folder_path = folder_path / "nwbfiles"
-    os.makedirs(output_folder_path, exist_ok=True)
-
     # The path to the electrode metadata file (.xlsx)
     data_list_file_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/Isis_DataList_temp.xlsx")
+
+    # For public dataset mode we only keep GPi channels
+    # Use dataset_mode="embargo" to keep all channels
+    dataset_mode = "embargo"
+
+    # The output folder for the NWB files
+    output_folder_path = folder_path / f"nwbfiles_{dataset_mode}"
+    os.makedirs(output_folder_path, exist_ok=True)
 
     convert_sessions(
         folder_path=folder_path,
         output_folder_path=output_folder_path,
         data_list_file_path=data_list_file_path,
-        dataset_mode="public",
-        stub_test=True,
+        dataset_mode=dataset_mode,
+        stub_test=False,
     )
