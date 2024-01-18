@@ -157,7 +157,7 @@ if __name__ == "__main__":
     nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_Gaia_{session_id}.nwb")
 
     # For testing purposes, set stub_test to True to convert only a stub of the session
-    stub_test = True
+    stub_test = False
 
     session_to_nwb(
         nwbfile_path=nwbfile_path,
