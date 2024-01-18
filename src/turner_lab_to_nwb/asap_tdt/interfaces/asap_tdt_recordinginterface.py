@@ -1,5 +1,7 @@
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
+
 from neuroconv.datainterfaces.ecephys.baserecordingextractorinterface import BaseRecordingExtractorInterface
 from neuroconv.utils import FilePathType
 from spikeinterface import ChannelSliceRecording
@@ -15,6 +17,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         file_path: FilePathType,
         data_list_file_path: FilePathType,
         stream_id: str = "3",
+        location: Literal["GPi", "VL"] = None,
         verbose: bool = True,
         es_key: str = "ElectricalSeries",
     ):
@@ -29,6 +32,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             The path that points to the electrode metadata file (.xlsx).
         stream_id : FilePathType
             The stream of the data for spikeinterface, "3" by default.
+        location : Literal["GPi", "VL"], optional
+            The location of the probe, when specified allows to filter the channels by location. By default None.
         verbose : bool, default: True
             Verbose
         es_key : str, default: "ElectricalSeries"
@@ -45,6 +50,12 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
 
         _, filename = self.file_path.stem.split("_", maxsplit=1)
         electrode_metadata = load_session_metadata(file_path=data_list_file_path, session_id=filename)
+
+        # Filter by location
+        if location is not None:
+            assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
+            electrode_metadata = electrode_metadata[electrode_metadata["Target"].isin([location])]
+
         self._electrode_metadata = electrode_metadata.drop_duplicates(subset=["Chan#"])
         parent_recording = TdtRecordingExtractor(
             folder_path=str(self.file_path), stream_id=stream_id, all_annotations=True
