@@ -59,6 +59,13 @@ class ASAPTdtSortingExtractor(BaseSorting):
         self.set_property(key="unit_quality_post_sorting", values=units_quality_renamed)
 
         units_df["chan"] = units_df["chan"].astype(int)
+
+        # Rename non-unique unit names
+        duplicates_mask = units_df["uname"].duplicated(keep=False)
+        for i, row in units_df.iterrows():
+            if duplicates_mask[i]:
+                units_df.at[i, "uname"] = f'{row["uname"]}-{row["chan"]}'
+
         unit_properties_mapping = dict(
             uname="unit_name",
             sort="sort_label",
