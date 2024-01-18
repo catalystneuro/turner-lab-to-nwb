@@ -57,34 +57,42 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
+    # For embargo mode keep all channels, for public keep only "GPi" channels
+    if location is None:
+        assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
+
     # Add Recording
-    source_data.update(
-        dict(Recording=dict(file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path)))
+    recording_source_data = dict(
+        file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path), location=location
     )
+    source_data.update(dict(Recording=recording_source_data))
     conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
-    # Add Processed Recording (high-pass filtered data)
-    source_data.update(dict(ProcessedRecordingVL=dict(file_path=str(vl_flt_file_path), location="VL")))
-    conversion_options.update(dict(ProcessedRecordingVL=dict(stub_test=stub_test, write_as="processed")))
-
-    if gpi_flt_file_path:
-        source_data.update(dict(ProcessedRecordingGPi=dict(file_path=str(gpi_flt_file_path), location="GPi")))
-        conversion_options.update(dict(ProcessedRecordingGPi=dict(stub_test=stub_test, write_as="processed")))
-
     # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
-    source_data.update(dict(PlexonSortingVL=dict(file_path=str(vl_plexon_file_path))))
     conversion_options_sorting = dict(
         stub_test=stub_test,
         write_as="processing",
         units_description="The units were sorted using the Plexon Offline Sorter v3.",
     )
-    conversion_options.update(dict(PlexonSortingVL=conversion_options_sorting))
+
+    # Add Processed Recording (high-pass filtered data)
+    if vl_flt_file_path:
+        source_data.update(dict(ProcessedRecordingVL=dict(file_path=str(vl_flt_file_path), location="VL")))
+        conversion_options.update(dict(ProcessedRecordingVL=dict(stub_test=stub_test, write_as="processed")))
+    if gpi_flt_file_path:
+        source_data.update(dict(ProcessedRecordingGPi=dict(file_path=str(gpi_flt_file_path), location="GPi")))
+        conversion_options.update(dict(ProcessedRecordingGPi=dict(stub_test=stub_test, write_as="processed")))
+
+    # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
+    if vl_plexon_file_path:
+        source_data.update(dict(PlexonSortingVL=dict(file_path=str(vl_plexon_file_path))))
+        conversion_options.update(dict(PlexonSortingVL=conversion_options_sorting))
     if gpi_plexon_file_path:
         source_data.update(dict(PlexonSortingGPi=dict(file_path=str(gpi_plexon_file_path))))
         conversion_options.update(dict(PlexonSortingGPi=conversion_options_sorting))
 
     # Add Sorting (curated spike times from Plexon Offline Sorter v3, only include single units)
-    source_data.update(dict(CuratedSorting=dict(file_path=str(events_file_path))))
+    source_data.update(dict(CuratedSorting=dict(file_path=str(events_file_path), location=location)))
     conversion_options.update(
         dict(
             CuratedSorting=dict(
@@ -103,7 +111,6 @@ def session_to_nwb(
 
     metadata = converter.get_metadata()
     # For data provenance we can add the time zone information to the conversion if missing
-
     session_start_time = metadata["NWBFile"]["session_start_time"]
     tzinfo = tz.gettz("US/Pacific")
     metadata["NWBFile"].update(
