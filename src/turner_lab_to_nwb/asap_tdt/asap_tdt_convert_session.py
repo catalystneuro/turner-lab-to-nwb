@@ -15,7 +15,11 @@ def session_to_nwb(
     vl_plexon_file_path: FilePathType,
     session_id: str,
     subject_id: str,
+    events_file_path: FilePathType,
+    vl_flt_file_path: FilePathType,
+    gpi_flt_file_path: Optional[FilePathType] = None,
     gpi_plexon_file_path: Optional[FilePathType] = None,
+    target_name_mapping: Optional[dict] = None,
     stub_test: bool = False,
 ):
     """
@@ -37,6 +41,14 @@ def session_to_nwb(
         The unique identifier for the session.
     subject_id : str
         The unique identifier for the subject.
+    events_file_path : FilePathType
+        The path that points to the .mat file containing the events, units data and optionally include the stimulation data.
+    vl_flt_file_path : FilePathType
+        The path to the high-pass filtered data from VL.
+    gpi_flt_file_path : FilePathType, optional
+        The path to the high-pass filtered data from GPi.
+    target_name_mapping : Optional[dict], optional
+        A dictionary mapping the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
     stub_test : bool, optional
         Whether to run the conversion in stub test mode, by default False.
     """
@@ -51,17 +63,41 @@ def session_to_nwb(
     )
     conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
-    # Add Sorting
-    source_data.update(dict(SortingVL=dict(file_path=str(vl_plexon_file_path))))
+    # Add Processed Recording (high-pass filtered data)
+    source_data.update(dict(ProcessedRecordingVL=dict(file_path=str(vl_flt_file_path), location="VL")))
+    conversion_options.update(dict(ProcessedRecordingVL=dict(stub_test=stub_test, write_as="processed")))
+
+    if gpi_flt_file_path:
+        source_data.update(dict(ProcessedRecordingGPi=dict(file_path=str(gpi_flt_file_path), location="GPi")))
+        conversion_options.update(dict(ProcessedRecordingGPi=dict(stub_test=stub_test, write_as="processed")))
+
+    # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
+    source_data.update(dict(PlexonSortingVL=dict(file_path=str(vl_plexon_file_path))))
     conversion_options_sorting = dict(
         stub_test=stub_test,
         write_as="processing",
         units_description="The units were sorted using the Plexon Offline Sorter v3.",
     )
-    conversion_options.update(dict(SortingVL=conversion_options_sorting))
+    conversion_options.update(dict(PlexonSortingVL=conversion_options_sorting))
     if gpi_plexon_file_path:
-        source_data.update(dict(SortingGPi=dict(file_path=str(gpi_plexon_file_path))))
-        conversion_options.update(dict(SortingGPi=conversion_options_sorting))
+        source_data.update(dict(PlexonSortingGPi=dict(file_path=str(gpi_plexon_file_path))))
+        conversion_options.update(dict(PlexonSortingGPi=conversion_options_sorting))
+
+    # Add Sorting (curated spike times from Plexon Offline Sorter v3, only include single units)
+    source_data.update(dict(CuratedSorting=dict(file_path=str(events_file_path))))
+    conversion_options.update(
+        dict(
+            CuratedSorting=dict(
+                stub_test=stub_test,
+                units_description="The curated single-units from the Plexon Offline Sorter v3, selected based on the quality of spike sorting.",
+            )
+        )
+    )
+
+    # Add Events
+    source_data.update(dict(Events=dict(file_path=str(events_file_path))))
+    if target_name_mapping:
+        conversion_options.update(dict(Events=dict(target_name_mapping=target_name_mapping)))
 
     converter = AsapTdtNWBConverter(source_data=source_data)
 
@@ -115,8 +151,19 @@ if __name__ == "__main__":
     vl_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_1_16.plx"
     # The plexon file with the spike sorted data from GPi, optional
     # When stimulation site is GPi, the plexon file is empty and this should be set to None
-    # gpi_plexon_file_path = None
-    gpi_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_24_24.plx"
+    gpi_plexon_file_path = None
+    # gpi_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_17_32.plx"
+
+    # The path to the high-pass filtered data from VL
+    vl_flt_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_1_16.flt.mat"
+    # The path to the high-pass filtered data from GPi, optional
+    # gpi_flt_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_24_24.flt.mat"
+    gpi_flt_file_path = None
+
+    # The path to the .mat file containing the events, units data and optionally include the stimulation data
+    events_file_path = folder_path / f"I_{date_string}" / f"{session_id}.mat"
+    # The mapping of the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right"
+    target_name_mapping = {1: "Left", 3: "Right"}
 
     # The path to the NWB file to be created
     nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_{subject_id}_{session_id}.nwb")
@@ -127,10 +174,14 @@ if __name__ == "__main__":
     session_to_nwb(
         nwbfile_path=nwbfile_path,
         tdt_tank_file_path=tank_file_path,
+        gpi_flt_file_path=gpi_flt_file_path,
+        vl_flt_file_path=vl_flt_file_path,
         data_list_file_path=data_list_file_path,
         vl_plexon_file_path=vl_plexon_file_path,
         gpi_plexon_file_path=gpi_plexon_file_path,
         session_id=session_id,
         subject_id=subject_id,
+        events_file_path=events_file_path,
+        target_name_mapping=target_name_mapping,
         stub_test=stub_test,
     )

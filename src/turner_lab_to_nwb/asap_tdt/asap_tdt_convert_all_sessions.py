@@ -44,23 +44,34 @@ for index, metadata in enumerate(metadata_list):
         nwbfile_name = f"stub_{subject_id}_{session_id}.nwb"
 
     session_metadata = load_session_metadata(file_path=data_list_file_path, session_id=session_id)
-    plexon_data = session_metadata.groupby("Area")["Chan#"].first().reset_index()
+    channel_map_per_target = target_channel_map = (
+        session_metadata.groupby("Target")["Chan#"].agg(["first", "last"]).to_dict("index")
+    )
 
-    stim_site = session_metadata["Stim. site"].replace(np.nan, None).unique().tolist()[0]
+    target_first_last_channel_map = session_metadata.groupby("Target")["Chan#"].first().to_dict()
+    target_first_last_channel_map = {target: list(channels.values()) for target, channels in target_channel_map.items()}
 
-    vl_plexon_first_channel = plexon_data.loc[plexon_data["Area"] == "VLa", "Chan#"].values[0]
-    vl_plexon_file_path = list(
-        folder_path.rglob(f"I_{date_string}/{session_id}_Chans_{vl_plexon_first_channel}_*.plx")
-    )[0]
+    vl_channels = "Chans_{}_{}".format(target_first_last_channel_map["VL"][0], target_first_last_channel_map["VL"][1])
+    vl_plexon_file_path = folder_path / f"I_{date_string}/{session_id}_{vl_channels}.plx"
+    assert vl_plexon_file_path.exists(), f"The file {vl_plexon_file_path} does not exist."
 
-    if stim_site is None:
-        gpi_plexon_first_channel = plexon_data.loc[plexon_data["Area"] == "GPi", "Chan#"].values[0]
-        gpi_plexon_file_path = list(
-            folder_path.rglob(f"I_{date_string}/{session_id}_Chans_{gpi_plexon_first_channel}_*.plx")
-        )[0]
-    else:
-        # If stimulation site is GPi, we only have spike sorting date from VL region, the plexon file for GPi is empty
-        gpi_plexon_file_path = None
+    vl_flt_file_path = folder_path / f"I_{date_string}/{session_id}_{vl_channels}.flt.mat"
+    assert vl_flt_file_path.exists(), f"The file {vl_flt_file_path} does not exist."
+
+    gpi_plexon_file_path = None
+    gpi_flt_file_path = None
+    if "GPi" in target_first_last_channel_map:
+        gpi_channels = "Chans_{}_{}".format(
+            target_first_last_channel_map["GPi"][0], target_first_last_channel_map["GPi"][1]
+        )
+        gpi_plexon_file_path = folder_path / f"I_{date_string}/{session_id}_{gpi_channels}.plx"
+        assert gpi_plexon_file_path.exists(), f"The file {gpi_plexon_file_path} does not exist."
+        gpi_flt_file_path = folder_path / f"I_{date_string}/{session_id}_{gpi_channels}.flt.mat"
+        assert gpi_flt_file_path.exists(), f"The file {gpi_flt_file_path} does not exist."
+
+    events_file_path = folder_path / f"I_{date_string}" / f"{session_id}.mat"
+    # The mapping of the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right"
+    target_name_mapping = {1: "Left", 3: "Right"}
 
     session_to_nwb(
         tdt_tank_file_path=metadata["source_data"]["recording"]["file_path"],
@@ -68,7 +79,11 @@ for index, metadata in enumerate(metadata_list):
         data_list_file_path=data_list_file_path,
         vl_plexon_file_path=vl_plexon_file_path,
         gpi_plexon_file_path=gpi_plexon_file_path,
+        vl_flt_file_path=vl_flt_file_path,
+        gpi_flt_file_path=gpi_flt_file_path,
         session_id=session_id,
         subject_id=subject_id,
+        events_file_path=events_file_path,
+        target_name_mapping=target_name_mapping,
         stub_test=stub_test,
     )
