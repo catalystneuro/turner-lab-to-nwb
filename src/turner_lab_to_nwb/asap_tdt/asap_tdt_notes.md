@@ -111,9 +111,12 @@ Required Parameters:
 ### Dataset mode
 
 The public dataset is a subset of the full dataset that only contains the data from the GPi channels.
+
 The embargo dataset is the full dataset that contains the data from all channels but is not going to be published publicly.
 
 
 ## TDT to NWB mapping
 
-TODO: add UML diagram
+The following table describes the mapping between the source data and the NWB data:
+
+![Alt text](asap_tdt_uml.png)
