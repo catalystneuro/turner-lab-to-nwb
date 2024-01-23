@@ -13,7 +13,7 @@ def convert_sessions(
     folder_path: FolderPathType,
     data_list_file_path: FilePathType,
     output_folder_path: FolderPathType,
-    dataset_mode: Literal["embargo", "public"] = None,
+    dataset_mode: Literal["embargo", "public"],
     stub_test: bool = False,
     verbose: bool = True,
 ):
@@ -28,8 +28,8 @@ def convert_sessions(
         The path to the electrode metadata file (.xlsx).
     output_folder_path : FolderPathType
         The output folder for the NWB files.
-    dataset_mode : Literal["embargo", "public"], optional
-        The mode of the dataset, when not specified the default is "embargo".
+    dataset_mode : Literal["embargo", "public"]
+        The mode of the dataset, for the public mode only GPi channels are kept.
     verbose: bool, default: True
         Controls verbosity, default is True.
     """
@@ -48,7 +48,6 @@ def convert_sessions(
     # Expand paths and extract metadata
     metadata_list = path_expander.expand_paths(source_data_spec)
 
-    dataset_mode = "embargo" if dataset_mode is None else dataset_mode
     assert dataset_mode in [
         "embargo",
         "public",
