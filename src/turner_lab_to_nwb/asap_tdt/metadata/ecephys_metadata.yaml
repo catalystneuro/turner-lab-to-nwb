@@ -1,10 +1,3 @@
-NWBFile:
-  session_description:
-    A rich text description of the experiment. Can also just be the abstract of the publication.
-  institution: University of Pittsburgh
-  lab: Turner
-  experimenter:
-    - Kase, Daisuke
 Ecephys:
   UnitProperties:
     - name: unit_quality

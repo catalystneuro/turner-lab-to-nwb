@@ -111,9 +111,10 @@ Required Parameters:
 ### Dataset mode
 
 The public dataset is a subset of the full dataset that only contains the data from the GPi channels.
+The general metadata for the public dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/public_metadata.yaml`.
 
 The embargo dataset is the full dataset that contains the data from all channels but is not going to be published publicly.
-
+The general metadata for the embargo dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/embargo_metadata.yaml`.
 
 ## TDT to NWB mapping
 

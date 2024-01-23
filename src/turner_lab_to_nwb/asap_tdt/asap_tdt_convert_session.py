@@ -119,9 +119,14 @@ def session_to_nwb(
     )
 
     # Update default metadata with the editable in the corresponding yaml file
-    editable_metadata_path = Path(__file__).parent / "asap_tdt_metadata.yaml"
+    general_metadata = "public_metadata.yaml" if location == "GPi" else "embargo_metadata.yaml"
+    editable_metadata_path = Path(__file__).parent / "metadata" / general_metadata
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
+
+    # Load ecephys metadata
+    ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
+    metadata = dict_deep_update(metadata, ecephys_metadata)
 
     # Run conversion
     converter.run_conversion(
