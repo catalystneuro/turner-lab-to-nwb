@@ -82,7 +82,6 @@ class AsapTdtNWBConverter(NWBConverter):
     ) -> None:
         # Add unit properties
         electrode_metadata = self.data_interface_objects["Recording"]._electrode_metadata
-        # self.data_interface_objects["Recording"].recording_extractor.set_channel_gains(1.0)
 
         # Set processed recording interface properties to match with raw recording interface
         vl_interface_name = "ProcessedRecordingVL"

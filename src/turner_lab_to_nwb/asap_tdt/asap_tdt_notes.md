@@ -65,6 +65,19 @@ The events data is stored in `.mat` files (in a structure called `events`).
 Some sessions may also include stimulation data which is stored in `.mat` files (in a structure called `dbs`).
 This data contains the onset times of stimulation. The site of stimulation and depth is stored in the `DataList` spreadsheet ("Stim. depth", "Stim. site").
 
+## Subject metadata
+
+The subject metadata can be provided in the `asap_tdt_subject_metadata.yaml` file as the follows:
+
+```yaml
+Subject:
+  {subject_id}:
+    species: Macaca mulatta # The formal latin binomal name for the species of the subject
+    subject_id: {subject_id} # The unique identifier of the subject
+    date_of_birth: 2009-01-01
+    sex: F # F, M or U for unknown
+```
+
 ## Run conversion for a single session
 
 `asap_tdt_convert_session.py`: this script defines the function to convert one full session of the conversion.
