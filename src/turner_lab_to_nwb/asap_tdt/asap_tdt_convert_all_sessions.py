@@ -82,6 +82,7 @@ for index, metadata in enumerate(metadata_list):
         vl_flt_file_path=vl_flt_file_path,
         gpi_flt_file_path=gpi_flt_file_path,
         session_id=session_id,
+        subject_id=subject_id,
         events_file_path=events_file_path,
         target_name_mapping=target_name_mapping,
         stub_test=stub_test,

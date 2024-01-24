@@ -14,6 +14,7 @@ def session_to_nwb(
     data_list_file_path: FilePathType,
     vl_plexon_file_path: FilePathType,
     session_id: str,
+    subject_id: str,
     events_file_path: FilePathType,
     vl_flt_file_path: FilePathType,
     gpi_flt_file_path: Optional[FilePathType] = None,
@@ -38,6 +39,8 @@ def session_to_nwb(
         The path to Plexon file (.plx) containing the spike sorted data from GPi.
     session_id : str
         The unique identifier for the session.
+    subject_id : str
+        The unique identifier for the subject.
     events_file_path : FilePathType
         The path that points to the .mat file containing the events, units data and optionally include the stimulation data.
     vl_flt_file_path : FilePathType
@@ -113,6 +116,14 @@ def session_to_nwb(
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
 
+    # Load subject metadata from the yaml file
+    subject_metadata_path = Path(__file__).parent / "asap_tdt_subjects_metadata.yaml"
+    subject_metadata = load_dict_from_file(subject_metadata_path)
+    assert subject_id in subject_metadata["Subject"], f"Subject {subject_id} is not in the metadata file."
+    pharmacology = subject_metadata["Subject"][subject_id].pop("pharmacology")
+    metadata["NWBFile"].update(pharmacology=pharmacology)
+    metadata["Subject"] = subject_metadata["Subject"][subject_id]
+
     # Run conversion
     converter.run_conversion(
         metadata=metadata, nwbfile_path=nwbfile_path, conversion_options=conversion_options, overwrite=True
@@ -129,8 +140,11 @@ if __name__ == "__main__":
     # The identifier of the session to be converted
     session_id = f"I_{date_string}_2"
 
+    # The identifier of the subject
+    subject_id = "Gaia"
+
     # The path to a single TDT Tank file (.Tbk)
-    tank_file_path = folder_path / f"I_{date_string}" / f"Gaia_{session_id}.Tbk"
+    tank_file_path = folder_path / f"I_{date_string}" / f"{subject_id}_{session_id}.Tbk"
 
     # The path to the electrode metadata file (.xlsx)
     data_list_file_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/Isis_DataList_temp.xlsx")
@@ -154,7 +168,7 @@ if __name__ == "__main__":
     target_name_mapping = {1: "Left", 3: "Right"}
 
     # The path to the NWB file to be created
-    nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_Gaia_{session_id}.nwb")
+    nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_{subject_id}_{session_id}.nwb")
 
     # For testing purposes, set stub_test to True to convert only a stub of the session
     stub_test = False
@@ -168,6 +182,7 @@ if __name__ == "__main__":
         vl_plexon_file_path=vl_plexon_file_path,
         gpi_plexon_file_path=gpi_plexon_file_path,
         session_id=session_id,
+        subject_id=subject_id,
         events_file_path=events_file_path,
         target_name_mapping=target_name_mapping,
         stub_test=stub_test,
