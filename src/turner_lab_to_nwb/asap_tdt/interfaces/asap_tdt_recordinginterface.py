@@ -14,6 +14,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         self,
         file_path: FilePathType,
         data_list_file_path: FilePathType,
+        gain: float,
         stream_id: str = "3",
         verbose: bool = True,
         es_key: str = "ElectricalSeries",
@@ -27,6 +28,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             The path to the TDT recording file.
         data_list_file_path : FilePathType
             The path that points to the electrode metadata file (.xlsx).
+        gain : float
+            The conversion factor from int16 to microvolts.
         stream_id : FilePathType
             The stream of the data for spikeinterface, "3" by default.
         verbose : bool, default: True
@@ -49,6 +52,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         parent_recording = TdtRecordingExtractor(
             folder_path=str(self.file_path), stream_id=stream_id, all_annotations=True
         )
+        # Set "gain_to_uV" extractor property
+        parent_recording.set_channel_gains(gain)
 
         # Tungsten electrode on channel 1 (channels 2-15 were grounded)
         # 16ch V-probe (tip-first contact length: 500 µm, inter-contact-interval: 150 µm) on channels 17-32

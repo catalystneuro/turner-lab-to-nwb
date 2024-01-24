@@ -56,7 +56,7 @@ def session_to_nwb(
 
     # Add Recording
     source_data.update(
-        dict(Recording=dict(file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path)))
+        dict(Recording=dict(file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path), gain=1.0))
     )
     conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
