@@ -128,7 +128,7 @@ def session_to_nwb(
     metadata = dict_deep_update(metadata, editable_metadata)
 
     # Load subject metadata from the yaml file
-    subject_metadata_path = Path(__file__).parent / "asap_tdt_subjects_metadata.yaml"
+    subject_metadata_path = Path(__file__).parent / "metadata" / "subjects_metadata.yaml"
     subject_metadata = load_dict_from_file(subject_metadata_path)
     assert subject_id in subject_metadata["Subject"], f"Subject {subject_id} is not in the metadata file."
     pharmacology = subject_metadata["Subject"][subject_id].pop("pharmacology")
