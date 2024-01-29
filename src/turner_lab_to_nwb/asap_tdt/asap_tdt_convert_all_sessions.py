@@ -4,6 +4,14 @@ from typing import Literal
 
 from neuroconv.tools import LocalPathExpander
 from neuroconv.utils import FolderPathType, FilePathType
+from tqdm import tqdm
+import warnings
+
+warnings.filterwarnings("ignore", "Could not identify sev files for channels")
+warnings.filterwarnings(
+    "ignore",
+    r"Complex objects \(like classes\) are not supported\. They are imported on a best effort base but your mileage will vary\.",
+)
 
 from turner_lab_to_nwb.asap_tdt.asap_tdt_convert_session import session_to_nwb
 from turner_lab_to_nwb.asap_tdt.utils import load_session_metadata
@@ -56,7 +64,13 @@ def convert_sessions(
     # For public dataset only keep GPi channels
     location = "GPi" if dataset_mode == "public" else None
 
-    for index, metadata in enumerate(metadata_list):
+    progress_bar = tqdm(
+        enumerate(metadata_list),
+        desc=f"Converting {len(metadata_list)} sessions in {dataset_mode} mode",
+        position=0,
+        total=len(metadata_list),
+    )
+    for index, metadata in progress_bar:
         subject_id = metadata["metadata"]["Subject"]["subject_id"]
         session_id = metadata["metadata"]["NWBFile"]["session_id"]
 
@@ -65,7 +79,8 @@ def convert_sessions(
 
         # TODO: remove this once the electrode metadata is available for all sessions
         if session_metadata.empty:
-            print("Skipping session {} because no electrode metadata was found.".format(session_id))
+            if verbose:
+                print("\nSkipping session {} because no electrode metadata was found.".format(session_id))
             continue
         channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
 
@@ -106,7 +121,7 @@ def convert_sessions(
             nwbfile_name = f"stub_{subject_id}_{session_id}.nwb"
         nwbfile_path = str(output_folder_path / nwbfile_name)
 
-        print(f"Converting session {session_id} of subject {subject_id} ...") if verbose else None
+        progress_bar.set_description(f"\nConverting session {session_id} of subject {subject_id}")
         session_to_nwb(
             tdt_tank_file_path=metadata["source_data"]["recording"]["file_path"],
             nwbfile_path=nwbfile_path,
