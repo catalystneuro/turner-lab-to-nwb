@@ -18,28 +18,36 @@ and the sessions (the date, the task, whether stimulation was applied etc.).
 
 ## TDT session folder structure
 
-Each TDT folder contains two sessions (e.g. `I_160615_1` and `I_160615_2`).
+Each TDT folder contains multiple sessions (e.g. `I_160615_1` and `I_160615_2`).
 The continuous data for each session is stored in Tucker Davis format (with files of `.Tbk`, `.Tdx`, `.tev`, `.tnt`, `.tsq`). The raw data and the high-pass filtered data
 is stored in `.ddt` and `.flt.mat` files. The `.plx` files contain the spike sorting data from Plexon Offline Sorter v3.
 
 Example folder structure:
 
-    I_160615/
-    ├── Gaia_I_160615_1.Tbk
-    ├── ...
-    ├── Gaia_I_160615_2.Tbk
-    ├── ...
-    ├── I_160615_1.mat
-    ├── I_160615_1_Chans_1_1.ddt
-    ├── I_160615_1_Chans_1_1.flt.mat
-    ├── I_160615_1_Chans_1_1.mat
-    ├── I_160615_1_Chans_1_1.plx
-    ├── I_160615_1_Chans_17_32.ddt
-    ├── I_160615_1_Chans_17_32.flt.mat
-    ├── I_160615_1_Chans_17_32.mat
-    ├── I_160615_1_Chans_17_32.plx
-    ├── ...
-    └── I_160615_2.mat
+    {root_folder}/                               # The root folder containing the sessions e.g. "pre_MPTP"
+    └── {subject_id}/                            # The folder containing the sessions for a given subject e.g. "Gaia"
+        ├── {date_string}/                       # The folder containing the sessions for a given date e.g. "160615"
+        │   ├── Gaia_{session_id}.Tbk            # Raw acquisition data in Tucker Davis (TDT) format
+        │   ├── ... (other TDT files)
+        │   ├── {session_id}.mat                 # Events data in Matlab format (also contains units and optionally stimulation data)
+        │   ├── {session_id}_Chans_1_1.ddt       # Raw data from channel 1 in DDT format
+        │   ├── {session_id}_Chans_1_1.flt.mat   # High-pass filtered data from channel 1 in Matlab format
+        │   ├── {session_id}_Chans_1_1.mat       # Raw data from channel 1 in Matlab format
+        │   ├── {session_id}_Chans_1_1.plx       # Plexon file for channel 1
+        │   ├── {session_id}_Chans_17_32.ddt     # Raw data from channel 17 to 32 in DDT format
+        │   ├── {session_id}_Chans_17_32.flt.mat # High-pass filtered data from channel 17 to 32 in Matlab format
+        │   ├── {session_id}_Chans_17_32.mat     # Raw data from channel 17 to 32 in Matlab format
+        │   └── {session_id}_Chans_17_32.plx     # Spike sorting data from channel 17 to 32
+
+## TDT data
+
+The TDT files contain the following streams of data:
+- the extracellular signal is stored in the `"Conx"` stream
+- the EMG data is stored in the `"EMGx"` stream. (if not empty)
+- the stimulation data is stored in the `"DBSx"` stream. (if not empty)
+- the event data is stored in the `"Task"` stream.
+
+Note that the stimulation and event data are also stored in `.mat` files.
 
 ## Events data
 
@@ -67,7 +75,7 @@ This data contains the onset times of stimulation. The site of stimulation and d
 
 ## Subject metadata
 
-The subject metadata can be provided in the `asap_tdt_subject_metadata.yaml` file as the follows:
+The subject metadata can be provided in the `src/turner_lab_to_nwb/asap_tdt/metadata/subjects_metadata.yaml` file as the follows:
 
 ```yaml
 Subject:
