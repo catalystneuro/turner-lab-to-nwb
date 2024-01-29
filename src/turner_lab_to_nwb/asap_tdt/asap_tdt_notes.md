@@ -96,6 +96,7 @@ Required Parameters:
 - "`tdt_tank_file_path`" : The path to a TDT Tank file (.Tbk).
 - "`data_list_file_path`" : The path to the electrode metadata file (.xlsx).
 - "`session_id`" : The unique identifier for the session.
+- "`subject_id`" : The identifier of the experimental subject.
 - "`events_file_path`" : The path that to the .mat file containing the events, units data and optionally include the stimulation data.
 
 Optional Parameters:
