@@ -17,7 +17,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         file_path: FilePathType,
         data_list_file_path: FilePathType,
         gain: float,
-        stream_id: str = "3",
+        stream_name: str = None,
         location: Literal["GPi", "VL", None] = None,
         verbose: bool = True,
         es_key: str = "ElectricalSeries",
@@ -33,8 +33,8 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             The path that points to the electrode metadata file (.xlsx).
         gain : float
             The conversion factor from int16 to microvolts.
-        stream_id : FilePathType
-            The stream of the data for spikeinterface, "3" by default.
+        stream_name : str, optional
+            The name of the stream for spikeinterface, when not specified defaults to "Conx" (extracellular signal).
         location : Literal["GPi", "VL", None], optional
             The location of the probe, when specified allows to filter the channels by location. By default None.
         verbose : bool, default: True
@@ -50,6 +50,10 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         assert self.file_path.suffix in valid_suffices, (
             f"The file {file_path} is not a valid TDT file." f"The file suffix must be one of {valid_suffices}."
         )
+
+        # Determine stream_id (can differ from session to session which stream_id corresponds to the extracellular signal)
+        stream_name = stream_name or "Conx"
+        stream_id = self._determine_stream_id(stream_name=stream_name)
 
         _, filename = self.file_path.stem.split("_", maxsplit=1)
         electrode_metadata = load_session_metadata(file_path=data_list_file_path, session_id=filename)
@@ -84,6 +88,17 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         channel_names = self.recording_extractor.get_property("channel_name")
         channel_names = [name.replace("'", "")[1:] for name in channel_names]
         self.recording_extractor.set_property(key="channel_name", values=channel_names)
+        # Remove duplicate channel_names property
+        self.recording_extractor.delete_property(key="channel_names")
+
+    def _determine_stream_id(self, stream_name: str) -> str:
+        """Determine the stream_id for the specified stream_name."""
+        from spikeinterface.extractors import TdtRecordingExtractor
+
+        stream_names, stream_ids = TdtRecordingExtractor.get_streams(folder_path=str(self.file_path))
+        stream_index = [stream_index for stream_index, stream in enumerate(stream_names) if stream_name in stream]
+        assert len(stream_index) == 1, f"Found {len(stream_index)} streams with name {stream_name}."
+        return stream_ids[stream_index[0]]
 
     def get_metadata(self) -> dict:
         metadata = super().get_metadata()
