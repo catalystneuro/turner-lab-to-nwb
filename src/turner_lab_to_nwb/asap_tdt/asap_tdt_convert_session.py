@@ -1,4 +1,5 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -110,7 +111,7 @@ def session_to_nwb(
     if target_name_mapping:
         conversion_options.update(dict(Events=dict(target_name_mapping=target_name_mapping)))
 
-    converter = AsapTdtNWBConverter(source_data=source_data)
+    converter = AsapTdtNWBConverter(source_data=source_data, verbose=False)
 
     metadata = converter.get_metadata()
     # For data provenance we can add the time zone information to the conversion if missing
@@ -134,6 +135,9 @@ def session_to_nwb(
     pharmacology = subject_metadata["Subject"][subject_id].pop("pharmacology")
     metadata["NWBFile"].update(pharmacology=pharmacology)
     metadata["Subject"] = subject_metadata["Subject"][subject_id]
+    date_of_birth = metadata["Subject"]["date_of_birth"]
+    date_of_birth_dt = datetime.strptime(date_of_birth, "%Y-%m-%d")
+    metadata["Subject"].update(date_of_birth=date_of_birth_dt.replace(tzinfo=tzinfo))
 
     # Load ecephys metadata
     ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")

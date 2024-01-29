@@ -1,7 +1,6 @@
 from typing import Optional
 
 import numpy as np
-import pandas as pd
 from neuroconv import NWBConverter
 from neuroconv.datainterfaces import PlexonSortingInterface
 from neuroconv.tools.nwb_helpers import get_default_backend_configuration, configure_backend
