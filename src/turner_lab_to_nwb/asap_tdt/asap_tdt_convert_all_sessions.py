@@ -38,7 +38,7 @@ def convert_sessions(
     source_data_spec = {
         "recording": {
             "base_directory": folder_path,
-            "file_path": "I_{date_string}/{subject_id}_{session_id}.Tbk",
+            "file_path": "{subject_id}/{date_string}/Gaia_{session_id}.Tbk",
         }
     }
 
@@ -62,6 +62,11 @@ def convert_sessions(
 
         # Load electrode metadata for the session
         session_metadata = load_session_metadata(file_path=data_list_file_path, session_id=session_id)
+
+        # TODO: remove this once the electrode metadata is available for all sessions
+        if session_metadata.empty:
+            print("Skipping session {} because no electrode metadata was found.".format(session_id))
+            continue
         channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
 
         # Skip sessions that do not have the specified location
@@ -75,23 +80,24 @@ def convert_sessions(
 
         # In embargo mode keep all channels
         date_string = metadata["metadata"]["extras"]["date_string"]
+        session_folder_path = folder_path / subject_id / date_string
         if "VL" in channel_ids and dataset_mode == "embargo":
             vl_channels = "Chans_{}_{}".format(channel_ids["VL"][0], channel_ids["VL"][-1])
-            vl_plexon_file_path = folder_path / f"I_{date_string}/{session_id}_{vl_channels}.plx"
+            vl_plexon_file_path = session_folder_path / f"{session_id}_{vl_channels}.plx"
             assert vl_plexon_file_path.exists(), f"The file {vl_plexon_file_path} does not exist."
 
-            vl_flt_file_path = folder_path / f"I_{date_string}/{session_id}_{vl_channels}.flt.mat"
+            vl_flt_file_path = session_folder_path / f"{session_id}_{vl_channels}.flt.mat"
             assert vl_flt_file_path.exists(), f"The file {vl_flt_file_path} does not exist."
 
         if "GPi" in channel_ids:
             gpi_channels = "Chans_{}_{}".format(channel_ids["GPi"][0], channel_ids["GPi"][-1])
-            gpi_plexon_file_path = folder_path / f"I_{date_string}/{session_id}_{gpi_channels}.plx"
+            gpi_plexon_file_path = session_folder_path / f"{session_id}_{gpi_channels}.plx"
             assert gpi_plexon_file_path.exists(), f"The file {gpi_plexon_file_path} does not exist."
 
-            gpi_flt_file_path = folder_path / f"I_{date_string}/{session_id}_{gpi_channels}.flt.mat"
+            gpi_flt_file_path = session_folder_path / f"{session_id}_{gpi_channels}.flt.mat"
             assert gpi_flt_file_path.exists(), f"The file {gpi_flt_file_path} does not exist."
 
-        events_file_path = folder_path / f"I_{date_string}" / f"{session_id}.mat"
+        events_file_path = session_folder_path / f"{session_id}.mat"
         # The mapping of the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right"
         target_name_mapping = {1: "Left", 3: "Right"}
 
@@ -121,7 +127,7 @@ def convert_sessions(
 if __name__ == "__main__":
     # Parameters for conversion
     # The root folder containing the sessions
-    folder_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample")
+    folder_path = Path("/Users/weian/data/pre_MPTP")
 
     # The path to the electrode metadata file (.xlsx)
     data_list_file_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/Isis_DataList_temp.xlsx")
