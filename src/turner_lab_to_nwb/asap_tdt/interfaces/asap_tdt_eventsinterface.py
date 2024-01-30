@@ -63,7 +63,10 @@ class ASAPTdtEventsInterface(BaseDataInterface):
         """
 
         event_structure_name = "events"
-        assert event_structure_name in self._events_data, f"The '{event_structure_name}' structure is not in the file."
+
+        if event_structure_name not in self._events_data:
+            return
+
         events = self._events_data[event_structure_name]
 
         for trial_start_time, trial_stop_time in zip(events["starttime"], events["endtime"]):
@@ -95,8 +98,8 @@ class ASAPTdtEventsInterface(BaseDataInterface):
         )
 
         for event_name, mapped_event_name in event_names_mapping.items():
-            # if event type contains only NaNs, skip it
-            if np.isnan(events[event_name]).all():
+            # if event is missing or event type contains only NaNs, skip it
+            if event_name not in events or np.isnan(events[event_name]).all():
                 continue
             nwbfile.add_trial_column(
                 name=mapped_event_name,
