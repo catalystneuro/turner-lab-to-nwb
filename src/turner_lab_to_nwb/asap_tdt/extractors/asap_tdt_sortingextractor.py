@@ -76,6 +76,15 @@ class ASAPTdtSortingExtractor(BaseSorting):
             if duplicates_mask[i]:
                 units_df.at[i, "uname"] = f'{row["uname"]}-{row["chan"]}'
 
+        # Some files have "Cont_Channel_Location" instead of "brain_area"
+        if "brain_area" not in units_df and "Cont_Channel_Location" in mat:
+            unique_channels = np.unique(units_df["chan"])
+            unique_channel_indices = unique_channels - 1  # MATLAB indices start at 1
+            brain_area_per_unique_channel = np.array(mat["Cont_Channel_Location"])[unique_channel_indices]
+            channel_to_location_mapping = dict(zip(unique_channels, brain_area_per_unique_channel))
+            brain_area_per_unit = [channel_to_location_mapping[channel] for channel in units_df["chan"]]
+            units_df["brain_area"] = brain_area_per_unit
+
         unit_properties_mapping = dict(
             uname="unit_name",
             sort="sort_label",
