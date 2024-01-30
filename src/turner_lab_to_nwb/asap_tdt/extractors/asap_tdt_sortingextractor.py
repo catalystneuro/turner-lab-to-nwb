@@ -38,7 +38,16 @@ class ASAPTdtSortingExtractor(BaseSorting):
         unit_names = units_df["uname"].values.tolist()
         num_units = len(unit_names)
         unit_ids = np.arange(num_units)
-        sampling_frequency = float(mat["Tanksummary"]["ChanFS"][-1])
+
+        # Determine sampling frequency
+        if "samplerate" in mat:
+            sampling_frequency = float(mat["samplerate"])
+        elif "ChanFS" in mat["Tanksummary"]:
+            channel_names = mat["Tanksummary"]["ChanName"]
+            channel_index = np.where(np.array(channel_names) == "Conx")[0]
+            sampling_frequency = float(mat["Tanksummary"]["ChanFS"][channel_index])
+        else:
+            raise ValueError(f"Cannot determine sampling frequency from '{file_path}'.")
         BaseSorting.__init__(self, sampling_frequency=sampling_frequency, unit_ids=unit_ids)
         spike_times = units_df["ts"].values
         sorting_segment = ASAPTdtSortingSegment(
