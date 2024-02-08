@@ -22,10 +22,14 @@ Each TDT folder contains multiple sessions (e.g. `I_160615_1` and `I_160615_2`).
 The continuous data for each session is stored in Tucker Davis format (with files of `.Tbk`, `.Tdx`, `.tev`, `.tnt`, `.tsq`). The raw data and the high-pass filtered data
 is stored in `.ddt` and `.flt.mat` files. The `.plx` files contain the spike sorting data from Plexon Offline Sorter v3.
 
-Example folder structure:
+Depending on the subject, the files structure is different.
+
+### "Isis" folder structure
+
+For subject "Isis" the files are organized in the following way:
 
     {root_folder}/                               # The root folder containing the sessions e.g. "pre_MPTP"
-    └── {subject_id}/                            # The folder containing the sessions for a given subject e.g. "Gaia"
+    └── Isis/                                    # The folder containing the sessions for a given subject e.g. "Isis"
         ├── {date_string}/                       # The folder containing the sessions for a given date e.g. "160615"
         │   ├── Gaia_{session_id}.Tbk            # Raw acquisition data in Tucker Davis (TDT) format
         │   ├── ... (other TDT files)
@@ -38,6 +42,20 @@ Example folder structure:
         │   ├── {session_id}_Chans_17_32.flt.mat # High-pass filtered data from channel 17 to 32 in Matlab format
         │   ├── {session_id}_Chans_17_32.mat     # Raw data from channel 17 to 32 in Matlab format
         │   └── {session_id}_Chans_17_32.plx     # Spike sorting data from channel 17 to 32
+
+### "Gaia" folder structure
+
+For subject "Gaia" the files are organized in the following way:
+
+    {root_folder}/                     # The root folder containing the sessions e.g. "pre_MPTP"
+    └── Gaia/                          # The folder containing the sessions for a given subject e.g. "Gaia"
+        ├── {date_string}/             # The folder containing the sessions for a given date e.g. "160615"
+        │   ├── Gaia_{session_id}.Tbk  # Raw acquisition data in Tucker Davis (TDT) format
+        │   ├── ... (other TDT files)
+        │   ├── {session_id}.mat       # Events data in Matlab format (also contains units and optionally stimulation data)
+        │   ├── {session_id}.flt.mat   # High-pass filtered data in Matlab format (all channels)
+        │   ├── {session_id}.plx       # Plexon file (all channels)
+
 
 ## TDT data
 
@@ -75,7 +93,7 @@ This data contains the onset times of stimulation. The site of stimulation and d
 
 ## Subject metadata
 
-The subject metadata can be provided in the `src/turner_lab_to_nwb/asap_tdt/metadata/subjects_metadata.yaml` file as the follows:
+The subject metadata can be provided in the respective conversion folders e.g. `src/turner_lab_to_nwb/asap_tdt/asap_tdt_isis/metadata/subject_metadata.yaml` file as the follows:
 
 ```yaml
 Subject:
@@ -88,20 +106,40 @@ Subject:
 
 ## Run conversion for a single session
 
-`asap_tdt_convert_session.py`: this script defines the function to convert one full session of the conversion.
+### Convert a single session for "Gaia"
+
+The conversion folder can be found at `src/turner_lab_to_nwb/asap_tdt/asap_tdt_gaia/` which contains the scripts to convert a single session or all sessions available for subject "Gaia".
+
+`asap_tdt_gaia_convert_session.py`: this script defines the function to convert one full session of the conversion.
 
 Required Parameters:
 
 - "`nwbfile_path`" : The path to the NWB file to be created.
 - "`tdt_tank_file_path`" : The path to a TDT Tank file (.Tbk).
-- "`data_list_file_path`" : The path to the electrode metadata file (.xlsx).
-- "`session_id`" : The unique identifier for the session.
-- "`subject_id`" : The identifier of the experimental subject.
+- "`session_metadata`" : The `pandas.DataFrame` object that contains the metadata for the session.
 - "`events_file_path`" : The path that to the .mat file containing the events, units data and optionally include the stimulation data.
 
 Optional Parameters:
 
-- "`location`" : The location of the probe (e.g. "GPi", "VL"), when specified allows to filter the channels by location. By default None.
+- "`flt_file_path`" :  The path to the high-pass filtered data (.mat).
+- "`plexon_file_path`" : The path to the Plexon file (.plx).
+- "`target_name_mapping`" : A dictionary mapping the task target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
+
+### Convert a single session for "Isis"
+
+The conversion folder can be found at `src/turner_lab_to_nwb/asap_tdt/asap_tdt_isis/` which contains the scripts to convert a single session or all sessions available for subject "Isis".
+
+`asap_tdt_isis_convert_session.py`: this script defines the function to convert one full session of the conversion.
+
+Required Parameters:
+
+- "`nwbfile_path`" : The path to the NWB file to be created.
+- "`tdt_tank_file_path`" : The path to a TDT Tank file (.Tbk).
+- "`session_metadata`" : The `pandas.DataFrame` object that contains the metadata for the session.
+- "`events_file_path`" : The path that to the .mat file containing the events, units data and optionally include the stimulation data.
+
+Optional Parameters:
+
 - "`gpi_flt_file_path`" :  The path to the high-pass filtered data from GPi (.mat).
 - "`vl_flt_file_path`" : The path to the high-pass filtered data from VL (.mat).
 - "`gpi_plexon_file_path`" : The path to the Plexon file from GPi (.plx).
@@ -112,17 +150,17 @@ Optional Parameters:
 
 To run a specific conversion, you might need to install first some conversion specific dependencies that are located in each conversion directory:
 ```
-cd src/turner_lab_to_nwb/asap_tdt
+cd src/turner_lab_to_nwb/asap_tdt/
 pip install -r asap_tdt_requirements.txt
 ```
 Then you can run a specific conversion with the following command:
 ```
-python asap_tdt_convert_session.py
+python asap_tdt_gaia/asap_tdt_gaia_convert_session.py
 ```
 
 ## Run conversion for all TDT sessions with public or embargo dataset mode
 
-`asap_tdt_convert_all_sessions.py`: this script defines the function to convert all sessions of the conversion.
+`asap_tdt_gaia_convert_all_sessions.py`: this script defines the function to convert all sessions of the conversion.
 
 Required Parameters:
 - "`folder_path`" : The root path to the TDT sessions.
