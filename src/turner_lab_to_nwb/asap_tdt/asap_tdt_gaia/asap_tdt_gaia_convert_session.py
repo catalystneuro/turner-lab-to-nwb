@@ -3,24 +3,20 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 from dateutil.tz import tz
 from neuroconv.utils import load_dict_from_file, dict_deep_update, FilePathType
 
-from turner_lab_to_nwb.asap_tdt import AsapTdtNWBConverter
+from turner_lab_to_nwb.asap_tdt.asap_tdt_gaia.asap_tdt_gaianwbconverter import AsapTdtGaiaNWBConverter
 
 
 def session_to_nwb(
     nwbfile_path: FilePathType,
     tdt_tank_file_path: FilePathType,
-    data_list_file_path: FilePathType,
-    session_id: str,
-    subject_id: str,
+    session_metadata: pd.DataFrame,
     events_file_path: FilePathType,
-    location: Optional[str] = None,
-    gpi_flt_file_path: Optional[FilePathType] = None,
-    vl_flt_file_path: Optional[FilePathType] = None,
-    gpi_plexon_file_path: Optional[FilePathType] = None,
-    vl_plexon_file_path: Optional[FilePathType] = None,
+    flt_file_path: Optional[FilePathType] = None,
+    plexon_file_path: Optional[FilePathType] = None,
     target_name_mapping: Optional[dict] = None,
     stub_test: bool = False,
 ):
@@ -37,20 +33,14 @@ def session_to_nwb(
         The path that points to the electrode metadata file (.xlsx).
     session_id : str
         The unique identifier for the session.
-    subject_id : str
-        The unique identifier for the subject.
     events_file_path : FilePathType
         The path that points to the .mat file containing the events, units data and optionally include the stimulation data.
     location : Optional[str], optional
         The location of the probe, when specified allows to filter the channels by location. By default None.
-    gpi_flt_file_path : FilePathType, optional
-        The path to the high-pass filtered data from GPi.
-    vl_flt_file_path : FilePathType, optional
-        The path to the high-pass filtered data from VL.
-    gpi_plexon_file_path : FilePathType, optional
-        The path to Plexon file (.plx) containing the spike sorted data from GPi.
-    vl_plexon_file_path : FilePathType, optional
-        The path to Plexon file (.plx) containing the spike sorted data from VL.
+    flt_file_path : FilePathType, optional
+        The path to the high-pass filtered data.
+    plexon_file_path : FilePathType, optional
+        The path to Plexon file (.plx) containing the spike sorted data.
     target_name_mapping : Optional[dict], optional
         A dictionary mapping the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
     stub_test : bool, optional
@@ -61,15 +51,18 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
-    # For embargo mode keep all channels, for public keep only "GPi" channels
-    if location is not None:
-        assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
+    channel_metadata = session_metadata.to_dict(orient="list")
 
     # Add Recording
-    recording_source_data = dict(
-        file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path), location=location, gain=1.0
+    source_data.update(
+        dict(
+            Recording=dict(
+                file_path=str(ecephys_file_path),
+                channel_metadata=channel_metadata,
+                gain=1.0,
+            ),
+        ),
     )
-    source_data.update(dict(Recording=recording_source_data))
     conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
 
     # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
@@ -80,22 +73,19 @@ def session_to_nwb(
     )
 
     # Add Processed Recording (high-pass filtered data)
-    if vl_flt_file_path:
-        source_data.update(dict(ProcessedRecordingVL=dict(file_path=str(vl_flt_file_path), location="VL")))
-        conversion_options.update(dict(ProcessedRecordingVL=dict(stub_test=stub_test, write_as="processed")))
-    if gpi_flt_file_path:
-        source_data.update(dict(ProcessedRecordingGPi=dict(file_path=str(gpi_flt_file_path), location="GPi")))
-        conversion_options.update(dict(ProcessedRecordingGPi=dict(stub_test=stub_test, write_as="processed")))
+    if flt_file_path:
+        source_data.update(
+            dict(ProcessedRecording=dict(file_path=str(flt_file_path), channel_metadata=channel_metadata))
+        )
+        conversion_options.update(dict(ProcessedRecording=dict(stub_test=stub_test, write_as="processed")))
 
     # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
-    if vl_plexon_file_path:
-        source_data.update(dict(PlexonSortingVL=dict(file_path=str(vl_plexon_file_path))))
-        conversion_options.update(dict(PlexonSortingVL=conversion_options_sorting))
-    if gpi_plexon_file_path:
-        source_data.update(dict(PlexonSortingGPi=dict(file_path=str(gpi_plexon_file_path))))
-        conversion_options.update(dict(PlexonSortingGPi=conversion_options_sorting))
+    if plexon_file_path:
+        source_data.update(dict(PlexonSorting=dict(file_path=str(plexon_file_path), channel_metadata=channel_metadata)))
+        conversion_options.update(dict(PlexonSorting=conversion_options_sorting))
 
     # Add Sorting (curated spike times from Plexon Offline Sorter v3, only include single units)
+    location = None if "VL" in channel_metadata["Target"] else "GPi"
     source_data.update(dict(CuratedSorting=dict(file_path=str(events_file_path), location=location)))
     conversion_options.update(
         dict(
@@ -111,12 +101,13 @@ def session_to_nwb(
     if target_name_mapping:
         conversion_options.update(dict(Events=dict(target_name_mapping=target_name_mapping)))
 
-    converter = AsapTdtNWBConverter(source_data=source_data, verbose=False)
+    converter = AsapTdtGaiaNWBConverter(source_data=source_data, verbose=False)
 
     metadata = converter.get_metadata()
     # For data provenance we can add the time zone information to the conversion if missing
     session_start_time = metadata["NWBFile"]["session_start_time"]
     tzinfo = tz.gettz("US/Pacific")
+    session_id = channel_metadata["Filename"][0]
     metadata["NWBFile"].update(
         session_id=str(session_id).replace("_", "-"),
         session_start_time=session_start_time.replace(tzinfo=tzinfo),
@@ -124,23 +115,22 @@ def session_to_nwb(
 
     # Update default metadata with the editable in the corresponding yaml file
     general_metadata = "public_metadata.yaml" if location == "GPi" else "embargo_metadata.yaml"
-    editable_metadata_path = Path(__file__).parent / "metadata" / general_metadata
+    editable_metadata_path = Path(__file__).parent.parent / "metadata" / general_metadata
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
 
     # Load subject metadata from the yaml file
-    subject_metadata_path = Path(__file__).parent / "metadata" / "subjects_metadata.yaml"
+    subject_metadata_path = Path(__file__).parent / "metadata" / "subject_metadata.yaml"
     subject_metadata = load_dict_from_file(subject_metadata_path)
-    assert subject_id in subject_metadata["Subject"], f"Subject {subject_id} is not in the metadata file."
-    pharmacology = subject_metadata["Subject"][subject_id].pop("pharmacology")
+    pharmacology = subject_metadata["Subject"].pop("pharmacology")
     metadata["NWBFile"].update(pharmacology=pharmacology)
-    metadata["Subject"] = subject_metadata["Subject"][subject_id]
+    metadata["Subject"].update(**subject_metadata["Subject"])
     date_of_birth = metadata["Subject"]["date_of_birth"]
     date_of_birth_dt = datetime.strptime(date_of_birth, "%Y-%m-%d")
     metadata["Subject"].update(date_of_birth=date_of_birth_dt.replace(tzinfo=tzinfo))
 
     # Load ecephys metadata
-    ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
+    ecephys_metadata = load_dict_from_file(Path(__file__).parent.parent / "metadata" / "ecephys_metadata.yaml")
     metadata = dict_deep_update(metadata, ecephys_metadata)
 
     # Run conversion

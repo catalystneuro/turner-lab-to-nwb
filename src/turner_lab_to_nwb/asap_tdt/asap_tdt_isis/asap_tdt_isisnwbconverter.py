@@ -15,7 +15,7 @@ from turner_lab_to_nwb.asap_tdt.interfaces import (
 )
 
 
-class AsapTdtNWBConverter(NWBConverter):
+class AsapTdtIsisNWBConverter(NWBConverter):
     """Primary conversion class for Turner's extracellular electrophysiology dataset."""
 
     data_interface_classes = dict(
@@ -49,7 +49,8 @@ class AsapTdtNWBConverter(NWBConverter):
         Set properties for a recording interface based on the raw recording interface.
         """
         recording_interface = self.data_interface_objects[interface_name]
-        group_name = f"Group {recording_interface.location}"
+        target_name = interface_name.replace("ProcessedRecording", "")
+        group_name = f"Group {target_name}"
         raw_recording_extractor_properties = self.data_interface_objects["Recording"].recording_extractor._properties
 
         indices = np.where(raw_recording_extractor_properties["group_name"] == group_name)[0]
@@ -79,35 +80,33 @@ class AsapTdtNWBConverter(NWBConverter):
         overwrite: bool = False,
         conversion_options: Optional[dict] = None,
     ) -> None:
+
         # Add unit properties
         electrode_metadata = self.data_interface_objects["Recording"]._electrode_metadata
 
         # Set processed recording interface properties to match with raw recording interface
-        vl_interface_name = "ProcessedRecordingVL"
-        if vl_interface_name in self.data_interface_objects:
-            self.set_processed_recording_interface_properties(interface_name=vl_interface_name)
-
-        gpi_interface_name = "ProcessedRecordingGPi"
-        if gpi_interface_name in self.data_interface_objects:
-            self.set_processed_recording_interface_properties(interface_name=gpi_interface_name)
+        for interface_name in ["ProcessedRecordingVL", "ProcessedRecordingGPi"]:
+            if interface_name in self.data_interface_objects:
+                self.set_processed_recording_interface_properties(interface_name=interface_name)
 
         num_units = 0
-        plexon_sorting_interfaces = [
-            interface_name for interface_name in self.data_interface_objects if "PlexonSorting" in interface_name
-        ]
-        for interface_name in plexon_sorting_interfaces:
+        for interface_name in ["PlexonSortingVL", "PlexonSortingGPi"]:
+            if interface_name not in self.data_interface_objects:
+                continue
+
             target_name = interface_name.replace("PlexonSorting", "")
             sorting_metadata = electrode_metadata[electrode_metadata["Target"] == target_name]
 
             sorting_interface = self.data_interface_objects[interface_name]
             sorting_extractor = sorting_interface.sorting_extractor
-
             # set unit properties
-            area_value = sorting_metadata["Area"].values[0]
-            sorting_extractor.set_property(
-                key="location",
-                values=[area_value] * sorting_extractor.get_num_units(),
-            )
+            if not sorting_metadata.empty:
+                area_value = sorting_metadata["Area"].values[0]
+                sorting_extractor.set_property(
+                    key="location",
+                    values=[area_value] * sorting_extractor.get_num_units(),
+                )
+
             extractor_unit_ids = sorting_extractor.get_unit_ids()
             # unit_ids are not unique across sorting interfaces, so we are offsetting them here
             sorting_extractor._main_ids = extractor_unit_ids + num_units
