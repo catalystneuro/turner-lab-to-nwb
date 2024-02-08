@@ -1,12 +1,10 @@
 from datetime import datetime
 from pathlib import Path
-from typing import Literal
 
+import pandas as pd
 from neuroconv.datainterfaces.ecephys.baserecordingextractorinterface import BaseRecordingExtractorInterface
 from neuroconv.utils import FilePathType
 from spikeinterface import ChannelSliceRecording
-
-from turner_lab_to_nwb.asap_tdt.utils import load_session_metadata
 
 
 class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
@@ -15,10 +13,9 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
     def __init__(
         self,
         file_path: FilePathType,
-        data_list_file_path: FilePathType,
+        channel_metadata: dict,
         gain: float,
         stream_name: str = None,
-        location: Literal["GPi", "VL", None] = None,
         verbose: bool = True,
         es_key: str = "ElectricalSeries",
     ):
@@ -29,14 +26,12 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         ----------
         file_path : FilePathType
             The path to the TDT recording file.
-        data_list_file_path : FilePathType
-            The path that points to the electrode metadata file (.xlsx).
+        channel_metadata : dict
+            The dictionary containing the metadata for the channels.
         gain : float
             The conversion factor from int16 to microvolts.
         stream_name : str, optional
             The name of the stream for spikeinterface, when not specified defaults to "Conx" (extracellular signal).
-        location : Literal["GPi", "VL", None], optional
-            The location of the probe, when specified allows to filter the channels by location. By default None.
         verbose : bool, default: True
             Verbose
         es_key : str, default: "ElectricalSeries"
@@ -55,15 +50,6 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         stream_name = stream_name or "Conx"
         stream_id = self._determine_stream_id(stream_name=stream_name)
 
-        _, filename = self.file_path.stem.split("_", maxsplit=1)
-        electrode_metadata = load_session_metadata(file_path=data_list_file_path, session_id=filename)
-
-        # Filter by location
-        if location is not None:
-            assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
-            electrode_metadata = electrode_metadata[electrode_metadata["Target"].isin([location])]
-
-        self._electrode_metadata = electrode_metadata.drop_duplicates(subset=["Chan#"])
         parent_recording = TdtRecordingExtractor(
             folder_path=str(self.file_path), stream_id=stream_id, all_annotations=True
         )
@@ -73,16 +59,18 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         # Tungsten electrode on channel 1 (channels 2-15 were grounded)
         # 16ch V-probe (tip-first contact length: 500 µm, inter-contact-interval: 150 µm) on channels 17-32
         # Note the channel map can be different from session to session
-        sliced_channel_ids = electrode_metadata["Chan#"].astype(str).values.tolist()
+        self._electrode_metadata = pd.DataFrame(channel_metadata)
+        assert "Chan#" in self._electrode_metadata, "The 'Chan#' column is missing from the channel metadata."
+        selected_channel_ids = self._electrode_metadata["Chan#"].astype(str).values.tolist()
         super().__init__(
-            parent_recording=parent_recording, channel_ids=sliced_channel_ids, verbose=verbose, es_key=es_key
+            parent_recording=parent_recording, channel_ids=selected_channel_ids, verbose=verbose, es_key=es_key
         )
 
         # Set properties
         group_names = "Group " + self._electrode_metadata["Target"]
-        self.recording_extractor.set_property(key="group_name", ids=sliced_channel_ids, values=group_names)
+        self.recording_extractor.set_property(key="group_name", ids=selected_channel_ids, values=group_names)
         custom_names = self._electrode_metadata.apply(lambda row: f"{row['Electrode']}-{row['Chan#']}", axis=1).tolist()
-        self.recording_extractor.set_property(key="custom_channel_name", ids=sliced_channel_ids, values=custom_names)
+        self.recording_extractor.set_property(key="custom_channel_name", ids=selected_channel_ids, values=custom_names)
 
         # Fix channel name format
         channel_names = self.recording_extractor.get_property("channel_name")
