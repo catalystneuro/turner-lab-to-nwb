@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 import numpy as np
 from neuroconv.utils import FilePathType
@@ -12,12 +12,15 @@ class ASAPTdtFilteredRecordingExtractor(BaseRecording):
     mode = "file"
     name = "tdtfiltered"
 
-    def __init__(self, file_path: FilePathType):
+    def __init__(self, file_path: FilePathType, channel_ids: Optional[List[int]] = None):
         """
         Parameters
         ----------
         file_path : FilePathType
             The file path to the MAT file containing the high-pass filtered data.
+        channel_ids: Optional[List[int]], optional
+            The indices of the channels to load (should be zero-indexed), by default None.
+            When not specified, all channels are loaded.
         """
 
         file_path = Path(file_path)
@@ -28,7 +31,10 @@ class ASAPTdtFilteredRecordingExtractor(BaseRecording):
         assert "hp_cont" in fft_data, f"The file {file_path} does not contain a 'hp_cont' key."
 
         data = fft_data["hp_cont"]
-        channel_ids = list(range(data.shape[1])) if len(data.shape) > 1 else [0]
+        if channel_ids is None:
+            channel_ids = list(range(data.shape[1])) if len(data.shape) > 1 else [0]
+        else:
+            data = data[:, channel_ids] if len(data.shape) > 1 else data
         sampling_frequency = fft_data["samplerate"]
         dtype = data.dtype
 
