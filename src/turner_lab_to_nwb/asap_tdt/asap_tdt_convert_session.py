@@ -46,6 +46,7 @@ def session_to_nwb(
         )
     except Exception as e:
         print(f"Error in recording interface for session {tdt_tank_file_path}: {e}")
+        return
 
     data_interfaces.update(Recording=recording_interface)
     conversion_options.update(Recording=dict(stub_test=stub_test))
