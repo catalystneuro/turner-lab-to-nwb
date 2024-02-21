@@ -61,12 +61,10 @@ def session_to_nwb(
     # Sometimes the events file does not contain the 'units' structure, so we need to check if it exists
     matin = read_mat(events_file_path)
     has_units = False
-    if "units" in matin and not gpi_only:
-        has_units = True
-    # When gpi_only is True, we have to check if there are units for GPi
-    elif "units" in matin and gpi_only:
+    if "units" in matin:
         units_df = load_units_dataframe(mat=matin)
-        units_df = units_df[units_df["brain_area"].str.contains("GP")]
+        # check in advance if the units are empty
+        units_df = units_df[units_df["brain_area"].str.contains("GP") == gpi_only]
         has_units = not units_df.empty
 
     # Add Curated Sorting

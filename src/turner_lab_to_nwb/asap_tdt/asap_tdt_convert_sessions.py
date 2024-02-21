@@ -50,12 +50,8 @@ def convert_sessions(
     target_name_mapping = {1: "Left", 3: "Right"}
 
     sessions_metadata = load_session_metadata(data_list_file_path)
-    if gpi_only:
-        sessions_metadata = sessions_metadata[sessions_metadata["Target"].str.contains("GP")]
-    else:
-        # Remove GPI sessions
-        sessions_metadata = sessions_metadata[~sessions_metadata["Target"].str.contains("GP")]
-
+    # filter the sessions based on the target
+    sessions_metadata = sessions_metadata[sessions_metadata["Target"].str.contains("GP") == gpi_only]
     progress_bar = tqdm(
         enumerate(tdt_tank_file_paths),
         desc=f"Converting {len(tdt_tank_file_paths)} sessions",
@@ -68,12 +64,6 @@ def convert_sessions(
 
         subject_id = "Isis" if "I" in tdt_tank_file_name.split("_") else "Gaia"
         session_id = tdt_tank_file_path.stem.replace("Gaia_", "")
-
-        # G_140513_1 could not resolve dtype for VectorData 'event_times'
-        # restarted G_140723_2, G_140909_1,
-        # bad "G_140627_2"'170310_5,
-        # if session_id in ["I_160624_1", "I_160621_1", "I_160714_1", "I_160714_3", "I_160714_4", "G_170313_1", "G_170310_5", "G_150318_1", "G_140627_2"]:#["G_140707_2", "G_140627_4", "G_140627_2", "G_140609_4", "G_140609_6", "G_140903_1", "G_140617_6", 'G_140611_2', "G_140611_1", "G_140524_3", "G_140521_4", "G_140514_1", "G_140514_4", "G_140513_1", "G_140512_4", "G_140512_8"]:
-        #     continue
 
         session_metadata = sessions_metadata[sessions_metadata["Filename"] == session_id]
         if session_metadata.empty:

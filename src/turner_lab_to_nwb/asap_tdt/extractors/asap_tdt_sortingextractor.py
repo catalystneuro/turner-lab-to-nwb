@@ -31,12 +31,10 @@ class ASAPTdtSortingExtractor(BaseSorting):
         units_df = load_units_dataframe(mat=mat)
         assert "brain_area" in units_df, f"The 'brain_area' column is missing from '{file_path}'."
 
-        # filter out units based on location
-        if gpi_only:
-            # to include GPi, GPe
-            units_df = units_df[units_df["brain_area"].str.contains("GP")]
-            if units_df.empty:
-                raise ValueError(f"There are no units in '{file_path}' that match the GPi location.")
+        # filter units based on brain area
+        units_df = units_df[units_df["brain_area"].str.contains("GP") == gpi_only]
+        if units_df.empty:
+            raise ValueError(f"No units found in '{file_path}'.")
 
         unit_brain_area = units_df["brain_area"].values.tolist()
         num_units = len(unit_brain_area)
