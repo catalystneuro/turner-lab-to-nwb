@@ -1,1 +1,1 @@
-from .asap_tdt_nwbconverter import ASAPTdtNWBConverter
+from .asap_tdtnwbconverter import ASAPTdtNWBConverter
