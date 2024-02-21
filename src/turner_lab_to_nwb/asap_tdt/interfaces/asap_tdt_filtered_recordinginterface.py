@@ -35,17 +35,16 @@ class ASAPTdtFilteredRecordingInterface(BaseRecordingExtractorInterface):
 
         # Determine which channels to load for files with multiple channels (that do not have "Chans" in the name)
         # should be zero-indexed
-        channel_ids = (
-            [int(chan) - 1 for chan in channel_metadata["Chan#"]] if "Chans" not in Path(file_path).name else None
-        )
+        channel_ids = [int(chan) - 1 for chan in channel_metadata["Chan#"]]
         super().__init__(es_key=es_key, verbose=verbose, file_path=file_path, channel_ids=channel_ids)
 
         # Set properties
         self._electrode_metadata = pd.DataFrame(channel_metadata)
         group_names = "Group " + self._electrode_metadata["Target"]
-        self.recording_extractor.set_property(key="group_name", ids=channel_ids, values=group_names)
+        extractor_channel_ids = self.recording_extractor.get_channel_ids()
+        self.recording_extractor.set_property(key="group_name", ids=extractor_channel_ids, values=group_names)
         custom_names = self._electrode_metadata.apply(lambda row: f"{row['Electrode']}-{row['Chan#']}", axis=1).tolist()
-        self.recording_extractor.set_property(key="custom_channel_name", ids=channel_ids, values=custom_names)
+        self.recording_extractor.set_property(key="custom_channel_name", ids=extractor_channel_ids, values=custom_names)
 
     def get_metadata(self) -> dict:
         metadata = super().get_metadata()

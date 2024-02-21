@@ -31,10 +31,20 @@ class ASAPTdtFilteredRecordingExtractor(BaseRecording):
         assert "hp_cont" in fft_data, f"The file {file_path} does not contain a 'hp_cont' key."
 
         data = fft_data["hp_cont"]
-        if channel_ids is None:
+
+        num_channels_in_file = data.shape[1] if len(data.shape) > 1 else 1
+        if len(channel_ids) == num_channels_in_file:
             channel_ids = list(range(data.shape[1])) if len(data.shape) > 1 else [0]
+        elif len(channel_ids) < num_channels_in_file:
+            if "Chans" not in file_path.name:
+                data = data[:, channel_ids]
+            else:
+                first_channel = channel_ids[0]
+                # offset channel_ids to zero
+                offset_channel_ids = [chan - first_channel for chan in channel_ids]
+                data = data[:, offset_channel_ids]
         else:
-            data = data[:, channel_ids] if len(data.shape) > 1 else data
+            raise ValueError(f"channel_ids {channel_ids} has more channels than the file {file_path}")
         sampling_frequency = fft_data["samplerate"]
         dtype = data.dtype
 
@@ -60,7 +70,7 @@ class ASAPTdtFilteredRecordingSegment(BaseRecordingSegment):
         if channel_indices is None:
             channel_indices = slice(None)
 
-        if self.num_channels == 1:
+        if self.num_channels == 1 and len(self._data.shape) == 1:
             traces = self._data[start_frame:end_frame]
             return traces[:, np.newaxis]
 
