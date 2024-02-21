@@ -68,7 +68,9 @@ class ASAPTdtSortingExtractor(BaseSorting):
         }
         if "sort_qual" in units_df and any(units_df["sort_qual"]):
             units_quality = units_df["sort_qual"].values.tolist()
-            units_quality_renamed = [quality_values_map.get(quality, quality) for quality in units_quality]
+            units_quality_renamed = [
+                quality_values_map.get(quality, quality) if quality else "no quality" for quality in units_quality
+            ]
             self.set_property(key="unit_quality_post_sorting", values=units_quality_renamed)
 
         # Cast "channel_ids" property to integer type
