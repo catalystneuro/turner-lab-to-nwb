@@ -13,7 +13,7 @@ def load_session_metadata(file_path: FilePathType, session_id: str = None, sheet
     if session_id:
         electrodes_metadata = electrodes_metadata[electrodes_metadata["Filename"] == session_id]
 
-    electrodes_metadata = electrodes_metadata.dropna(subset=["Chan#"])
+    electrodes_metadata = electrodes_metadata.dropna(subset=["Chan#", "plx Chan#"])
     electrode_metadata_without_duplicates = electrodes_metadata.drop_duplicates(subset=["Filename", "Chan#"])
     # map "GP" values to "GPi"
     electrode_metadata_without_duplicates.loc[:, "Target"] = electrode_metadata_without_duplicates["Target"].replace(
