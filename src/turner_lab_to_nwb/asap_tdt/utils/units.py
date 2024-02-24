@@ -5,7 +5,7 @@ import pandas as pd
 def load_units_dataframe(mat: dict) -> pd.DataFrame:
     # Check if the units structure contains only a single unit
     units = mat["units"]
-    if isinstance(units["uname"], str):
+    if not isinstance(units["sort"], list):
         single_unit = dict()
         fields = ["uname", "sort", "chan", "brain_area", "ts", "sort_qual"]
         # single unit structure
@@ -18,7 +18,12 @@ def load_units_dataframe(mat: dict) -> pd.DataFrame:
     if "brain_area" not in units_df and "Cont_Channel_Location" in mat:
         unique_channels = np.unique(units_df["chan"]).astype(int)
         unique_channel_indices = unique_channels - 1  # MATLAB indices start at 1
-        brain_areas = np.array(mat["Cont_Channel_Location"])
+        brain_areas = (
+            [mat["Cont_Channel_Location"]]
+            if isinstance(mat["Cont_Channel_Location"], str)
+            else mat["Cont_Channel_Location"]
+        )
+        brain_areas = np.array(brain_areas)
         if len(unique_channel_indices) != len(brain_areas):
             brain_areas = brain_areas[unique_channel_indices]
         channel_to_location_mapping = dict(zip(unique_channels, brain_areas))
