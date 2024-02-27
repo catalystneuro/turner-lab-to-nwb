@@ -55,10 +55,10 @@ def session_to_nwb(
     data_interfaces.update(Events=events_interface)
     conversion_options.update(Events=dict(target_name_mapping=target_name_mapping))
 
+    # Check if the session is GPI only
+    gpi_only = any(["GP" in target for target in session_metadata["Target"].values])
+
     # Check 'units' structure in the events file
-
-    gpi_only = True if "GP" in session_metadata["Target"].values else False
-
     # Sometimes the events file does not contain the 'units' structure, so we need to check if it exists
     events_mat = read_mat(events_file_path)
     has_units = False
