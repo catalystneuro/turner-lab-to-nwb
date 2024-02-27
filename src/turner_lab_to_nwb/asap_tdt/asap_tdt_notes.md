@@ -93,7 +93,7 @@ This data contains the onset times of stimulation. The site of stimulation and d
 
 ## Subject metadata
 
-The subject metadata can be provided in the respective conversion folders e.g. `src/turner_lab_to_nwb/asap_tdt/asap_tdt_isis/metadata/subject_metadata.yaml` file as the follows:
+The subject metadata can be provided in the respective conversion folders e.g. `src/turner_lab_to_nwb/asap_tdt/metadata/subjects_metadata.yaml` file as the follows:
 
 ```yaml
 Subject:
@@ -106,44 +106,21 @@ Subject:
 
 ## Run conversion for a single session
 
-### Convert a single session for "Gaia"
-
-The conversion folder can be found at `src/turner_lab_to_nwb/asap_tdt/asap_tdt_gaia/` which contains the scripts to convert a single session or all sessions available for subject "Gaia".
-
-`asap_tdt_gaia_convert_session.py`: this script defines the function to convert one full session of the conversion.
+`asap_tdt_convert_session.py`: this script defines the function to convert one full session of the conversion.
 
 Required Parameters:
 
 - "`nwbfile_path`" : The path to the NWB file to be created.
 - "`tdt_tank_file_path`" : The path to a TDT Tank file (.Tbk).
 - "`session_metadata`" : The `pandas.DataFrame` object that contains the metadata for the session.
+- "`session_id`" : The identifier of the session.
+- "`subject_id`" : The identifier of the subject.
 - "`events_file_path`" : The path that to the .mat file containing the events, units data and optionally include the stimulation data.
 
 Optional Parameters:
 
 - "`flt_file_path`" :  The path to the high-pass filtered data (.mat).
 - "`plexon_file_path`" : The path to the Plexon file (.plx).
-- "`target_name_mapping`" : A dictionary mapping the task target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
-
-### Convert a single session for "Isis"
-
-The conversion folder can be found at `src/turner_lab_to_nwb/asap_tdt/asap_tdt_isis/` which contains the scripts to convert a single session or all sessions available for subject "Isis".
-
-`asap_tdt_isis_convert_session.py`: this script defines the function to convert one full session of the conversion.
-
-Required Parameters:
-
-- "`nwbfile_path`" : The path to the NWB file to be created.
-- "`tdt_tank_file_path`" : The path to a TDT Tank file (.Tbk).
-- "`session_metadata`" : The `pandas.DataFrame` object that contains the metadata for the session.
-- "`events_file_path`" : The path that to the .mat file containing the events, units data and optionally include the stimulation data.
-
-Optional Parameters:
-
-- "`gpi_flt_file_path`" :  The path to the high-pass filtered data from GPi (.mat).
-- "`vl_flt_file_path`" : The path to the high-pass filtered data from VL (.mat).
-- "`gpi_plexon_file_path`" : The path to the Plexon file from GPi (.plx).
-- "`vl_plexon_file_path`" : The path to the Plexon file from VL (.plx).
 - "`target_name_mapping`" : A dictionary mapping the task target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
 
 ### Example usage
@@ -155,25 +132,25 @@ pip install -r asap_tdt_requirements.txt
 ```
 Then you can run a specific conversion with the following command:
 ```
-python asap_tdt_gaia/asap_tdt_gaia_convert_session.py
+python asap_tdt_gaia/asap_tdt_convert_session.py
 ```
 
 ## Run conversion for all TDT sessions with public or embargo dataset mode
 
-`asap_tdt_gaia_convert_all_sessions.py`: this script defines the function to convert all sessions of the conversion.
+`asap_tdt_convert_all_sessions.py`: this script defines the function to convert all sessions of the conversion.
 
 Required Parameters:
 - "`folder_path`" : The root path to the TDT sessions.
 - "`output_folder_path"`: The folder where the NWB files will be stored.
 - "`data_list_file_path`" : The path to the electrode metadata file (.xlsx).
-- "`dataset_mode`" : The dataset mode ("public" or "embargo"). (see details below)
+- "`gpi_only`": Whether to convert only the GPI sessions, default is False.
 
-### Dataset mode
+### GPi only mode
 
-The public dataset is a subset of the full dataset that only contains the data from the GPi channels.
+When the `gpi_only` parameter is set to `True`, the conversion will only convert the sessions that contain GPi data.
 The general metadata for the public dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/public_metadata.yaml`.
 
-The embargo dataset is the full dataset that contains the data from all channels but is not going to be published publicly.
+When the `gpi_only` parameter is set to `False`, the conversion will convert all non-GPi data.
 The general metadata for the embargo dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/embargo_metadata.yaml`.
 
 ## TDT to NWB mapping
