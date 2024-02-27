@@ -127,7 +127,7 @@ Optional Parameters:
 
 To run a specific conversion, you might need to install first some conversion specific dependencies that are located in each conversion directory:
 ```
-cd src/turner_lab_to_nwb/asap_tdt/
+cd src/turner_lab_to_nwb/asap_tdt
 pip install -r asap_tdt_requirements.txt
 ```
 Then you can run a specific conversion with the following command:
