@@ -60,10 +60,10 @@ def session_to_nwb(
     gpi_only = True if "GP" in session_metadata["Target"].values else False
 
     # Sometimes the events file does not contain the 'units' structure, so we need to check if it exists
-    matin = read_mat(events_file_path)
+    events_mat = read_mat(events_file_path)
     has_units = False
-    if "units" in matin:
-        units_df = load_units_dataframe(mat=matin)
+    if "units" in events_mat:
+        units_df = load_units_dataframe(mat=events_mat)
         # check in advance if the units are empty
         units_df = units_df[units_df["brain_area"].str.contains("GP") == gpi_only]
         has_units = not units_df.empty
@@ -94,16 +94,21 @@ def session_to_nwb(
         else:
             # When there are multiple flt files, we need to match the target to the flt file
             channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
+            # we have to check that both channels are present in the flt file name
+            channels_from_flt_name = [file.stem.replace(".flt", "").split("_")[-2:] for file in flt_file_path]
+            channel_ranges = [range(int(channels[0]), int(channels[1]) + 1) for channels in channels_from_flt_name]
             # match target to flt file
             for target_name, channels in channel_ids.items():
-                channel_names = "Chans_{}_".format(channel_ids[target_name][0])
+                flt_file_path_per_target = None
+                for ind, channel_range in enumerate(channel_ranges):
+                    if all(int(chan) in channel_range for chan in channels):
+                        flt_file_path_per_target = flt_file_path[ind]
+                        break
                 channel_metadata_per_target = session_metadata[session_metadata["Target"] == target_name]
-                flt_file_path_per_target = [path for path in flt_file_path if channel_names in path.name]
-                if len(flt_file_path_per_target) != 1:
-                    raise ValueError(f"Found {len(flt_file_path_per_target)} flt files for target {target_name}.")
+                assert flt_file_path_per_target is not None, f"Could not find flt file for channels {channels}."
 
                 processed_recording_source_data = dict(
-                    file_path=str(flt_file_path_per_target[0]),
+                    file_path=str(flt_file_path_per_target),
                     channel_metadata=channel_metadata_per_target.to_dict(orient="list"),
                     es_key="ElectricalSeriesProcessed" + target_name,
                 )
@@ -127,18 +132,21 @@ def session_to_nwb(
             conversion_options.update(PlexonSorting=conversion_options_sorting)
         else:
             channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
+            channels_from_plx_name = [file.stem.split("_")[-2:] for file in plexon_file_path]
+            channel_ranges = [range(int(channels[0]), int(channels[1]) + 1) for channels in channels_from_plx_name]
             # match target to plexon file
             for target_name, channels in channel_ids.items():
-                channel_names = "Chans_{}_".format(channel_ids[target_name][0])
+                plexon_file_path_per_target = None
+                for ind, channel_range in enumerate(channel_ranges):
+                    if all(int(chan) in channel_range for chan in channels):
+                        plexon_file_path_per_target = plexon_file_path[ind]
+                        break
+                if plexon_file_path_per_target is None:
+                    print(f"Could not find plexon file for channels {channels}.")
+                    continue
                 channel_metadata_per_target = session_metadata[session_metadata["Target"] == target_name]
-                if channel_metadata_per_target["Note"].isin(["no units"]).all():
-                    continue
-                plexon_file_path_per_target = [path for path in plexon_file_path if channel_names in path.name]
-                if len(plexon_file_path_per_target) != 1:
-                    print(f"Found {len(plexon_file_path_per_target)} plexon files for target {target_name}.")
-                    continue
                 plexon_sorting_interface = ASAPTdtPlexonSortingInterface(
-                    file_path=plexon_file_path_per_target[0],
+                    file_path=plexon_file_path_per_target,
                     channel_metadata=channel_metadata_per_target.to_dict(orient="list"),
                 )
                 interface_name = f"PlexonSorting{target_name}"
@@ -155,6 +163,7 @@ def session_to_nwb(
     # For data provenance we can add the time zone information to the conversion if missing
     session_start_time = metadata["NWBFile"]["session_start_time"]
     tzinfo = tz.gettz("US/Pacific")
+    # Add tag to the session_id
     tag = "pre-MPTP" if "pre_MPTP" in Path(tdt_tank_file_path).parts else "post-MPTP"
     session_id = session_id.replace("_", "-")
     session_id_with_tag = f"{tag}-{session_id}"  # e.g. pre-MPTP-I-160818-4
