@@ -3,6 +3,14 @@ import pandas as pd
 
 
 def load_units_dataframe(mat: dict) -> pd.DataFrame:
+    """
+    Load the units structure from the MAT file into a pandas DataFrame.
+
+    Parameters
+    ----------
+    mat : dict
+        The dictionary containing the MAT file data.
+    """
     # Check if the units structure contains only a single unit
     units = mat["units"]
     if not isinstance(units["sort"], list):
