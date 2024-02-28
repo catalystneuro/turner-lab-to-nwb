@@ -163,17 +163,18 @@ def session_to_nwb(
     # For data provenance we can add the time zone information to the conversion if missing
     session_start_time = metadata["NWBFile"]["session_start_time"]
     tzinfo = tz.gettz("US/Pacific")
+
     # Add tag to the session_id
-    tag = "pre-MPTP" if "pre_MPTP" in Path(tdt_tank_file_path).parts else "post-MPTP"
-    session_id = session_id.replace("_", "-")
-    session_id_with_tag = f"{tag}-{session_id}"  # e.g. pre-MPTP-I-160818-4
+    tag = "pre_MPTP" if "pre_MPTP" in Path(tdt_tank_file_path).parts else "post_MPTP"
+    session_id_with_tag = f"{tag}-{session_id}"
+    session_id_with_tag = session_id_with_tag.replace("_", "-")  # e.g. pre-MPTP-I-160818-4
     metadata["NWBFile"].update(
         session_id=session_id_with_tag,
         session_start_time=session_start_time.replace(tzinfo=tzinfo),
     )
 
     # Update default metadata with the editable in the corresponding yaml file
-    general_metadata = "public_metadata.yaml" if gpi_only else "embargo_metadata.yaml"
+    general_metadata = f"{tag}_public_metadata.yaml" if gpi_only else f"{tag}_embargo_metadata.yaml"
     editable_metadata_path = Path(__file__).parent / "metadata" / general_metadata
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
@@ -182,8 +183,12 @@ def session_to_nwb(
     subject_metadata_path = Path(__file__).parent / "metadata" / "subjects_metadata.yaml"
     subject_metadata = load_dict_from_file(subject_metadata_path)
     subject_metadata = subject_metadata["Subject"][subject_id]
+
+    # Add pharmacology metadata for post_MPTP sessions
     pharmacology = subject_metadata.pop("pharmacology")
-    metadata["NWBFile"].update(pharmacology=pharmacology)
+    if tag == "post_MPTP":
+        metadata["NWBFile"].update(pharmacology=pharmacology)
+
     metadata["Subject"].update(**subject_metadata)
     date_of_birth = metadata["Subject"]["date_of_birth"]
     date_of_birth_dt = datetime.strptime(date_of_birth, "%Y-%m-%d")
