@@ -5,11 +5,11 @@ Subject:
     pharmacology: MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine; the chemical compound that induces parkinsonism) administration date 2017-10-27 (ICA; internal carotid artery injection), 2017-11-28 (IM; intramuscular injection), 2017-12-01 (IM), 2018-06-08 (ICA), 2018-07-05 (IM), 2018-07-19 (IM), 2018-08-27 (IM)
     date_of_birth: 2005-06-14
     sex: F
-    species: Macaca mulatta # Rhesus monkey
+    species: Macaca mulatta
   Gaia:
     subject_id: Gaia
     description: USDA registration number RQ7431
     pharmacology: MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine; the chemical compound that induces parkinsonism) administration date 2015-02-09 (ICA; internal carotid artery injection)
-    species: Macaca mulatta # Rhesus monkey
+    species: Macaca mulatta
     sex: F
     date_of_birth: 2005-02-01
