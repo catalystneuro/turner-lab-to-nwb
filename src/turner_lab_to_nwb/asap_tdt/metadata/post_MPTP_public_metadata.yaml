@@ -8,6 +8,7 @@ NWBFile:
   lab: Turner
   experimenter:
     - Kase, Daisuke
+    - Zimnik, Andrew
   experiment_description: |
     This dataset contains recordings of single-unit activity from globus pallidus-internus (GPi) in MPTP treated monkeys performing a choice reaction time reaching task.
     The neuronal activity was recorded using 16-contact linear probes (0.5–1.0 MΩ, V-probe, Plexon).
