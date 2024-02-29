@@ -61,8 +61,16 @@ class ASAPTdtFilteredRecordingInterface(BaseRecordingExtractorInterface):
             ]
         )
 
+        filter_description = (
+            "Equiripple High-pass filter designed using the FIRPM function in MATLAB with a "
+            "stop-band frequency of 200 Hz, a pass-band frequency of 300 Hz, "
+            "a stop-band attenuation of 0.0001 dB, a pass-band ripple of 0.057501127785 dB, "
+            "and a density factor of 20.",
+        )
+
         brain_areas_description = ", ".join(brain_areas) if len(brain_areas) > 1 else brain_areas[0]
         metadata["Ecephys"][self.es_key].update(
-            description=f"High-pass filtered traces (200 Hz) from {brain_areas_description} region."
+            description=f"High-pass filtered traces (200 Hz) from {brain_areas_description} region.",
+            filtering=filter_description,
         )
         return metadata

@@ -3,7 +3,7 @@
 NWBFile:
   keywords: [extracellular electrophysiology, single-unit activity, ventrolateral anterior nucleus, reaching task, macaque]
   related_publications:
-    - https://doi.org/10.1101/546598]  # TODO: confirm with the lab
+    - https://doi.org/10.1101/546598  # TODO: confirm with the lab
   institution: University of Pittsburgh
   lab: Turner
   experimenter:
