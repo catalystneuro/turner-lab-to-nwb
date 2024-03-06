@@ -1,3 +1,4 @@
 neuroconv[tdt,plexon]
 openpyxl==3.1.2
 ndx-events==0.2.0
+ndx-turner-metadata==0.1.0
