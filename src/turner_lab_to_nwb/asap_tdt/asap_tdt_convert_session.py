@@ -200,6 +200,8 @@ def session_to_nwb(
         ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
         metadata = dict_deep_update(metadata, ecephys_metadata)
 
+    metadata["LabMetaData"] = dict(name="MPTPMetaData", MPTP_status=tag)
+
     converter.run_conversion(
         nwbfile_path=nwbfile_path,
         metadata=metadata,

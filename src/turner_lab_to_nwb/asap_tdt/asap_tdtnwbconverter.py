@@ -1,6 +1,7 @@
 from typing import Optional
 
 import numpy as np
+from ndx_turner_metadata import TurnerLabMetaData
 from neuroconv import ConverterPipe
 from neuroconv.utils import DeepDict
 from pynwb import NWBFile
@@ -51,6 +52,13 @@ class ASAPTdtNWBConverter(ConverterPipe):
         # Set aligned starting time with recording extractor
         starting_time = self.data_interface_objects["Recording"].get_timestamps()[0]
         recording_interface.set_aligned_starting_time(aligned_starting_time=starting_time)
+
+    def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None) -> None:
+        super().add_to_nwbfile(nwbfile=nwbfile, metadata=metadata, conversion_options=conversion_options)
+
+        # Add LabMetaData
+        lab_meta_data = TurnerLabMetaData(**metadata["LabMetaData"])
+        nwbfile.add_lab_meta_data(lab_meta_data)
 
     def run_conversion(
         self,
