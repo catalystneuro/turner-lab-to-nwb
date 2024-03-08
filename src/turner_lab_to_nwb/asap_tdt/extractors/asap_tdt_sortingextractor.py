@@ -1,10 +1,11 @@
-from typing import Optional, Literal
+from typing import Optional
 import numpy as np
-import pandas as pd
 from pymatreader import read_mat
 from spikeinterface import BaseSorting, BaseSortingSegment
 
 from neuroconv.utils import FilePathType
+
+from turner_lab_to_nwb.asap_tdt.utils import load_units_dataframe
 
 
 class ASAPTdtSortingExtractor(BaseSorting):
@@ -14,31 +15,40 @@ class ASAPTdtSortingExtractor(BaseSorting):
     installation_mesg = ""
     name = "tdtsorting"
 
-    def __init__(self, file_path: FilePathType, location: Literal["GPi", "VL", None] = None):
+    def __init__(self, file_path: FilePathType, gpi_only: bool = True):
         """
         Parameters
         ----------
         file_path : FilePathType
             The file path to the MAT file containing the clustered spike times.
-        location: Literal["GPi", "VL", None], optional
-            The location of the probe, when specified allows to filter the units by location. By default None.
+        gpi_only: bool, optional
+            Determines whether to load only GPi units, by default True.
         """
 
         mat = read_mat(file_path)
         assert "units" in mat, f"The 'units' structure is missing from '{file_path}'."
-        units_df = pd.DataFrame(mat["units"])
 
-        # filter out units based on location
-        if location is not None:
-            assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
-            units_df = units_df[units_df["brain_area"].str.contains(location)]
-            if units_df.empty:
-                raise ValueError(f"No units found in '{file_path}' for location '{location}'.")
+        units_df = load_units_dataframe(mat=mat)
+        assert "brain_area" in units_df, f"The 'brain_area' column is missing from '{file_path}'."
 
-        unit_names = units_df["uname"].values.tolist()
-        num_units = len(unit_names)
+        # filter units based on brain area
+        units_df = units_df[units_df["brain_area"].str.contains("GP") == gpi_only]
+        if units_df.empty:
+            raise ValueError(f"No units found in '{file_path}'.")
+
+        unit_brain_area = units_df["brain_area"].values.tolist()
+        num_units = len(unit_brain_area)
         unit_ids = np.arange(num_units)
-        sampling_frequency = float(mat["Tanksummary"]["ChanFS"][-1])
+
+        # Determine sampling frequency
+        if "samplerate" in mat:
+            sampling_frequency = float(mat["samplerate"])
+        elif "ChanFS" in mat["Tanksummary"]:
+            channel_names = mat["Tanksummary"]["ChanName"]
+            channel_index = np.where(np.array(channel_names) == "Conx")[0]
+            sampling_frequency = float(mat["Tanksummary"]["ChanFS"][channel_index])
+        else:
+            raise ValueError(f"Cannot determine sampling frequency from '{file_path}'.")
         BaseSorting.__init__(self, sampling_frequency=sampling_frequency, unit_ids=unit_ids)
         spike_times = units_df["ts"].values
         sorting_segment = ASAPTdtSortingSegment(
@@ -54,20 +64,27 @@ class ASAPTdtSortingExtractor(BaseSorting):
             "A -> B": "changed to good from excellent based on post-sorting quality",
             "B -> A": "changed to excellent from good based on post-sorting quality",
         }
-        units_quality = units_df["sort_qual"].values.tolist()
-        units_quality_renamed = [quality_values_map.get(quality, quality) for quality in units_quality]
-        self.set_property(key="unit_quality_post_sorting", values=units_quality_renamed)
+        if "sort_qual" in units_df and any(units_df["sort_qual"]):
+            units_quality = units_df["sort_qual"].values.tolist()
+            units_quality_renamed = [
+                quality_values_map.get(quality, quality) if quality else "no quality" for quality in units_quality
+            ]
+            self.set_property(key="unit_quality_post_sorting", values=units_quality_renamed)
 
-        units_df["chan"] = units_df["chan"].astype(int)
+        # Cast "channel_ids" property to integer type
+        units_df.loc[:, "chan"] = units_df["chan"].astype(int)
 
-        # Rename non-unique unit names
-        duplicates_mask = units_df["uname"].duplicated(keep=False)
-        for i, row in units_df.iterrows():
-            if duplicates_mask[i]:
-                units_df.at[i, "uname"] = f'{row["uname"]}-{row["chan"]}'
+        if "uname" in units_df:
+            # Set "unit_name" property
+            self.set_property(key="unit_name", values=units_df["uname"].values.tolist())
+
+            # Rename non-unique unit names
+            duplicates_mask = units_df["uname"].duplicated(keep=False)
+            for i, row in units_df.iterrows():
+                if duplicates_mask[i]:
+                    units_df.at[i, "uname"] = f'{row["uname"]}-{row["chan"]}'
 
         unit_properties_mapping = dict(
-            uname="unit_name",
             sort="sort_label",
             brain_area="location",
             chan="channel_ids",

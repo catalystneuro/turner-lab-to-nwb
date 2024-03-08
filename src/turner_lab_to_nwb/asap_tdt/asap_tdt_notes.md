@@ -18,28 +18,54 @@ and the sessions (the date, the task, whether stimulation was applied etc.).
 
 ## TDT session folder structure
 
-Each TDT folder contains two sessions (e.g. `I_160615_1` and `I_160615_2`).
+Each TDT folder contains multiple sessions (e.g. `I_160615_1` and `I_160615_2`).
 The continuous data for each session is stored in Tucker Davis format (with files of `.Tbk`, `.Tdx`, `.tev`, `.tnt`, `.tsq`). The raw data and the high-pass filtered data
 is stored in `.ddt` and `.flt.mat` files. The `.plx` files contain the spike sorting data from Plexon Offline Sorter v3.
 
-Example folder structure:
+Depending on the subject, the files structure is different.
 
-    I_160615/
-    ├── Gaia_I_160615_1.Tbk
-    ├── ...
-    ├── Gaia_I_160615_2.Tbk
-    ├── ...
-    ├── I_160615_1.mat
-    ├── I_160615_1_Chans_1_1.ddt
-    ├── I_160615_1_Chans_1_1.flt.mat
-    ├── I_160615_1_Chans_1_1.mat
-    ├── I_160615_1_Chans_1_1.plx
-    ├── I_160615_1_Chans_17_32.ddt
-    ├── I_160615_1_Chans_17_32.flt.mat
-    ├── I_160615_1_Chans_17_32.mat
-    ├── I_160615_1_Chans_17_32.plx
-    ├── ...
-    └── I_160615_2.mat
+### "Isis" folder structure
+
+For subject "Isis" the files are organized in the following way:
+
+    {root_folder}/                               # The root folder containing the sessions e.g. "pre_MPTP"
+    └── Isis/                                    # The folder containing the sessions for a given subject e.g. "Isis"
+        ├── {date_string}/                       # The folder containing the sessions for a given date e.g. "160615"
+        │   ├── Gaia_{session_id}.Tbk            # Raw acquisition data in Tucker Davis (TDT) format
+        │   ├── ... (other TDT files)
+        │   ├── {session_id}.mat                 # Events data in Matlab format (also contains units and optionally stimulation data)
+        │   ├── {session_id}_Chans_1_1.ddt       # Raw data from channel 1 in DDT format
+        │   ├── {session_id}_Chans_1_1.flt.mat   # High-pass filtered data from channel 1 in Matlab format
+        │   ├── {session_id}_Chans_1_1.mat       # Raw data from channel 1 in Matlab format
+        │   ├── {session_id}_Chans_1_1.plx       # Plexon file for channel 1
+        │   ├── {session_id}_Chans_17_32.ddt     # Raw data from channel 17 to 32 in DDT format
+        │   ├── {session_id}_Chans_17_32.flt.mat # High-pass filtered data from channel 17 to 32 in Matlab format
+        │   ├── {session_id}_Chans_17_32.mat     # Raw data from channel 17 to 32 in Matlab format
+        │   └── {session_id}_Chans_17_32.plx     # Spike sorting data from channel 17 to 32
+
+### "Gaia" folder structure
+
+For subject "Gaia" the files are organized in the following way:
+
+    {root_folder}/                     # The root folder containing the sessions e.g. "pre_MPTP"
+    └── Gaia/                          # The folder containing the sessions for a given subject e.g. "Gaia"
+        ├── {date_string}/             # The folder containing the sessions for a given date e.g. "160615"
+        │   ├── Gaia_{session_id}.Tbk  # Raw acquisition data in Tucker Davis (TDT) format
+        │   ├── ... (other TDT files)
+        │   ├── {session_id}.mat       # Events data in Matlab format (also contains units and optionally stimulation data)
+        │   ├── {session_id}.flt.mat   # High-pass filtered data in Matlab format (all channels)
+        │   ├── {session_id}.plx       # Plexon file (all channels)
+
+
+## TDT data
+
+The TDT files contain the following streams of data:
+- the extracellular signal is stored in the `"Conx"` stream
+- the EMG data is stored in the `"EMGx"` stream. (if not empty)
+- the stimulation data is stored in the `"DBSx"` stream. (if not empty)
+- the event data is stored in the `"Task"` stream.
+
+Note that the stimulation and event data are also stored in `.mat` files.
 
 ## Events data
 
@@ -67,7 +93,7 @@ This data contains the onset times of stimulation. The site of stimulation and d
 
 ## Subject metadata
 
-The subject metadata can be provided in the `asap_tdt_subject_metadata.yaml` file as the follows:
+The subject metadata can be provided in the respective conversion folders e.g. `src/turner_lab_to_nwb/asap_tdt/metadata/subjects_metadata.yaml` file as the follows:
 
 ```yaml
 Subject:
@@ -86,17 +112,15 @@ Required Parameters:
 
 - "`nwbfile_path`" : The path to the NWB file to be created.
 - "`tdt_tank_file_path`" : The path to a TDT Tank file (.Tbk).
-- "`data_list_file_path`" : The path to the electrode metadata file (.xlsx).
-- "`session_id`" : The unique identifier for the session.
+- "`session_metadata`" : The `pandas.DataFrame` object that contains the metadata for the session.
+- "`session_id`" : The identifier of the session.
+- "`subject_id`" : The identifier of the subject.
 - "`events_file_path`" : The path that to the .mat file containing the events, units data and optionally include the stimulation data.
 
 Optional Parameters:
 
-- "`location`" : The location of the probe (e.g. "GPi", "VL"), when specified allows to filter the channels by location. By default None.
-- "`gpi_flt_file_path`" :  The path to the high-pass filtered data from GPi (.mat).
-- "`vl_flt_file_path`" : The path to the high-pass filtered data from VL (.mat).
-- "`gpi_plexon_file_path`" : The path to the Plexon file from GPi (.plx).
-- "`vl_plexon_file_path`" : The path to the Plexon file from VL (.plx).
+- "`flt_file_path`" :  The path to the high-pass filtered data (.mat).
+- "`plexon_file_path`" : The path to the Plexon file (.plx).
 - "`target_name_mapping`" : A dictionary mapping the task target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
 
 ### Example usage
@@ -108,7 +132,7 @@ pip install -r asap_tdt_requirements.txt
 ```
 Then you can run a specific conversion with the following command:
 ```
-python asap_tdt_convert_session.py
+python asap_tdt_gaia/asap_tdt_convert_session.py
 ```
 
 ## Run conversion for all TDT sessions with public or embargo dataset mode
@@ -119,14 +143,14 @@ Required Parameters:
 - "`folder_path`" : The root path to the TDT sessions.
 - "`output_folder_path"`: The folder where the NWB files will be stored.
 - "`data_list_file_path`" : The path to the electrode metadata file (.xlsx).
-- "`dataset_mode`" : The dataset mode ("public" or "embargo"). (see details below)
+- "`gpi_only`": Whether to convert only the GPI sessions, default is False.
 
-### Dataset mode
+### GPi only mode
 
-The public dataset is a subset of the full dataset that only contains the data from the GPi channels.
+When the `gpi_only` parameter is set to `True`, the conversion will only convert the sessions that contain GPi data.
 The general metadata for the public dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/public_metadata.yaml`.
 
-The embargo dataset is the full dataset that contains the data from all channels but is not going to be published publicly.
+When the `gpi_only` parameter is set to `False`, the conversion will convert all non-GPi data.
 The general metadata for the embargo dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/embargo_metadata.yaml`.
 
 ## TDT to NWB mapping

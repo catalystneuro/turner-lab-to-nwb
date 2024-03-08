@@ -1,33 +1,15 @@
 from typing import Optional
 
 import numpy as np
-import pandas as pd
-from neuroconv import NWBConverter
-from neuroconv.datainterfaces import PlexonSortingInterface
-from neuroconv.tools.nwb_helpers import get_default_backend_configuration, configure_backend
+from neuroconv import ConverterPipe
 from neuroconv.utils import DeepDict
 from pynwb import NWBFile
 
-from turner_lab_to_nwb.asap_tdt.interfaces import (
-    ASAPTdtEventsInterface,
-    ASAPTdtFilteredRecordingInterface,
-    ASAPTdtRecordingInterface,
-    ASAPTdtSortingInterface,
-)
 
-
-class AsapTdtNWBConverter(NWBConverter):
-    """Primary conversion class for Turner's extracellular electrophysiology dataset."""
-
-    data_interface_classes = dict(
-        Recording=ASAPTdtRecordingInterface,
-        ProcessedRecordingVL=ASAPTdtFilteredRecordingInterface,
-        ProcessedRecordingGPi=ASAPTdtFilteredRecordingInterface,
-        PlexonSortingVL=PlexonSortingInterface,
-        PlexonSortingGPi=PlexonSortingInterface,
-        CuratedSorting=ASAPTdtSortingInterface,
-        Events=ASAPTdtEventsInterface,
-    )
+class ASAPTdtNWBConverter(ConverterPipe):
+    """
+    Primary conversion class for handling multiple TDT data streams.
+    """
 
     def get_metadata(self) -> DeepDict:
         metadata = super().get_metadata()
@@ -39,25 +21,23 @@ class AsapTdtNWBConverter(NWBConverter):
 
         return metadata
 
-    # def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None) -> None:
-    #     super().add_to_nwbfile(nwbfile=nwbfile, metadata=metadata, conversion_options=conversion_options)
-    #
-    #     backend_configuration = get_default_backend_configuration(nwbfile=nwbfile, backend="hdf5")
-    #     configure_backend(nwbfile=nwbfile, backend_configuration=backend_configuration)
-
     def set_processed_recording_interface_properties(self, interface_name: str) -> None:
         """
         Set properties for a recording interface based on the raw recording interface.
         """
         recording_interface = self.data_interface_objects[interface_name]
-        group_name = f"Group {recording_interface.location}"
         raw_recording_extractor_properties = self.data_interface_objects["Recording"].recording_extractor._properties
 
-        indices = np.where(raw_recording_extractor_properties["group_name"] == group_name)[0]
-        if len(indices) == 0:
-            return
-
         extractor_num_channels = recording_interface.recording_extractor.get_num_channels()
+
+        target_name = interface_name.replace("ProcessedRecording", "")
+        indices = range(extractor_num_channels)
+        if target_name:
+            group_name = f"Group {target_name}"
+            indices = np.where(raw_recording_extractor_properties["group_name"] == group_name)[0]
+            if len(indices) == 0:
+                return
+
         assert len(indices) == extractor_num_channels
 
         # Set new channel ids
@@ -80,44 +60,34 @@ class AsapTdtNWBConverter(NWBConverter):
         overwrite: bool = False,
         conversion_options: Optional[dict] = None,
     ) -> None:
-        # Add unit properties
-        electrode_metadata = self.data_interface_objects["Recording"]._electrode_metadata
 
         # Set processed recording interface properties to match with raw recording interface
-        vl_interface_name = "ProcessedRecordingVL"
-        if vl_interface_name in self.data_interface_objects:
-            self.set_processed_recording_interface_properties(interface_name=vl_interface_name)
+        procesed_recording_interface_names = [
+            interface_name for interface_name in self.data_interface_objects if "ProcessedRecording" in interface_name
+        ]
+        for interface_name in procesed_recording_interface_names:
+            self.set_processed_recording_interface_properties(interface_name=interface_name)
 
-        gpi_interface_name = "ProcessedRecordingGPi"
-        if gpi_interface_name in self.data_interface_objects:
-            self.set_processed_recording_interface_properties(interface_name=gpi_interface_name)
-
-        num_units = 0
-        plexon_sorting_interfaces = [
+        plexon_sorting_interface_names = [
             interface_name for interface_name in self.data_interface_objects if "PlexonSorting" in interface_name
         ]
-        for interface_name in plexon_sorting_interfaces:
-            target_name = interface_name.replace("PlexonSorting", "")
-            sorting_metadata = electrode_metadata[electrode_metadata["Target"] == target_name]
+        num_plexon_sorting_interfaces = len(plexon_sorting_interface_names)
 
-            sorting_interface = self.data_interface_objects[interface_name]
-            sorting_extractor = sorting_interface.sorting_extractor
-
-            # set unit properties
-            area_value = sorting_metadata["Area"].values[0]
-            sorting_extractor.set_property(
-                key="location",
-                values=[area_value] * sorting_extractor.get_num_units(),
-            )
-            extractor_unit_ids = sorting_extractor.get_unit_ids()
-            # unit_ids are not unique across sorting interfaces, so we are offsetting them here
-            sorting_extractor._main_ids = extractor_unit_ids + num_units
-            num_units = len(extractor_unit_ids)
+        if num_plexon_sorting_interfaces > 1:
+            num_units = 0
+            for interface_name in plexon_sorting_interface_names:
+                sorting_interface = self.data_interface_objects[interface_name]
+                sorting_extractor = sorting_interface.sorting_extractor
+                extractor_unit_ids = sorting_extractor.get_unit_ids()
+                # unit_ids are not unique across sorting interfaces, so we are offsetting them here
+                sorting_extractor._main_ids = extractor_unit_ids + num_units
+                num_units = len(extractor_unit_ids)
 
         # Add stimulation events metadata
-        stimulation_site = electrode_metadata["Stim. site"].replace(np.nan, None).unique()[0]
+        channel_metadata = self.data_interface_objects["Recording"]._electrode_metadata
+        stimulation_site = channel_metadata["Stim. site"].replace(np.nan, None).unique()[0]
         if stimulation_site:
-            stimulation_depth = electrode_metadata["Stim. depth"].unique()[0]
+            stimulation_depth = channel_metadata["Stim. depth"].unique()[0]
             metadata["StimulationEvents"].update(stimulation_site=stimulation_site, stimulation_depth=stimulation_depth)
 
         super().run_conversion(

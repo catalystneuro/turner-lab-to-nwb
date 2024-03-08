@@ -8,5 +8,7 @@ Ecephys:
       description: The period when the spike waveforms had good isolation.
     - name: channel_ids
       description: The electrode channel ids for each unit.
-    - name: label
+    - name: sort_label
       description: The sorting label for each unit.
+    - name: location
+      description: The brain region for each unit.

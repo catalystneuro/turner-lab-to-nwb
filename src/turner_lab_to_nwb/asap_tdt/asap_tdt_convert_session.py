@@ -1,204 +1,203 @@
-"""Primary script to run to convert an entire session for of data using the NWBConverter."""
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from dateutil.tz import tz
-from neuroconv.utils import load_dict_from_file, dict_deep_update, FilePathType
+import pandas as pd
+from dateutil import tz
+from neuroconv.utils import FilePathType, load_dict_from_file, dict_deep_update
+from pymatreader import read_mat
 
-from turner_lab_to_nwb.asap_tdt import AsapTdtNWBConverter
+from turner_lab_to_nwb.asap_tdt import ASAPTdtNWBConverter
+from turner_lab_to_nwb.asap_tdt.interfaces import (
+    ASAPTdtRecordingInterface,
+    ASAPTdtEventsInterface,
+    ASAPTdtSortingInterface,
+    ASAPTdtFilteredRecordingInterface,
+    ASAPTdtPlexonSortingInterface,
+)
+from turner_lab_to_nwb.asap_tdt.utils import load_units_dataframe
 
 
 def session_to_nwb(
     nwbfile_path: FilePathType,
     tdt_tank_file_path: FilePathType,
-    data_list_file_path: FilePathType,
-    session_id: str,
     subject_id: str,
+    session_id: str,
+    session_metadata: pd.DataFrame,
     events_file_path: FilePathType,
-    location: Optional[str] = None,
-    gpi_flt_file_path: Optional[FilePathType] = None,
-    vl_flt_file_path: Optional[FilePathType] = None,
-    gpi_plexon_file_path: Optional[FilePathType] = None,
-    vl_plexon_file_path: Optional[FilePathType] = None,
+    flt_file_path: Optional[FilePathType] = None,
+    plexon_file_path: Optional[FilePathType] = None,
     target_name_mapping: Optional[dict] = None,
     stub_test: bool = False,
+    verbose: bool = True,
 ):
-    """
-    Convert a session of data to NWB.
 
-    Parameters
-    ----------
-    nwbfile_path : FilePathType
-        The path that points to the NWB file to be created.
-    tdt_tank_file_path : FilePathType
-        The path that points to a TDT Tank file (.Tbk).
-    data_list_file_path : FilePathType
-        The path that points to the electrode metadata file (.xlsx).
-    session_id : str
-        The unique identifier for the session.
-    subject_id : str
-        The unique identifier for the subject.
-    events_file_path : FilePathType
-        The path that points to the .mat file containing the events, units data and optionally include the stimulation data.
-    location : Optional[str], optional
-        The location of the probe, when specified allows to filter the channels by location. By default None.
-    gpi_flt_file_path : FilePathType, optional
-        The path to the high-pass filtered data from GPi.
-    vl_flt_file_path : FilePathType, optional
-        The path to the high-pass filtered data from VL.
-    gpi_plexon_file_path : FilePathType, optional
-        The path to Plexon file (.plx) containing the spike sorted data from GPi.
-    vl_plexon_file_path : FilePathType, optional
-        The path to Plexon file (.plx) containing the spike sorted data from VL.
-    target_name_mapping : Optional[dict], optional
-        A dictionary mapping the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right".
-    stub_test : bool, optional
-        Whether to run the conversion in stub test mode, by default False.
-    """
-    ecephys_file_path = Path(tdt_tank_file_path)
-
-    source_data = dict()
+    data_interfaces = dict()
     conversion_options = dict()
 
-    # For embargo mode keep all channels, for public keep only "GPi" channels
-    if location is not None:
-        assert location in ["GPi", "VL"], f"Location must be one of ['GPi', 'VL'], not {location}."
+    channel_metadata = session_metadata.to_dict(orient="list")
 
-    # Add Recording
-    recording_source_data = dict(
-        file_path=str(ecephys_file_path), data_list_file_path=str(data_list_file_path), location=location, gain=1.0
-    )
-    source_data.update(dict(Recording=recording_source_data))
-    conversion_options.update(dict(Recording=dict(stub_test=stub_test)))
+    # Temporary until TDT files are fixed that have missing "StoreName" header key error.
+    try:
+        recording_interface = ASAPTdtRecordingInterface(
+            file_path=str(tdt_tank_file_path),
+            channel_metadata=channel_metadata,
+            gain=1.0,
+        )
+    except Exception as e:
+        print(f"Error in recording interface for session {tdt_tank_file_path}: {e}")
+        return
 
-    # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
-    conversion_options_sorting = dict(
-        stub_test=stub_test,
-        write_as="processing",
-        units_description="The units were sorted using the Plexon Offline Sorter v3.",
-    )
+    data_interfaces.update(Recording=recording_interface)
+    conversion_options.update(Recording=dict(stub_test=stub_test))
 
-    # Add Processed Recording (high-pass filtered data)
-    if vl_flt_file_path:
-        source_data.update(dict(ProcessedRecordingVL=dict(file_path=str(vl_flt_file_path), location="VL")))
-        conversion_options.update(dict(ProcessedRecordingVL=dict(stub_test=stub_test, write_as="processed")))
-    if gpi_flt_file_path:
-        source_data.update(dict(ProcessedRecordingGPi=dict(file_path=str(gpi_flt_file_path), location="GPi")))
-        conversion_options.update(dict(ProcessedRecordingGPi=dict(stub_test=stub_test, write_as="processed")))
+    events_interface = ASAPTdtEventsInterface(file_path=events_file_path)
+    data_interfaces.update(Events=events_interface)
+    conversion_options.update(Events=dict(target_name_mapping=target_name_mapping))
 
-    # Add Sorting (uncurated spike times from Plexon Offline Sorter v3)
-    if vl_plexon_file_path:
-        source_data.update(dict(PlexonSortingVL=dict(file_path=str(vl_plexon_file_path))))
-        conversion_options.update(dict(PlexonSortingVL=conversion_options_sorting))
-    if gpi_plexon_file_path:
-        source_data.update(dict(PlexonSortingGPi=dict(file_path=str(gpi_plexon_file_path))))
-        conversion_options.update(dict(PlexonSortingGPi=conversion_options_sorting))
+    # Check if the session is GPI only
+    gpi_only = any(["GP" in target for target in session_metadata["Target"].values])
 
-    # Add Sorting (curated spike times from Plexon Offline Sorter v3, only include single units)
-    source_data.update(dict(CuratedSorting=dict(file_path=str(events_file_path), location=location)))
-    conversion_options.update(
-        dict(
+    # Check 'units' structure in the events file
+    # Sometimes the events file does not contain the 'units' structure, so we need to check if it exists
+    events_mat = read_mat(events_file_path)
+    has_units = False
+    if "units" in events_mat:
+        units_df = load_units_dataframe(mat=events_mat)
+        # check in advance if the units are empty
+        units_df = units_df[units_df["brain_area"].str.contains("GP") == gpi_only]
+        has_units = not units_df.empty
+
+    # Add Curated Sorting
+    if has_units:
+        curated_sorting_interface = ASAPTdtSortingInterface(file_path=events_file_path, gpi_only=gpi_only)
+        data_interfaces.update(CuratedSorting=curated_sorting_interface)
+        conversion_options.update(
             CuratedSorting=dict(
                 stub_test=stub_test,
                 units_description="The curated single-units from the Plexon Offline Sorter v3, selected based on the quality of spike sorting.",
             )
         )
+
+    # Add Filtered Recording
+    if flt_file_path is not None:
+        if len(flt_file_path) == 1:
+            processed_recording_source_data = dict(
+                file_path=str(flt_file_path[0]),
+                channel_metadata=channel_metadata,
+                es_key="ElectricalSeriesProcessed",
+            )
+            processed_recording_interface = ASAPTdtFilteredRecordingInterface(**processed_recording_source_data)
+            data_interfaces.update(ProcessedRecording=processed_recording_interface)
+            conversion_options.update(ProcessedRecording=dict(stub_test=stub_test, write_as="processed"))
+
+        else:
+            # When there are multiple flt files, we need to match the target to the flt file
+            channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
+            # we have to check that both channels are present in the flt file name
+            channels_from_flt_name = [file.stem.replace(".flt", "").split("_")[-2:] for file in flt_file_path]
+            channel_ranges = [range(int(channels[0]), int(channels[1]) + 1) for channels in channels_from_flt_name]
+            # match target to flt file
+            for target_name, channels in channel_ids.items():
+                flt_file_path_per_target = None
+                for ind, channel_range in enumerate(channel_ranges):
+                    if all(int(chan) in channel_range for chan in channels):
+                        flt_file_path_per_target = flt_file_path[ind]
+                        break
+                channel_metadata_per_target = session_metadata[session_metadata["Target"] == target_name]
+                assert flt_file_path_per_target is not None, f"Could not find flt file for channels {channels}."
+
+                processed_recording_source_data = dict(
+                    file_path=str(flt_file_path_per_target),
+                    channel_metadata=channel_metadata_per_target.to_dict(orient="list"),
+                    es_key="ElectricalSeriesProcessed" + target_name,
+                )
+                processed_recording_interface = ASAPTdtFilteredRecordingInterface(**processed_recording_source_data)
+                interface_name = f"ProcessedRecording{target_name}"
+                data_interfaces.update({interface_name: processed_recording_interface})
+                conversion_options.update({interface_name: dict(stub_test=stub_test, write_as="processed")})
+
+    # Add Uncurated Sorting
+    if plexon_file_path is not None:
+        conversion_options_sorting = dict(
+            stub_test=stub_test,
+            write_as="processing",
+            units_description="The units were sorted using the Plexon Offline Sorter v3.",
+        )
+        if len(plexon_file_path) == 1:
+            plexon_sorting_interface = ASAPTdtPlexonSortingInterface(
+                file_path=plexon_file_path[0], channel_metadata=channel_metadata
+            )
+            data_interfaces.update(PlexonSorting=plexon_sorting_interface)
+            conversion_options.update(PlexonSorting=conversion_options_sorting)
+        else:
+            channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
+            channels_from_plx_name = [file.stem.split("_")[-2:] for file in plexon_file_path]
+            channel_ranges = [range(int(channels[0]), int(channels[1]) + 1) for channels in channels_from_plx_name]
+            # match target to plexon file
+            for target_name, channels in channel_ids.items():
+                plexon_file_path_per_target = None
+                for ind, channel_range in enumerate(channel_ranges):
+                    if all(int(chan) in channel_range for chan in channels):
+                        plexon_file_path_per_target = plexon_file_path[ind]
+                        break
+                if plexon_file_path_per_target is None:
+                    print(f"Could not find plexon file for channels {channels}.")
+                    continue
+                channel_metadata_per_target = session_metadata[session_metadata["Target"] == target_name]
+                plexon_sorting_interface = ASAPTdtPlexonSortingInterface(
+                    file_path=plexon_file_path_per_target,
+                    channel_metadata=channel_metadata_per_target.to_dict(orient="list"),
+                )
+                interface_name = f"PlexonSorting{target_name}"
+                data_interfaces.update({interface_name: plexon_sorting_interface})
+                conversion_options.update({interface_name: conversion_options_sorting})
+
+    # Create the converter
+    converter = ASAPTdtNWBConverter(
+        data_interfaces=data_interfaces,
+        verbose=verbose,
     )
-
-    # Add Events
-    source_data.update(dict(Events=dict(file_path=str(events_file_path))))
-    if target_name_mapping:
-        conversion_options.update(dict(Events=dict(target_name_mapping=target_name_mapping)))
-
-    converter = AsapTdtNWBConverter(source_data=source_data)
 
     metadata = converter.get_metadata()
     # For data provenance we can add the time zone information to the conversion if missing
     session_start_time = metadata["NWBFile"]["session_start_time"]
     tzinfo = tz.gettz("US/Pacific")
+    # Add tag to the session_id
+    tag = "pre-MPTP" if "pre_MPTP" in Path(tdt_tank_file_path).parts else "post-MPTP"
+    session_id = session_id.replace("_", "-")
+    session_id_with_tag = f"{tag}-{session_id}"  # e.g. pre-MPTP-I-160818-4
     metadata["NWBFile"].update(
-        session_id=str(session_id).replace("_", "-"),
+        session_id=session_id_with_tag,
         session_start_time=session_start_time.replace(tzinfo=tzinfo),
     )
 
     # Update default metadata with the editable in the corresponding yaml file
-    general_metadata = "public_metadata.yaml" if location == "GPi" else "embargo_metadata.yaml"
+    general_metadata = "public_metadata.yaml" if gpi_only else "embargo_metadata.yaml"
     editable_metadata_path = Path(__file__).parent / "metadata" / general_metadata
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
 
     # Load subject metadata from the yaml file
-    subject_metadata_path = Path(__file__).parent / "asap_tdt_subjects_metadata.yaml"
+    subject_metadata_path = Path(__file__).parent / "metadata" / "subjects_metadata.yaml"
     subject_metadata = load_dict_from_file(subject_metadata_path)
-    assert subject_id in subject_metadata["Subject"], f"Subject {subject_id} is not in the metadata file."
-    pharmacology = subject_metadata["Subject"][subject_id].pop("pharmacology")
+    subject_metadata = subject_metadata["Subject"][subject_id]
+    pharmacology = subject_metadata.pop("pharmacology")
     metadata["NWBFile"].update(pharmacology=pharmacology)
-    metadata["Subject"] = subject_metadata["Subject"][subject_id]
+    metadata["Subject"].update(**subject_metadata)
+    date_of_birth = metadata["Subject"]["date_of_birth"]
+    date_of_birth_dt = datetime.strptime(date_of_birth, "%Y-%m-%d")
+    metadata["Subject"].update(date_of_birth=date_of_birth_dt.replace(tzinfo=tzinfo))
 
     # Load ecephys metadata
-    ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
-    metadata = dict_deep_update(metadata, ecephys_metadata)
+    has_sorting = any("Sorting" in data_interface_name for data_interface_name in data_interfaces.keys())
+    if has_sorting:
+        ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
+        metadata = dict_deep_update(metadata, ecephys_metadata)
 
-    # Run conversion
     converter.run_conversion(
-        metadata=metadata, nwbfile_path=nwbfile_path, conversion_options=conversion_options, overwrite=True
-    )
-
-
-if __name__ == "__main__":
-    # Parameters for conversion
-    # The root folder containing the sessions
-    folder_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample")
-
-    # The date string that identifies the session
-    date_string = "160624"
-    # The identifier of the session to be converted
-    session_id = f"I_{date_string}_2"
-
-    # The identifier of the subject
-    subject_id = "Gaia"
-
-    # The path to a single TDT Tank file (.Tbk)
-    tank_file_path = folder_path / f"I_{date_string}" / f"{subject_id}_{session_id}.Tbk"
-
-    # The path to the electrode metadata file (.xlsx)
-    data_list_file_path = Path("/Volumes/t7-ssd/Turner/Previous_PD_Project_sample/Isis_DataList_temp.xlsx")
-
-    # The plexon file with the spike sorted data from VL
-    vl_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_1_16.plx"
-    # The plexon file with the spike sorted data from GPi, optional
-    # When stimulation site is GPi, the plexon file is empty and this should be set to None
-    gpi_plexon_file_path = None
-    # gpi_plexon_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_17_32.plx"
-
-    # The path to the high-pass filtered data from VL
-    vl_flt_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_1_16.flt.mat"
-    # The path to the high-pass filtered data from GPi, optional
-    # gpi_flt_file_path = folder_path / f"I_{date_string}" / f"{session_id}_Chans_24_24.flt.mat"
-    gpi_flt_file_path = None
-
-    # The path to the .mat file containing the events, units data and optionally include the stimulation data
-    events_file_path = folder_path / f"I_{date_string}" / f"{session_id}.mat"
-    # The mapping of the target identifiers to more descriptive names, e.g. 1: "Left", 3: "Right"
-    target_name_mapping = {1: "Left", 3: "Right"}
-
-    # The path to the NWB file to be created
-    nwbfile_path = Path(f"/Volumes/t7-ssd/nwbfiles/stub_{subject_id}_{session_id}.nwb")
-
-    # For testing purposes, set stub_test to True to convert only a stub of the session
-    stub_test = False
-
-    session_to_nwb(
         nwbfile_path=nwbfile_path,
-        tdt_tank_file_path=tank_file_path,
-        gpi_flt_file_path=gpi_flt_file_path,
-        vl_flt_file_path=vl_flt_file_path,
-        data_list_file_path=data_list_file_path,
-        vl_plexon_file_path=vl_plexon_file_path,
-        gpi_plexon_file_path=gpi_plexon_file_path,
-        session_id=session_id,
-        subject_id=subject_id,
-        events_file_path=events_file_path,
-        target_name_mapping=target_name_mapping,
-        stub_test=stub_test,
+        metadata=metadata,
+        overwrite=True,
+        conversion_options=conversion_options,
     )
