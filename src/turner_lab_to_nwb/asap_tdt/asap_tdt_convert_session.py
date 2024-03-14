@@ -63,7 +63,7 @@ def session_to_nwb(
     if "units" in events_mat:
         units_df = load_units_dataframe(mat=events_mat)
         # check in advance if the units are empty
-        units_df = units_df[units_df["brain_area"].str.contains("GP") == gpi_only]
+        units_df = units_df[units_df["brain_area"].eq("GPi") == gpi_only]
         has_units = not units_df.empty
 
     # Add Curated Sorting

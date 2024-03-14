@@ -51,7 +51,7 @@ def convert_sessions(
 
     sessions_metadata = load_session_metadata(data_list_file_path)
     # filter the sessions based on the target
-    sessions_metadata = sessions_metadata[sessions_metadata["Target"].str.contains("GP") == gpi_only]
+    sessions_metadata = sessions_metadata[sessions_metadata["Target"].eq("GPi") == gpi_only]
     # filter out NaN values
     sessions_metadata = sessions_metadata[sessions_metadata["Target"] != "NaN"]
     progress_bar = tqdm(
