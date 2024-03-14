@@ -91,13 +91,6 @@ class ASAPTdtNWBConverter(ConverterPipe):
                 sorting_extractor._main_ids = extractor_unit_ids + num_units
                 num_units = len(extractor_unit_ids)
 
-        # Add stimulation events metadata
-        channel_metadata = self.data_interface_objects["Recording"]._electrode_metadata
-        stimulation_site = channel_metadata["Stim. site"].replace(np.nan, None).unique()[0]
-        if stimulation_site:
-            stimulation_depth = channel_metadata["Stim. depth"].unique()[0]
-            metadata["StimulationEvents"].update(stimulation_site=stimulation_site, stimulation_depth=stimulation_depth)
-
         super().run_conversion(
             nwbfile_path=nwbfile_path,
             nwbfile=nwbfile,

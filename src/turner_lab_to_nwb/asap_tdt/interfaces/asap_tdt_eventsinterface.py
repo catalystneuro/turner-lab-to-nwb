@@ -116,54 +116,5 @@ class ASAPTdtEventsInterface(BaseDataInterface):
             data=target_data,
         )
 
-    def add_stimulation_events(self, nwbfile: NWBFile, metadata: dict):
-        """
-        Add stimulation events to the nwbfile
-
-        Parameters
-        ----------
-        nwbfile : NWBFile
-            The nwbfile to add the stimulation events to.
-        """
-        from ndx_events import AnnotatedEventsTable
-
-        stimulation_metadata = metadata["StimulationEvents"]
-        assert (
-            stimulation_metadata["name"] not in nwbfile.acquisition
-        ), f"The {stimulation_metadata['name']} is already in nwbfile. "
-        events = AnnotatedEventsTable(
-            name=stimulation_metadata["name"],
-            description=stimulation_metadata["description"],
-        )
-        event_type_kwargs = dict(
-            label="stimulation_onset",
-            event_description="The stimulation onset times.",
-            event_times=self._events_data["dbs"],
-        )
-        if "stimulation_depth" in stimulation_metadata:
-            events.add_column(
-                name="stimulation_depth",
-                description="The depth of stimulation in micrometers.",
-                index=True,
-            )
-            event_type_kwargs.update(stimulation_depth=[stimulation_metadata["stimulation_depth"]])
-        if "stimulation_site" in stimulation_metadata:
-            events.add_column(
-                name="stimulation_site",
-                description="The site of stimulation.",
-                index=True,
-            )
-            event_type_kwargs.update(stimulation_site=[stimulation_metadata["stimulation_site"]])
-
-        # add an event type (row) to the AnnotatedEventsTable instance
-        events.add_event_type(**event_type_kwargs)
-
-        nwbfile.add_acquisition(events)
-
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: dict, target_name_mapping: Optional[dict] = None):
         self.add_trials(nwbfile=nwbfile, target_name_mapping=target_name_mapping)
-
-        # 'dbs' is the structure containing the stimulation onset times
-        stimulation_structure_name = "dbs"
-        if stimulation_structure_name in self._events_data:
-            self.add_stimulation_events(nwbfile=nwbfile, metadata=metadata)
