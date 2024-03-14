@@ -109,6 +109,7 @@ def convert_sessions(
             session_id=session_id,
             session_metadata=session_metadata,
             events_file_path=events_file_path,
+            gpi_only=gpi_only,
             flt_file_path=flt_file_paths,
             plexon_file_path=plexon_file_paths,
             target_name_mapping=target_name_mapping,
@@ -133,6 +134,7 @@ if __name__ == "__main__":
         folder_path=folder_path,
         output_folder_path=output_folder_path,
         data_list_file_path=data_list_file_path,
+        gpi_only=True,
         stub_test=True,
         verbose=False,
     )

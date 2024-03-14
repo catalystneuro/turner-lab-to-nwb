@@ -25,6 +25,7 @@ def session_to_nwb(
     session_id: str,
     session_metadata: pd.DataFrame,
     events_file_path: FilePathType,
+    gpi_only: bool = False,
     flt_file_path: Optional[FilePathType] = None,
     plexon_file_path: Optional[FilePathType] = None,
     target_name_mapping: Optional[dict] = None,
@@ -54,9 +55,6 @@ def session_to_nwb(
     events_interface = ASAPTdtEventsInterface(file_path=events_file_path)
     data_interfaces.update(Events=events_interface)
     conversion_options.update(Events=dict(target_name_mapping=target_name_mapping))
-
-    # Check if the session is GPI only
-    gpi_only = any(["GP" in target for target in session_metadata["Target"].values])
 
     # Check 'units' structure in the events file
     # Sometimes the events file does not contain the 'units' structure, so we need to check if it exists
