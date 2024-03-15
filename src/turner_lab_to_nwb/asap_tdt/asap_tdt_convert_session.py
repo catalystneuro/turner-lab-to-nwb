@@ -25,6 +25,7 @@ def session_to_nwb(
     session_id: str,
     session_metadata: pd.DataFrame,
     events_file_path: FilePathType,
+    gpi_only: bool = False,
     flt_file_path: Optional[FilePathType] = None,
     plexon_file_path: Optional[FilePathType] = None,
     target_name_mapping: Optional[dict] = None,
@@ -55,9 +56,6 @@ def session_to_nwb(
     data_interfaces.update(Events=events_interface)
     conversion_options.update(Events=dict(target_name_mapping=target_name_mapping))
 
-    # Check if the session is GPI only
-    gpi_only = any(["GP" in target for target in session_metadata["Target"].values])
-
     # Check 'units' structure in the events file
     # Sometimes the events file does not contain the 'units' structure, so we need to check if it exists
     events_mat = read_mat(events_file_path)
@@ -65,7 +63,7 @@ def session_to_nwb(
     if "units" in events_mat:
         units_df = load_units_dataframe(mat=events_mat)
         # check in advance if the units are empty
-        units_df = units_df[units_df["brain_area"].str.contains("GP") == gpi_only]
+        units_df = units_df[units_df["brain_area"].eq("GPi") == gpi_only]
         has_units = not units_df.empty
 
     # Add Curated Sorting
@@ -163,17 +161,18 @@ def session_to_nwb(
     # For data provenance we can add the time zone information to the conversion if missing
     session_start_time = metadata["NWBFile"]["session_start_time"]
     tzinfo = tz.gettz("US/Pacific")
+
     # Add tag to the session_id
-    tag = "pre-MPTP" if "pre_MPTP" in Path(tdt_tank_file_path).parts else "post-MPTP"
-    session_id = session_id.replace("_", "-")
-    session_id_with_tag = f"{tag}-{session_id}"  # e.g. pre-MPTP-I-160818-4
+    tag = "pre_MPTP" if "pre_MPTP" in Path(tdt_tank_file_path).parts else "post_MPTP"
+    session_id_with_tag = f"{tag}-{session_id}"
+    session_id_with_tag = session_id_with_tag.replace("_", "-")  # e.g. pre-MPTP-I-160818-4
     metadata["NWBFile"].update(
         session_id=session_id_with_tag,
         session_start_time=session_start_time.replace(tzinfo=tzinfo),
     )
 
     # Update default metadata with the editable in the corresponding yaml file
-    general_metadata = "public_metadata.yaml" if gpi_only else "embargo_metadata.yaml"
+    general_metadata = f"{tag}_public_metadata.yaml" if gpi_only else f"{tag}_embargo_metadata.yaml"
     editable_metadata_path = Path(__file__).parent / "metadata" / general_metadata
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
@@ -182,8 +181,12 @@ def session_to_nwb(
     subject_metadata_path = Path(__file__).parent / "metadata" / "subjects_metadata.yaml"
     subject_metadata = load_dict_from_file(subject_metadata_path)
     subject_metadata = subject_metadata["Subject"][subject_id]
+
+    # Add pharmacology metadata for post_MPTP sessions
     pharmacology = subject_metadata.pop("pharmacology")
-    metadata["NWBFile"].update(pharmacology=pharmacology)
+    if tag == "post_MPTP":
+        metadata["NWBFile"].update(pharmacology=pharmacology)
+
     metadata["Subject"].update(**subject_metadata)
     date_of_birth = metadata["Subject"]["date_of_birth"]
     date_of_birth_dt = datetime.strptime(date_of_birth, "%Y-%m-%d")
@@ -194,6 +197,8 @@ def session_to_nwb(
     if has_sorting:
         ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
         metadata = dict_deep_update(metadata, ecephys_metadata)
+
+    metadata["LabMetaData"] = dict(name="MPTPMetaData", MPTP_status=tag)
 
     converter.run_conversion(
         nwbfile_path=nwbfile_path,

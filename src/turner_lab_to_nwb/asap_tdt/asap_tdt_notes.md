@@ -8,7 +8,6 @@ Extracellular spiking activity of neurons in globus pallidus-internus (GPi) and 
 or 16-contact linear probes (0.5–1.0 MΩ, V-probe, Plexon) in monkeys while performing a choice reaction time reaching task.
 During a subset of data collection sessions, EMG activity was collected via either chronically implanted subcutaneous electrodes or electrodes inserted percutaneously immediately before the session.
 All recordings were performed with at least one electrode positioned in each of GPi and VLa.
-Some sessions also included stimulation of GPi using custom built stimulating electrodes implanted in the arm-related region of primary motor cortex and in the SCP at its decussation.
 The stored neuronal data were high-pass filtered (200 Hz) and thresholded, and candidate action potentials were sorted into clusters in principal components space (Off-line Sorter, Plexon).
 
 ## DataList spreadsheet
