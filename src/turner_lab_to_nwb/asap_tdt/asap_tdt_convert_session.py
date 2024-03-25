@@ -6,7 +6,6 @@ import pandas as pd
 from dateutil import tz
 from neuroconv.utils import FilePathType, load_dict_from_file, dict_deep_update
 from nwbinspector import inspect_nwbfile
-from nwbinspector.inspector_tools import save_report, format_messages
 from pymatreader import read_mat
 
 from turner_lab_to_nwb.asap_tdt import ASAPTdtNWBConverter
@@ -212,14 +211,5 @@ def session_to_nwb(
     )
 
     # Run inspection for nwbfile
-    nwbfile_path = Path(nwbfile_path)
     results = list(inspect_nwbfile(nwbfile_path=nwbfile_path))
-    if results:
-        report_path = nwbfile_path.parent / f"{nwbfile_path.stem}_inspector_result.txt"
-        save_report(
-            report_file_path=report_path,
-            formatted_messages=format_messages(
-                results,
-                levels=["importance", "file_path"],
-            ),
-        )
+    return results
