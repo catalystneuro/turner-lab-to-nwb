@@ -12,3 +12,18 @@ Ecephys:
       description: The sorting label for each unit.
     - name: location
       description: The brain region for each unit.
+  Electrodes:
+    - name: chamber_name
+      description: The name of the chamber (either Sagittal or Coronal).
+    - name: chamber_x
+      description: The medio-lateral coordinate relative to the chamber center, lateral positive.
+    - name: chamber_y
+      description: The antero-posterior coordinate relative to the chamber center, posterior negative.
+    - name: chamber_z
+      description: The dorso-ventral coordinate relative to the chamber center, ventral positive.
+    - name: acx_x
+      description: Medio-lateral coordinate relative to the anterior commissure crossing, lateral positive, in millimeters.
+    - name: acx_y
+      description: Antero-posterior coordinate relative to the anterior commissure crossing, posterior negative, in millimeters.
+    - name: acx_z
+      description: Dorso-ventral coordinate relative to the anterior commissure crossing, ventral positive, in millimeters.
