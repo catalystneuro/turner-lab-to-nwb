@@ -31,3 +31,11 @@ Ecephys:
       description: Antero-posterior coordinate relative to the anterior commissure crossing, posterior negative, in millimeters.
     - name: acx_z
       description: Dorso-ventral coordinate relative to the anterior commissure crossing, ventral positive, in millimeters.
+    - name: offset_to_uV
+      description: The offset to apply to the traces to convert to microvolts.
+    - name: gain_to_uV
+      description: The gain to apply to the traces to convert to microvolts.
+    - name: channel_ids
+      description: The identifier of the channels.
+    - name: channel_name
+      description: The channel names from TDT.
