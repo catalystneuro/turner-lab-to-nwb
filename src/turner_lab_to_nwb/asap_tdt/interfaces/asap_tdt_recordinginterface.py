@@ -115,11 +115,6 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         )
 
         ecephys_metadata = metadata["Ecephys"]
-        device_metadata = ecephys_metadata["Device"][0]
-        device_metadata.update(
-            description="TDT recording",
-            manufacturer="Tucker-Davis Technologies (TDT)",
-        )
 
         electrode_groups = []
         unique_electrodes_data = self._electrode_metadata.groupby("Area").first()

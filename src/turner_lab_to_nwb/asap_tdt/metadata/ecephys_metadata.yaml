@@ -1,4 +1,8 @@
 Ecephys:
+  Device:
+    - name: DeviceEcephys
+      description: TDT recording
+      manufacturer: Tucker-Davis Technologies (TDT)
   UnitProperties:
     - name: unit_quality
       description: The quality metric for each unit.
