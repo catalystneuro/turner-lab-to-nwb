@@ -124,7 +124,7 @@ if __name__ == "__main__":
     folder_path = Path("/Volumes/LaCie/CN_GCP/Turner/Previous_PD_Project_Sample/pre_MPTP/Isis")
 
     # The path to the electrode metadata file (.xlsx)
-    data_list_file_path = Path("/Users/weian/data/Data_list/DataList.xlsx")
+    data_list_file_path = Path("/Users/weian/data/Data_list/DataList_GPi_final.xlsx")
 
     # The output folder for the NWB files
     output_folder_path = Path("/Volumes/LaCie/CN_GCP/Turner/nwbfiles_public")
@@ -135,6 +135,6 @@ if __name__ == "__main__":
         output_folder_path=output_folder_path,
         data_list_file_path=data_list_file_path,
         gpi_only=True,
-        stub_test=True,
+        stub_test=False,
         verbose=False,
     )

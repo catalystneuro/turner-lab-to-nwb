@@ -5,6 +5,7 @@ from typing import Optional
 import pandas as pd
 from dateutil import tz
 from neuroconv.utils import FilePathType, load_dict_from_file, dict_deep_update
+from nwbinspector import inspect_nwbfile
 from pymatreader import read_mat
 
 from turner_lab_to_nwb.asap_tdt import ASAPTdtNWBConverter
@@ -193,10 +194,12 @@ def session_to_nwb(
     metadata["Subject"].update(date_of_birth=date_of_birth_dt.replace(tzinfo=tzinfo))
 
     # Load ecephys metadata
+    ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
     has_sorting = any("Sorting" in data_interface_name for data_interface_name in data_interfaces.keys())
-    if has_sorting:
-        ecephys_metadata = load_dict_from_file(Path(__file__).parent / "metadata" / "ecephys_metadata.yaml")
-        metadata = dict_deep_update(metadata, ecephys_metadata)
+    if not has_sorting:
+        # Remove unit metadata when no unit data is present for the session
+        ecephys_metadata["Ecephys"].pop("UnitProperties")
+    metadata = dict_deep_update(metadata, ecephys_metadata)
 
     metadata["LabMetaData"] = dict(name="MPTPMetaData", MPTP_status=tag)
 
@@ -206,3 +209,7 @@ def session_to_nwb(
         overwrite=True,
         conversion_options=conversion_options,
     )
+
+    # Run inspection for nwbfile
+    results = list(inspect_nwbfile(nwbfile_path=nwbfile_path))
+    return results

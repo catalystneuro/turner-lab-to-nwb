@@ -69,8 +69,27 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         # Set properties
         group_names = "Group " + self._electrode_metadata["Target"]
         self.recording_extractor.set_property(key="group_name", ids=selected_channel_ids, values=group_names)
-        custom_names = self._electrode_metadata.apply(lambda row: f"{row['Electrode']}-{row['Chan#']}", axis=1).tolist()
-        self.recording_extractor.set_property(key="custom_channel_name", ids=selected_channel_ids, values=custom_names)
+        electrode_type = self._electrode_metadata["Electrode"]
+        self.recording_extractor.set_property(key="electrode_type", ids=selected_channel_ids, values=electrode_type)
+
+        # Set chamber and stereotaxic coordinates
+        chamber_name_mapping = dict(Sag="Sagittal", Cor="Coronal")
+        chamber = self._electrode_metadata["Chamber"].map(chamber_name_mapping)
+        self.recording_extractor.set_property(key="chamber_name", values=chamber)
+
+        chamber_x = self._electrode_metadata["ML_chamber"]
+        chamber_y = self._electrode_metadata["AP_chamber"]
+        chamber_z = self._electrode_metadata["Z_chamber"]
+        self.recording_extractor.set_property(key="chamber_x", values=chamber_x)
+        self.recording_extractor.set_property(key="chamber_y", values=chamber_y)
+        self.recording_extractor.set_property(key="chamber_z", values=chamber_z)
+
+        acx_x = self._electrode_metadata["ML_acx"]
+        acx_y = self._electrode_metadata["AP_acx"]
+        acx_z = self._electrode_metadata["Z_acx"]
+        self.recording_extractor.set_property(key="acx_x", values=acx_x)
+        self.recording_extractor.set_property(key="acx_y", values=acx_y)
+        self.recording_extractor.set_property(key="acx_z", values=acx_z)
 
         # Fix channel name format
         channel_names = self.recording_extractor.get_property("channel_name")
@@ -96,11 +115,6 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         )
 
         ecephys_metadata = metadata["Ecephys"]
-        device_metadata = ecephys_metadata["Device"][0]
-        device_metadata.update(
-            description="TDT recording",
-            manufacturer="Tucker-Davis Technologies (TDT)",
-        )
 
         electrode_groups = []
         unique_electrodes_data = self._electrode_metadata.groupby("Area").first()
@@ -120,16 +134,12 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
             key="brain_area",
             values=self._electrode_metadata["Area"].values.tolist(),
         )
-        self.recording_extractor.set_property(
-            key="location",
-            values=self._electrode_metadata[["ML", "AP", "Z"]].values,
-        )
 
         # Add electrodes and electrode groups
         ecephys_metadata.update(
             Electrodes=[
                 dict(name="group_name", description="The name of the ElectrodeGroup this electrode is a part of."),
-                dict(name="custom_channel_name", description="Custom channel name assigned in TDT."),
+                dict(name="electrode_type", description="The type of electrode."),
             ]
         )
 

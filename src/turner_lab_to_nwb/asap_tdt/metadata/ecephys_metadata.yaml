@@ -1,4 +1,8 @@
 Ecephys:
+  Device:
+    - name: DeviceEcephys
+      description: TDT recording
+      manufacturer: Tucker-Davis Technologies (TDT)
   UnitProperties:
     - name: unit_quality
       description: The quality metric for each unit.
@@ -12,3 +16,26 @@ Ecephys:
       description: The sorting label for each unit.
     - name: location
       description: The brain region for each unit.
+  Electrodes:
+    - name: chamber_name
+      description: The name of the chamber (either Sagittal or Coronal).
+    - name: chamber_x
+      description: The medio-lateral coordinate relative to the chamber center, lateral positive.
+    - name: chamber_y
+      description: The antero-posterior coordinate relative to the chamber center, posterior negative.
+    - name: chamber_z
+      description: The dorso-ventral coordinate relative to the chamber center, ventral positive.
+    - name: acx_x
+      description: Medio-lateral coordinate relative to the anterior commissure crossing, lateral positive, in millimeters.
+    - name: acx_y
+      description: Antero-posterior coordinate relative to the anterior commissure crossing, posterior negative, in millimeters.
+    - name: acx_z
+      description: Dorso-ventral coordinate relative to the anterior commissure crossing, ventral positive, in millimeters.
+    - name: offset_to_uV
+      description: The offset to apply to the traces to convert to microvolts.
+    - name: gain_to_uV
+      description: The gain to apply to the traces to convert to microvolts.
+    - name: channel_ids
+      description: The identifier of the channels.
+    - name: channel_name
+      description: The channel names from TDT.
