@@ -54,6 +54,6 @@ class ASAPTdtPlexonSortingInterface(BaseSortingExtractorInterface):
 
         self.sorting_extractor.set_property(
             # SpikeInterface refers to this as 'brain_area', NeuroConv remaps to 'location'
-            key="brain_area",
+            key="location",
             values=brain_area_units,
         )
