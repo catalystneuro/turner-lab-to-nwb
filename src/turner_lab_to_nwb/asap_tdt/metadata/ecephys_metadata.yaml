@@ -17,8 +17,8 @@ Ecephys:
     - name: location
       description: The brain region for each unit.
   Electrodes:
-    - name: chamber_name
-      description: The name of the chamber (either Sagittal or Coronal).
+    - name: chamber_type
+      description: The type of the chamber (either Sagittal or Coronal).
     - name: chamber_x
       description: The medio-lateral coordinate relative to the chamber center, lateral positive.
     - name: chamber_y
