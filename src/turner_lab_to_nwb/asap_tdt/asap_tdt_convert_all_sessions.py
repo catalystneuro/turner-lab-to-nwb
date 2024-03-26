@@ -93,8 +93,13 @@ def convert_sessions(
         if not flt_file_paths:
             flt_file_paths = list(tdt_tank_file_path.parent.glob(f"{session_id}.flt.mat"))
             if not flt_file_paths:
-                print(f"No flt file found for session {session_id} of subject {subject_id}.")
-                flt_file_paths = None
+                if (tdt_tank_file_path.parent / "ch_data_flt").exists():
+                    flt_file_paths = natsorted(
+                        (tdt_tank_file_path.parent / "ch_data_flt").glob(f"{session_id}_Ch_*.flt.mat")
+                    )
+                else:
+                    print(f"No flt file found for session {session_id} of subject {subject_id}.")
+                    flt_file_paths = None
 
         plexon_file_paths = list(tdt_tank_file_path.parent.glob(f"{session_id}_Chans*.plx"))
         if not plexon_file_paths:
