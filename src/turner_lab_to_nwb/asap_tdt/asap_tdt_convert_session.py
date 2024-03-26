@@ -15,7 +15,9 @@ from turner_lab_to_nwb.asap_tdt.interfaces import (
     ASAPTdtSortingInterface,
     ASAPTdtFilteredRecordingInterface,
     ASAPTdtPlexonSortingInterface,
+    ASAPTdtMultiFileFilteredRecordingInterface,
 )
+
 from turner_lab_to_nwb.asap_tdt.utils import load_units_dataframe
 
 
@@ -48,7 +50,7 @@ def session_to_nwb(
         )
     except Exception as e:
         print(f"Error in recording interface for session {tdt_tank_file_path}: {e}")
-        return
+        return []
 
     data_interfaces.update(Recording=recording_interface)
     conversion_options.update(Recording=dict(stub_test=stub_test))
@@ -80,6 +82,7 @@ def session_to_nwb(
 
     # Add Filtered Recording
     if flt_file_path is not None:
+        # When there is only one flt file, we can directly subset the channels using the channel metadata
         if len(flt_file_path) == 1:
             processed_recording_source_data = dict(
                 file_path=str(flt_file_path[0]),
@@ -90,6 +93,27 @@ def session_to_nwb(
             data_interfaces.update(ProcessedRecording=processed_recording_interface)
             conversion_options.update(ProcessedRecording=dict(stub_test=stub_test, write_as="processed"))
 
+        # For files that contain the "Ch_" string in the name, they contain only one channel per file
+        elif "Ch_" in str(flt_file_path[0]):
+            # When there are multiple flt files, we need to match the target to the flt file
+            channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
+            for target_name, channels in channel_ids.items():
+                file_paths = [str(file) for chan in channels for file in flt_file_path if f"Ch_{chan}.flt" in file.stem]
+                assert len(file_paths) == len(channels), f"Could not find flt file for channels {channels}."
+                channel_metadata_per_target = session_metadata[session_metadata["Target"] == target_name]
+                processed_recording_source_data = dict(
+                    file_paths=file_paths,
+                    channel_metadata=channel_metadata_per_target.to_dict(orient="list"),
+                    es_key="ElectricalSeriesProcessed" + target_name,
+                )
+                processed_recording_interface = ASAPTdtMultiFileFilteredRecordingInterface(
+                    **processed_recording_source_data
+                )
+                interface_name = f"ProcessedRecording{target_name}"
+                data_interfaces.update({interface_name: processed_recording_interface})
+                conversion_options.update({interface_name: dict(stub_test=stub_test, write_as="processed")})
+
+        # When there are multiple flt files (but they contain more than one channel), we need to match the channel names in the file name to the channel metadata
         else:
             # When there are multiple flt files, we need to match the target to the flt file
             channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
@@ -144,13 +168,18 @@ def session_to_nwb(
                     print(f"Could not find plexon file for channels {channels}.")
                     continue
                 channel_metadata_per_target = session_metadata[session_metadata["Target"] == target_name]
-                plexon_sorting_interface = ASAPTdtPlexonSortingInterface(
-                    file_path=plexon_file_path_per_target,
-                    channel_metadata=channel_metadata_per_target.to_dict(orient="list"),
-                )
-                interface_name = f"PlexonSorting{target_name}"
-                data_interfaces.update({interface_name: plexon_sorting_interface})
-                conversion_options.update({interface_name: conversion_options_sorting})
+                try:
+                    plexon_sorting_interface = ASAPTdtPlexonSortingInterface(
+                        file_path=plexon_file_path_per_target,
+                        channel_metadata=channel_metadata_per_target.to_dict(orient="list"),
+                    )
+                    interface_name = f"PlexonSorting{target_name}"
+                    data_interfaces.update({interface_name: plexon_sorting_interface})
+                    conversion_options.update({interface_name: conversion_options_sorting})
+                except ValueError as e:
+                    # Skip the session if there is no sorting data inside the plexon file
+                    print(f"Error in plexon sorting interface for session {plexon_file_path_per_target}: {e}")
+                    continue
 
     # Create the converter
     converter = ASAPTdtNWBConverter(

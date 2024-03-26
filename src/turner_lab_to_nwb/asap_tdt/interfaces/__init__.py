@@ -1,5 +1,8 @@
 from .asap_tdt_recordinginterface import ASAPTdtRecordingInterface
 from .asap_tdt_eventsinterface import ASAPTdtEventsInterface
 from .asap_tdt_sortinginterface import ASAPTdtSortingInterface
-from .asap_tdt_filtered_recordinginterface import ASAPTdtFilteredRecordingInterface
+from .asap_tdt_filtered_recordinginterface import (
+    ASAPTdtFilteredRecordingInterface,
+    ASAPTdtMultiFileFilteredRecordingInterface,
+)
 from .asap_tdt_plexon_sortinginterface import ASAPTdtPlexonSortingInterface
