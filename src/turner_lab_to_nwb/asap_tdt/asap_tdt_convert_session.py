@@ -148,11 +148,15 @@ def session_to_nwb(
             units_description="The units were sorted using the Plexon Offline Sorter v3.",
         )
         if len(plexon_file_path) == 1:
-            plexon_sorting_interface = ASAPTdtPlexonSortingInterface(
-                file_path=plexon_file_path[0], channel_metadata=channel_metadata
-            )
-            data_interfaces.update(PlexonSorting=plexon_sorting_interface)
-            conversion_options.update(PlexonSorting=conversion_options_sorting)
+            try:
+                plexon_sorting_interface = ASAPTdtPlexonSortingInterface(
+                    file_path=plexon_file_path[0], channel_metadata=channel_metadata
+                )
+                data_interfaces.update(PlexonSorting=plexon_sorting_interface)
+                conversion_options.update(PlexonSorting=conversion_options_sorting)
+            except ValueError as e:
+                # Skip the session if there is no sorting data inside the plexon file
+                print(f"Error in plexon sorting interface for session {plexon_file_path}: {e}")
         else:
             channel_ids = session_metadata.groupby("Target")["Chan#"].apply(list).to_dict()
             channels_from_plx_name = [file.stem.split("_")[-2:] for file in plexon_file_path]

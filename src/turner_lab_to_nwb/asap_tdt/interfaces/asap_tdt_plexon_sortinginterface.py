@@ -49,7 +49,8 @@ class ASAPTdtPlexonSortingInterface(BaseSortingExtractorInterface):
         unit_ids_to_keep = [
             chan_ind for chan_ind, chan in enumerate(plexon_header["spike_channels"]) if chan[0] in channel_names
         ]
-        assert len(unit_ids_to_keep), f"No units found in '{file_path}' for channels '{plexon_channel_ids}'."
+        if not len(unit_ids_to_keep):
+            raise ValueError(f"No units found in '{file_path}' for channels '{plexon_channel_ids}'.")
         super().__init__(parent_sorting=parent_sorting, unit_ids=unit_ids_to_keep, renamed_unit_ids=None)
 
         self.sorting_extractor.set_property(
