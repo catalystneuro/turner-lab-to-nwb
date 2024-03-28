@@ -78,3 +78,60 @@ class ASAPTdtFilteredRecordingSegment(BaseRecordingSegment):
 
     def get_num_samples(self) -> int:
         return self.num_samples
+
+
+class ASAPTdtMultiFileFilteredRecordingExtractor(BaseRecording):
+    def __init__(self, file_paths: list):
+        """
+        Parameters
+        ----------
+        file_paths : list
+            The list of file paths to the MAT files containing the high-pass filtered data.
+        """
+        import h5py
+
+        channel_ids = [int(Path(file_path).stem.replace(".flt", "").split("_")[-1]) for file_path in file_paths]
+
+        with h5py.File(str(file_paths[0]), "r") as f:
+            sampling_frequency = f["samplerate"][:][0][0]
+            num_samples = f["hp_cont"].shape[1]
+            dtype = f["hp_cont"][0, 0].dtype
+
+        super().__init__(sampling_frequency, channel_ids, dtype)
+
+        rec_segment = ASAPTdtMultiFileFilteredRecordingSegment(
+            sampling_frequency=sampling_frequency, file_paths=file_paths, num_samples=num_samples
+        )
+        self.add_recording_segment(rec_segment)
+
+
+class ASAPTdtMultiFileFilteredRecordingSegment(BaseRecordingSegment):
+    def __init__(self, sampling_frequency: float, file_paths: list, num_samples: int, t_start: Optional[float] = None):
+        super().__init__(sampling_frequency=sampling_frequency, t_start=t_start)
+
+        self.file_paths = file_paths
+        self.num_channels = len(file_paths)
+        self.num_samples = num_samples
+
+    def _concatenate_over_channels(self, start_frame=None, end_frame=None):
+        import h5py
+
+        data = []
+        for file_path in self.file_paths:
+            with h5py.File(str(file_path), "r") as f:
+                data.append(f["hp_cont"][:, start_frame:end_frame])
+        return np.concatenate(data, axis=0)
+
+    def get_traces(self, start_frame=None, end_frame=None, channel_indices=None):
+        if start_frame is None:
+            start_frame = 0
+        if end_frame is None:
+            end_frame = self.num_samples
+        if channel_indices is None:
+            channel_indices = slice(None)
+
+        data = np.transpose(self._concatenate_over_channels(start_frame, end_frame), (1, 0))
+        return data[:, channel_indices]
+
+    def get_num_samples(self) -> int:
+        return self.num_samples

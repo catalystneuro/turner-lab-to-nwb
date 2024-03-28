@@ -75,7 +75,7 @@ class ASAPTdtRecordingInterface(BaseRecordingExtractorInterface):
         # Set chamber and stereotaxic coordinates
         chamber_name_mapping = dict(Sag="Sagittal", Cor="Coronal")
         chamber = self._electrode_metadata["Chamber"].map(chamber_name_mapping)
-        self.recording_extractor.set_property(key="chamber_name", values=chamber)
+        self.recording_extractor.set_property(key="chamber_type", values=chamber)
 
         chamber_x = self._electrode_metadata["ML_chamber"]
         chamber_y = self._electrode_metadata["AP_chamber"]
