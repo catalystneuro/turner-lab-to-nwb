@@ -2,7 +2,9 @@ import os
 import warnings
 from pathlib import Path
 
+from natsort import natsorted
 from neuroconv.utils import FolderPathType, FilePathType
+from nwbinspector.inspector_tools import save_report, format_messages
 from tqdm import tqdm
 
 from turner_lab_to_nwb.asap_tdt.asap_tdt_convert_session import session_to_nwb
@@ -61,6 +63,7 @@ def convert_sessions(
         total=len(tdt_tank_file_paths),
     )
 
+    all_sessions_inspector_results = []
     for tank_file_ind, tdt_tank_file_path in progress_bar:
         tdt_tank_file_name = tdt_tank_file_path.stem
 
@@ -90,8 +93,13 @@ def convert_sessions(
         if not flt_file_paths:
             flt_file_paths = list(tdt_tank_file_path.parent.glob(f"{session_id}.flt.mat"))
             if not flt_file_paths:
-                print(f"No flt file found for session {session_id} of subject {subject_id}.")
-                flt_file_paths = None
+                if (tdt_tank_file_path.parent / "ch_data_flt").exists():
+                    flt_file_paths = natsorted(
+                        (tdt_tank_file_path.parent / "ch_data_flt").glob(f"{session_id}_Ch_*.flt.mat")
+                    )
+                else:
+                    print(f"No flt file found for session {session_id} of subject {subject_id}.")
+                    flt_file_paths = None
 
         plexon_file_paths = list(tdt_tank_file_path.parent.glob(f"{session_id}_Chans*.plx"))
         if not plexon_file_paths:
@@ -102,7 +110,7 @@ def convert_sessions(
 
         progress_bar.set_description(f"\nConverting session {session_id} of subject {subject_id}")
 
-        session_to_nwb(
+        session_inspector_results = session_to_nwb(
             nwbfile_path=str(nwbfile_path),
             tdt_tank_file_path=str(tdt_tank_file_path),
             subject_id=subject_id,
@@ -116,6 +124,18 @@ def convert_sessions(
             stub_test=stub_test,
             verbose=verbose,
         )
+
+        all_sessions_inspector_results.extend(session_inspector_results)
+
+    report_path = output_folder_path / "inspector_result.txt"
+    save_report(
+        report_file_path=report_path,
+        formatted_messages=format_messages(
+            all_sessions_inspector_results,
+            levels=["importance", "file_path"],
+        ),
+        overwrite=True,
+    )
 
 
 if __name__ == "__main__":

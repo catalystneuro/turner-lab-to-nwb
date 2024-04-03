@@ -37,6 +37,8 @@ class ASAPTdtSortingExtractor(BaseSorting):
             raise ValueError(f"No units found in '{file_path}'.")
 
         unit_brain_area = units_df["brain_area"].values.tolist()
+        # brain_area can sometimes be an empty list for some units
+        units_df["brain_area"] = [area if area else "unknown" for area in unit_brain_area]
         num_units = len(unit_brain_area)
         unit_ids = np.arange(num_units)
 

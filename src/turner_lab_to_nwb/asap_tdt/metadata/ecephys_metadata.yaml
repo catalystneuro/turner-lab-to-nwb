@@ -17,14 +17,14 @@ Ecephys:
     - name: location
       description: The brain region for each unit.
   Electrodes:
-    - name: chamber_name
-      description: The name of the chamber (either Sagittal or Coronal).
+    - name: chamber_type
+      description: The type of the chamber (either Sagittal or Coronal).
     - name: chamber_x
-      description: The medio-lateral coordinate relative to the chamber center, lateral positive.
+      description: The medio-lateral coordinate relative to the chamber center, lateral positive, in millimeters.
     - name: chamber_y
-      description: The antero-posterior coordinate relative to the chamber center, posterior negative.
+      description: The antero-posterior coordinate relative to the chamber center, posterior negative, in millimeters.
     - name: chamber_z
-      description: The dorso-ventral coordinate relative to the chamber center, ventral positive.
+      description: The dorso-ventral coordinate relative to the chamber center, ventral positive, in millimeters.
     - name: acx_x
       description: Medio-lateral coordinate relative to the anterior commissure crossing, lateral positive, in millimeters.
     - name: acx_y
