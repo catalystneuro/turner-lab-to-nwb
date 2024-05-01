@@ -53,7 +53,8 @@ def convert_sessions(
 
     sessions_metadata = load_session_metadata(data_list_file_path)
     # filter the sessions based on the target
-    sessions_metadata = sessions_metadata[sessions_metadata["Target"].eq("GPi") == gpi_only]
+    if gpi_only:
+        sessions_metadata = sessions_metadata[sessions_metadata["Target"].eq("GPi")]
     # filter out NaN values
     sessions_metadata = sessions_metadata[sessions_metadata["Target"] != "NaN"]
     progress_bar = tqdm(
@@ -154,7 +155,7 @@ if __name__ == "__main__":
         folder_path=folder_path,
         output_folder_path=output_folder_path,
         data_list_file_path=data_list_file_path,
-        gpi_only=True,
+        gpi_only=False,
         stub_test=False,
         verbose=False,
     )

@@ -66,7 +66,8 @@ def session_to_nwb(
     if "units" in events_mat:
         units_df = load_units_dataframe(mat=events_mat)
         # check in advance if the units are empty
-        units_df = units_df[units_df["brain_area"].eq("GPi") == gpi_only]
+        if gpi_only:
+            units_df = units_df[units_df["brain_area"].eq("GPi")]
         has_units = not units_df.empty
 
     # Add Curated Sorting
@@ -206,7 +207,7 @@ def session_to_nwb(
     )
 
     # Update default metadata with the editable in the corresponding yaml file
-    general_metadata = f"{tag}_public_metadata.yaml" if gpi_only else f"{tag}_embargo_metadata.yaml"
+    general_metadata = f"{tag}_GPi_only_metadata.yaml" if gpi_only else f"{tag}_metadata.yaml"
     editable_metadata_path = Path(__file__).parent / "metadata" / general_metadata
     editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(metadata, editable_metadata)
