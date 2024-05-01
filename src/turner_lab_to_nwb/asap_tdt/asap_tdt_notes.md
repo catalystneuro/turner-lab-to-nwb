@@ -85,11 +85,6 @@ The events data is stored in `.mat` files (in a structure called `events`).
 | return_end   | The time of the hand sensor at the home-position on (= end of the return movement) |
 | cue_onset    | The time of the target and go-cue instruction (reach target and go-cue were instructed simultaneously in this task) |
 
-## Stimulation data
-
-Some sessions may also include stimulation data which is stored in `.mat` files (in a structure called `dbs`).
-This data contains the onset times of stimulation. The site of stimulation and depth is stored in the `DataList` spreadsheet ("Stim. depth", "Stim. site").
-
 ## Subject metadata
 
 The subject metadata can be provided in the respective conversion folders e.g. `src/turner_lab_to_nwb/asap_tdt/metadata/subjects_metadata.yaml` file as the follows:
@@ -146,11 +141,13 @@ Required Parameters:
 
 ### GPi only mode
 
-When the `gpi_only` parameter is set to `True`, the conversion will only convert the sessions that contain GPi data.
-The general metadata for the public dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/public_metadata.yaml`.
+When the `gpi_only` parameter is set to `True`, the conversion script will only convert the sessions that contain GPi data.
+The general metadata for the pre-MPTP sessions can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/pre_MPTP_GPi_only_metadata.yaml`.
+The general metadata for the post-MPTP sessions can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/post_MPTP_GPi_only_metadata.yaml`.
 
-When the `gpi_only` parameter is set to `False`, the conversion will convert all non-GPi data.
-The general metadata for the embargo dataset can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/embargo_metadata.yaml`.
+When the `gpi_only` parameter is set to `False`, the conversion script will convert all (GPi and non-GPi) data.
+The general metadata for the pre-MPTP sessions can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/pre_MPTP_metadata.yaml`.
+The general metadata for the post-MPTP sessions can be edited by modifying the yaml file at `src/turner_lab_to_nwb/asap_tdt/metadata/post_MPTP_metadata.yaml`.
 
 ## TDT to NWB mapping
 
