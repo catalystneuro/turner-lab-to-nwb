@@ -3,6 +3,7 @@ import warnings
 from pathlib import Path
 
 from natsort import natsorted
+from neuroconv.tools.data_transfers import automatic_dandi_upload
 from neuroconv.utils import FolderPathType, FilePathType
 from nwbinspector.inspector_tools import save_report, format_messages
 from tqdm import tqdm
@@ -158,4 +159,10 @@ if __name__ == "__main__":
         gpi_only=False,
         stub_test=False,
         verbose=False,
+    )
+
+    automatic_dandi_upload(
+        dandiset_id="000947",
+        nwb_folder_path=output_folder_path,
+        cleanup=False,
     )
