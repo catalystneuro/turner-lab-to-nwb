@@ -1,18 +1,18 @@
-# The NWBFile metadata for the embargo dataset (all non-GPi channels) for post-MPTP data
+# The NWBFile metadata for the public dataset (GPi and non-GPi channels) for post-MPTP sessions
 
 NWBFile:
-  keywords: [extracellular electrophysiology, single-unit activity, ventrolateral anterior nucleus, reaching task, macaque, MPTP]
+  keywords: [extracellular electrophysiology, single-unit activity, globus pallidus-internus, ventrolateral anterior nucleus, primary motor cortex, reaching task, macaque]
   related_publications:
-    - https://doi.org/10.1101/2023.09.08.556120
+    - https://doi.org/10.1101/546598
   institution: University of Pittsburgh
   lab: Turner
   experimenter:
     - Kase, Daisuke
     - Zimnik, Andrew
   experiment_description: |
-    This dataset contains continuous wide-band recordings of single-unit activity from ventrolateral nucleus of the
-    thalamus (VLa and VLp) and the arm-related regions of primary motor cortex, including sulcus (M1-S) and gyrus (M1-G)
-    subregions, in MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine)-induced parkinsonian monkeys performing a choice
+    This dataset contains recordings of single-unit activity from from multiple cortical areas,
+    including globus pallidus-internus (GPi), ventrolateral nucleus of the thalamus (VLa and VLp) and
+    the arm-related regions of primary motor cortex, including sulcus (M1-S) and gyrus (M1-G) subregions in  monkeys performing a choice
     reaction time reaching task. Small numbers of recordings were also obtained from supplementary motor area (SMA),
     external globus pallidus (GPe), the thalamic reticular nucleus (RTN), striatum (STR) and the region between RTN
     and VL thalamus (R-V).
@@ -22,6 +22,6 @@ NWBFile:
     The neuronal data were high-pass filtered (Fpass: 200 Hz, Matlab FIRPM) and thresholded, and candidate action
     potentials were sorted into clusters in principal components space (Off-line Sorter, Plexon).
   session_description: |
-    This session contains raw and high-pass filtered (200 Hz) extracellular data from ventrolateral nucleus of the
-    thalamus (VLa and VLp) and the arm-related regions of primary motor cortex, including sulcus (M1-S) and gyrus (M1-G)
-    subregions, in parkinsonism monkeys performing a choice reaction time reaching task.
+    This session contains raw and high-pass filtered (200 Hz) extracellular data from multiple cortical areas,
+    including the globus pallidus-internus (GPi) and ventrolateral nucleus of the thalamus (VLa and VLp) in
+    macaque performing a choice reaction time reaching task.

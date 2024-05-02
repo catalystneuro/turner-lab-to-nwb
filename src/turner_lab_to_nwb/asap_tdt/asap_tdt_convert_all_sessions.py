@@ -3,6 +3,7 @@ import warnings
 from pathlib import Path
 
 from natsort import natsorted
+from neuroconv.tools.data_transfers import automatic_dandi_upload
 from neuroconv.utils import FolderPathType, FilePathType
 from nwbinspector.inspector_tools import save_report, format_messages
 from tqdm import tqdm
@@ -53,7 +54,8 @@ def convert_sessions(
 
     sessions_metadata = load_session_metadata(data_list_file_path)
     # filter the sessions based on the target
-    sessions_metadata = sessions_metadata[sessions_metadata["Target"].eq("GPi") == gpi_only]
+    if gpi_only:
+        sessions_metadata = sessions_metadata[sessions_metadata["Target"].eq("GPi")]
     # filter out NaN values
     sessions_metadata = sessions_metadata[sessions_metadata["Target"] != "NaN"]
     progress_bar = tqdm(
@@ -154,7 +156,13 @@ if __name__ == "__main__":
         folder_path=folder_path,
         output_folder_path=output_folder_path,
         data_list_file_path=data_list_file_path,
-        gpi_only=True,
+        gpi_only=False,
         stub_test=False,
         verbose=False,
+    )
+
+    automatic_dandi_upload(
+        dandiset_id="000947",
+        nwb_folder_path=output_folder_path,
+        cleanup=False,
     )

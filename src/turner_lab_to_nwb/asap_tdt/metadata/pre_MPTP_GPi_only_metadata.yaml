@@ -1,4 +1,4 @@
-# The NWBFile metadata for the public dataset (only GPi channels) for pre-MPTP data
+# The NWBFile metadata for pre-MPTP sessions that only contain GPi channels
 
 NWBFile:
   keywords: [extracellular electrophysiology, single-unit activity, globus pallidus-internus, reaching task, macaque]
@@ -19,4 +19,4 @@ NWBFile:
     potentials were sorted into clusters in principal components space (Off-line Sorter, Plexon).
   session_description: |
     This session contains raw and high-pass filtered (200 Hz) extracellular data from globus pallidus-internus (GPi)
-    in monkeys performing a choice reaction time reaching task.
+    in macaque performing a choice reaction time reaching task.

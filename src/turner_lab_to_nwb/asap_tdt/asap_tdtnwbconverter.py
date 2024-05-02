@@ -88,7 +88,9 @@ class ASAPTdtNWBConverter(ConverterPipe):
                 sorting_extractor = sorting_interface.sorting_extractor
                 extractor_unit_ids = sorting_extractor.get_unit_ids()
                 # unit_ids are not unique across sorting interfaces, so we are offsetting them here
-                sorting_extractor._main_ids = extractor_unit_ids + num_units
+                renamed_unit_ids = extractor_unit_ids + num_units
+                sorting_extractor._main_ids = renamed_unit_ids
+                sorting_extractor._sorting_segments[0]._ids_conversion = dict(zip(renamed_unit_ids, extractor_unit_ids))
                 num_units = len(extractor_unit_ids)
 
         super().run_conversion(
