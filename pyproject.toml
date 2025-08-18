@@ -1,6 +1,43 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "turner-lab-to-nwb"
+version = "0.0.1"
+description = "NWB conversion scripts, functions, and classes for Turner conversion"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "CatalystNeuro", email = "ben.dichter@catalystneuro.com"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+requires-python = ">=3.12"
+dependencies = [
+    "neuroconv",
+    "nwbwidgets",
+    "nwbinspector",
+    "pymatreader>=1.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/catalystneuro/turner-lab-to-nwb"
+Repository = "https://github.com/catalystneuro/turner-lab-to-nwb"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/turner_lab_to_nwb"]
+
 [tool.black]
 line-length = 120
-target-version = ['py38', 'py39', 'py310']
+target-version = ['py312']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -19,6 +56,24 @@ extend-exclude = '''
   | dist
 )/
 '''
+
+[tool.codespell]
+skip = '*.git*,*.pdf,*.css, *.ipynb,*/assets/*,*.txt'
+check-hidden = true
+ignore-words-list = 'assertin,sems,sinlge,singl,som'
+
+[tool.ruff]
+
+[tool.ruff.lint]
+select = [
+    "F401",  # Unused import
+    "I",  # All isort rules
+]
+fixable = ["ALL"]
+
+[tool.ruff.lint.isort]
+relative-imports-order = "closest-to-furthest"
+known-first-party = ["turner_lab_to_nwb"]
 
 [tool.isort]
 profile = "black"
