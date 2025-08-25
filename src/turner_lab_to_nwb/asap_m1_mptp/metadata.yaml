@@ -1,0 +1,36 @@
+NWBFile:
+  related_publications:
+    - "Turner & DeLong (2000). Corticostriatal activity in primary motor cortex of the macaque"
+    - "Pasquereau & Turner (2011). Primary motor cortex of the parkinsonian monkey: differential effects on the spontaneous activity of pyramidal tract-type neurons"
+    - "Pasquereau & Turner (2013). Primary motor cortex of the parkinsonian monkey: altered encoding of active movement"
+  session_description: |
+    Single-unit recordings from primary motor cortex (M1) of MPTP-treated parkinsonian macaque monkeys 
+    performing visuomotor step-tracking flexion/extension elbow movements. Data includes spike times from 
+    pyramidal tract neurons (PTNs) and corticostriatal neurons (CSNs) identified through antidromic stimulation.
+    Task involves center hold, target presentation, movement execution, and reward phases with optional 
+    torque perturbations on random trials.
+  institution: Emory University
+  lab: Turner Lab
+  experimenter:
+    - Turner, Robert S.
+    - Pasquereau, Benjamin
+  session_start_time: "1900-01-01T00:00:00"  # Placeholder - actual times unknown
+  experiment_description: |
+    Investigation of motor cortical dysfunction in parkinsonism using single-unit recordings during 
+    visuomotor motor tasks. MPTP-induced parkinsonian model used to study changes in pyramidal tract 
+    and corticostriatal neuron activity patterns.
+  keywords:
+    - MPTP
+    - parkinsonism
+    - motor cortex
+    - single unit recording
+    - pyramidal tract neurons
+    - corticostriatal neurons
+    - visuomotor task
+Subject:
+  species: Macaca mulatta  # Macaque monkey
+  age: P2555D  # Approximately 7 years (typical adult research macaque)
+  sex: U  # Unknown
+  description: MPTP-treated parkinsonian macaque monkey used for motor cortex electrophysiology
+  subject_id: placeholder
+ 

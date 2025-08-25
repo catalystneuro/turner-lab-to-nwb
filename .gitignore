@@ -159,3 +159,9 @@ src/turner_lab_to_nwb/asap_m1_mptp/assets/pdf_papers
 
 # Project documentation
 CLAUDE.md
+
+# Protocol diagrams (D2 generated files)
+src/turner_lab_to_nwb/asap_m1_mptp/assets/protocol_diagrams/
+
+# NWB output files
+nwbfiles/
