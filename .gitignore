@@ -150,3 +150,12 @@ dmypy.json
 
 # NWB files
 **.nwb
+
+# Data directory (symbolic link)
+data
+
+# PDF papers directory (symbolic link)
+src/turner_lab_to_nwb/asap_m1_mptp/assets/pdf_papers
+
+# Project documentation
+CLAUDE.md
