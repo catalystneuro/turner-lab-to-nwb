@@ -31,6 +31,35 @@ The conversion pipeline will handle the following data streams:
     - Trial-based (when present)
 
 
+### Electrode Coordinate System
+
+The Turner lab dataset uses **chamber-relative coordinates** rather than absolute stereotactic atlas coordinates:
+
+#### **Coordinate Reference Frame**
+- **Origin**: Chamber center/reference point (surgically positioned over left M1)
+- **Chamber specifications**: Cylindrical stainless steel, 35° coronal angle
+- **Coordinate system type**: Subject-specific, chamber-relative coordinates
+
+#### **Coordinate Definitions**  
+- **A_P**: Anterior-Posterior position relative to chamber center (mm, positive = anterior)
+- **M_L**: Medial-Lateral position relative to chamber center (mm, positive = lateral)  
+- **Depth**: Electrode depth below chamber reference point (mm, positive = deeper)
+
+#### **Anatomical Context**
+- **Target region**: Primary motor cortex (M1), arm representation area
+- **Functional verification**: Electrode locations confirmed via microstimulation (≤40μA, 10 pulses at 300Hz)
+- **Anatomical landmark**: Within 3mm of anterior bank of central sulcus
+- **Layer targeting**: Layer 5 pyramidal neurons (PTNs and CSNs)
+
+#### **Clinical/Scientific Context**
+- **Initial targeting**: Chamber surgically positioned using stereotactic atlas coordinates
+- **Daily recordings**: Electrode positions defined relative to chamber for precision and reproducibility
+- **Cross-study comparisons**: Would require individual transformation to atlas coordinates
+- **Coordinate precision**: Sub-millimeter accuracy within chamber reference frame
+
+#### **Atlas Relationship**
+These coordinates do NOT directly correspond to standard macaque brain atlas coordinates (Horsley-Clarke, MNI Macaque Atlas, AC/PC-based). They represent positions within a subject-specific coordinate frame defined by the implanted recording chamber. For cross-study analysis, coordinates would need individual transformation based on each animal's anatomy and chamber placement.
+
 ### Data Stream Locations in MATLAB Files
 
 #### **Extracellular Electrophysiology**

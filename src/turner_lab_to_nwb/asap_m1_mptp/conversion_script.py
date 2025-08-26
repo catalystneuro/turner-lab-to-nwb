@@ -85,7 +85,7 @@ def convert_session_to_nwbfile(
     placeholder_date = datetime(1900, 1, 1, 0, 0, 0, tzinfo=pittsburgh_tz)
     metadata["NWBFile"]["session_start_time"] = placeholder_date
 
-    # Create NWB file with spike data first
+    # Create NWB file - spike interface will add electrode table and units
     nwbfile = converter.create_nwbfile(metadata=metadata)
 
     configure_and_write_nwbfile(nwbfile=nwbfile, nwbfile_path=nwbfile_path)
@@ -155,16 +155,14 @@ if __name__ == "__main__":
         nwbfile_path = output_folder / f"{session_id}.nwb"
         
         # Convert session
-        try:
-            convert_session_to_nwbfile(
-                matlab_file_path, 
-                nwbfile_path, 
-                session_info_dict, 
-                inter_trial_time_interval, 
-                verbose=verbose
-            )
-        except:
-            print(f"Error converting session {session_id} and file {matlab_file_path}")
+        convert_session_to_nwbfile(
+            matlab_file_path, 
+            nwbfile_path, 
+            session_info_dict, 
+            inter_trial_time_interval, 
+            verbose=verbose
+        )
+
 
     if verbose:
         print(f"Conversion complete! Files saved to {output_folder}")

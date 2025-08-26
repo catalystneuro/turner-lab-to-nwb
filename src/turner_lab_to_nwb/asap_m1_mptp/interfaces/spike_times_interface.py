@@ -32,7 +32,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         file_path : FilePath
             Path to the first Turner Lab .mat file (will check for additional units automatically)
         session_metadata : dict
-            Metadata for all units in this session
+            Metadata for all units in this session (each unit contains session-level info)
         inter_trial_time_interval : float, optional
             Time interval between trials in seconds, by default 3.0
         verbose : bool, optional
@@ -42,6 +42,18 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         self.base_file_path = Path(file_path)
         self.session_metadata = session_metadata
         self.inter_trial_time_interval = inter_trial_time_interval
+        
+        # Extract session-level info from first unit (all units have same session info)
+        if self.session_metadata:
+            first_unit = self.session_metadata[0]
+            self.session_info = {
+                'Animal': first_unit['Animal'],
+                'MPTP': first_unit['MPTP'],
+                'DateCollected': first_unit['DateCollected'],
+                'A_P': first_unit['A_P'],
+                'M_L': first_unit['M_L'],
+                'Depth': first_unit['Depth']
+            }
 
     def get_metadata(self) -> DeepDict:
         """Get metadata for the NWB file."""
@@ -84,6 +96,41 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         if metadata is None:
             metadata = self.get_metadata()
 
+        # Create electrode table first (before adding units)
+        device = nwbfile.create_device(
+            name="DeviceMicroelectrodeSystem",
+            description="Turner Lab microelectrode recording system: Glass-coated PtIr microelectrode "
+                        "mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo) within "
+                        "cylindrical stainless steel recording chamber (35° coronal angle). "
+                        "Signal amplified ×10⁴, bandpass filtered 0.3-10kHz. "
+                        "Sampling: 20kHz for unit discrimination, 1kHz for analog/behavioral signals. "
+                        "Chamber-relative coordinate system with sub-millimeter precision."
+        )
+        
+        electrode_group = nwbfile.create_electrode_group(
+            name="ElectrodeGroupM1Chamber", 
+            description="Primary motor cortex (M1) electrode group within chamber-relative coordinate system. "
+                        "Layer 5 pyramidal neurons targeted in arm representation area. "
+                        "Chamber surgically positioned over left M1 using stereotactic atlas coordinates. "
+                        "Daily electrode positions defined relative to chamber center/reference point. "
+                        "Functional verification via microstimulation (≤40μA, 10 pulses at 300Hz). "
+                        "Antidromic identification from cerebral peduncle (PTNs) and posterolateral striatum (CSNs).",
+            location="Primary motor cortex (M1), arm area, Layer 5 - chamber coordinates",
+            device=device
+        )
+        
+        # Add electrode with chamber-relative coordinates (NOT absolute stereotactic coordinates)
+        nwbfile.add_electrode(
+            x=self.session_info['M_L'],  # Medial-Lateral (mm, + = lateral from chamber center)
+            y=self.session_info['A_P'],  # Anterior-Posterior (mm, + = anterior from chamber center)
+            z=self.session_info['Depth'],  # Depth (mm, + = below chamber reference point)
+            imp=float('nan'),  # Electrode impedance not recorded
+            location="M1 arm area, Layer 5 (chamber coordinates: A/P={:.1f}, M/L={:.1f}, Depth={:.1f}mm)".format(
+                self.session_info['A_P'], self.session_info['M_L'], self.session_info['Depth']),
+            filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
+            group=electrode_group
+        )
+
         # Discover all unit files for this session
         base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811" from "v5811.1.mat"
         base_dir = self.base_file_path.parent
@@ -113,7 +160,6 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         if nwbfile.units is None:
             nwbfile.add_unit_column("cell_type", "Cell type classification (PTN/CSN/NR/NT)")
             nwbfile.add_unit_column("unit_number", "Original unit number from recording")
-            nwbfile.add_unit_column("file_origin", "Source MATLAB file")
 
         # Process each unit
         for unit_file_path, unit_meta in zip(unit_files, unit_metadata_list):
@@ -183,12 +229,12 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             cell_type = unit_meta.get("Antidrom", "unknown")
             unit_number = unit_meta.get("UnitNum1", 0)
 
-            # Add unit to NWB file
+            # Add unit to NWB file - link to electrode index 0
             nwbfile.add_unit(
                 spike_times=all_spike_times,
+                electrodes=[0],  # Link to electrode index 0
                 cell_type=cell_type,
                 unit_number=unit_number,
-                file_origin=str(unit_file_path.name),
             )
 
             if self.verbose:
