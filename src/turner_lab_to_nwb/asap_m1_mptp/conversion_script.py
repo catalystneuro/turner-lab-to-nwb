@@ -70,7 +70,7 @@ def convert_session_to_nwbfile(
     # Update metadata with session-specific information
     cell_types = [unit['Antidrom'] for unit in session_info_dict['units']]
     general_metadata['NWBFile']['session_description'] += f" MPTP condition: {session_info['MPTP']}. Cell types: {', '.join(cell_types)}."
-    general_metadata['Subject']['subject_id'] = f"monkey_{session_info['Animal']}"
+    general_metadata['Subject']['subject_id'] = session_info['Animal']
     general_metadata['Subject']['description'] = f"MPTP-treated parkinsonian macaque monkey. Recording date: {session_info['DateCollected']}. Stereotactic coordinates: A/P={session_info['A_P']}mm, M/L={session_info['M_L']}mm, Depth={session_info['Depth']}mm."
 
     data_interfaces = {"spike": spike_interface, "analog": analog_interface, "trials": trials_interface}
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     output_folder = Path("/home/heberto/development/turner-lab-to-nwb/nwbfiles/")
     inter_trial_time_interval = 3.0  # seconds
     stub_test = False  # Set to True to convert only 5 sessions for testing
-    verbose = True  # Set to True to print progress information
+    verbose = False  # Set to True to print progress information
 
     # Load metadata table
     metadata_table_path = Path(__file__).parent / "assets" / "metadata_table" / "ven_table.csv"
@@ -155,13 +155,16 @@ if __name__ == "__main__":
         nwbfile_path = output_folder / f"{session_id}.nwb"
         
         # Convert session
-        convert_session_to_nwbfile(
-            matlab_file_path, 
-            nwbfile_path, 
-            session_info_dict, 
-            inter_trial_time_interval, 
-            verbose=verbose
-        )
-    
+        try:
+            convert_session_to_nwbfile(
+                matlab_file_path, 
+                nwbfile_path, 
+                session_info_dict, 
+                inter_trial_time_interval, 
+                verbose=verbose
+            )
+        except:
+            print(f"Error converting session {session_id} and file {matlab_file_path}")
+
     if verbose:
         print(f"Conversion complete! Files saved to {output_folder}")

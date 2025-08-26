@@ -124,13 +124,43 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             if "unit_ts" not in mat_data:
                 raise ValueError(f"Missing 'unit_ts' field in MATLAB file: {unit_file_path}")
 
-            # Load spike times matrix (trials x max_spikes_per_trial)
+            # Load spike times matrix - handle both 1D and 2D formats
             spike_times_matrix = mat_data["unit_ts"]
-            n_trials, max_spikes_per_trial = spike_times_matrix.shape
+            
+            if spike_times_matrix.ndim == 1:
+                # 1D format: one value per trial (or two values per trial for different conditions)
+                # Convert to 2D format for consistent processing
+                if self.verbose:
+                    print(f"Converting 1D unit_ts array (shape {spike_times_matrix.shape}) to 2D format")
+                spike_times_matrix = spike_times_matrix.reshape(-1, 1)  # Each row is a trial with 1 spike max
+                n_trials, max_spikes_per_trial = spike_times_matrix.shape
+            elif spike_times_matrix.ndim == 2:
+                # 2D format: trials x max_spikes_per_trial (standard format)
+                n_trials, max_spikes_per_trial = spike_times_matrix.shape
+            else:
+                raise ValueError(f"Unexpected unit_ts array dimensions: {spike_times_matrix.ndim}. Expected 1D or 2D array.")
 
             # Generate trial start times if not provided (should be same for all units in session)
             if trial_start_times is None:
-                trial_start_times = np.arange(n_trials) * self.inter_trial_time_interval
+                # Use analog-based trial durations (same approach as trials_interface.py)
+                analog_data = mat_data["Analog"]
+                
+                # Get actual trial durations from analog data
+                trial_durations = []
+                for trial_index in range(n_trials):
+                    trial_analog = analog_data["x"][trial_index]
+                    duration_s = len(trial_analog) / 1000.0  # 1kHz sampling, convert to seconds
+                    trial_durations.append(duration_s)
+                
+                # Create trial start times with inter-trial intervals
+                trial_start_times = []
+                current_time = 0.0
+                
+                for trial_index in range(n_trials):
+                    trial_start_times.append(current_time)
+                    current_time += trial_durations[trial_index] + self.inter_trial_time_interval
+                
+                trial_start_times = np.array(trial_start_times)
 
             # Convert trial-based spike times to continuous timeline
             all_spike_times = []
@@ -142,8 +172,8 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 valid_spikes = trial_spikes[~np.isnan(trial_spikes)]
 
                 if len(valid_spikes) > 0:
-                    # Add trial start time offset
-                    global_spike_times = valid_spikes + trial_start_times[trial_idx]
+                    # Convert from milliseconds to seconds and add trial start time offset
+                    global_spike_times = (valid_spikes / 1000.0) + trial_start_times[trial_idx]
                     all_spike_times.extend(global_spike_times)
 
             # Sort all spike times

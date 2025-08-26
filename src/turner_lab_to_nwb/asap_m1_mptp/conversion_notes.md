@@ -34,7 +34,10 @@ The conversion pipeline will handle the following data streams:
 ### Data Stream Locations in MATLAB Files
 
 #### **Extracellular Electrophysiology**
-- **Spike times**: `unit_ts` matrix - Shape: (n_trials, max_spikes_per_trial), padded with NaNs
+- **Spike times**: `unit_ts` matrix - **Two data formats encountered:**
+  - **Standard format**: Shape (n_trials, max_spikes_per_trial), padded with NaNs
+  - **Compact format**: Shape (n_values,) - 1D array with one value per condition/trial
+  - The conversion handles both formats automatically
 - **Waveforms**: Not stored (online spike sorting performed during recording)
 - **Antidromic stimulation traces**: 
   - `StrStim` - Striatum stimulation sweeps (50ms, 20kHz)
@@ -77,6 +80,58 @@ The conversion pipeline will handle the following data streams:
   - `NR` = No response, `NT` = Not tested
 
 **📖 Complete reading instructions**: [File Structure Documentation](assets/data_exploration/file_structure.md)
+
+### Data Format Variations
+
+#### **Spike Times (`unit_ts`) Format Differences**
+
+During conversion development, we encountered two different `unit_ts` data formats that require special handling:
+
+**Standard 2D Format (Most files):**
+- Shape: `(n_trials, max_spikes_per_trial)`
+- Example: `(20, 138)` = 20 trials, up to 138 spikes per trial
+- Data: Multiple spike times per trial, NaN-padded
+- Usage: Typical format allowing multiple spikes per trial
+
+**Compact 1D Format (Some files like v3601.1.mat, v5604b.2.mat):**
+- Shape: `(n_values,)`  
+- Example: `(20,)` or `(40,)`
+- Data: Single representative spike time per trial/condition
+- Usage: Simplified format with one spike time per trial, NaN when no spike
+
+**What we observed:**
+- v3601.1.mat: 1D array shape `(20,)` with 4 non-NaN values out of 20
+- v5604b.2.mat: 1D array shape `(40,)` with 29 non-NaN values out of 40  
+- Standard files: 2D array like `(20, 138)` with multiple spikes per trial
+
+**Expected trial counts (verified from metadata table and file_info):**
+- v3601.1.mat: `ntrials1_1=10, ntrials1_2=10` (total=20), `file_info.trial_n=20`, Events confirms 20 behavioral trials
+- v5604b.2.mat: `ntrials1_1=20, ntrials1_2=20` (total=40), `file_info.trial_n=40`, Events confirms 40 behavioral trials
+- Standard files: Same pattern, e.g., v0502.1.mat has 20 behavioral trials but 2D `unit_ts` shape `(20, 138)`
+
+**Key insight**: The 1D `unit_ts` array length **exactly matches** the total number of behavioral trials:
+- 1D format: Array length = total behavioral trials (one-to-one mapping)
+- 2D format: First dimension = total behavioral trials, second dimension = max spikes per trial
+
+**What we expected:**
+- All files to follow the standard 2D format based on initial data exploration
+
+**What needs clarification with data authors:**
+1. **Data collection difference**: Why some sessions used 1D vs 2D spike recording format?
+2. **Temporal meaning**: In 1D format, does each element represent:
+   - Single spike per trial (most likely given one-to-one trial mapping)?
+   - Peak/representative firing time within each trial?
+   - First spike occurrence in each trial?
+3. **Recording methodology**: Was spike detection/sorting different for 1D vs 2D sessions?
+4. **Data completeness**: Are we losing spike data by using only one value per trial in 1D format?
+
+**Current assumptions in conversion:**
+- 1D format represents one spike time per behavioral trial
+- Direct mapping: `unit_ts[i]` corresponds to behavioral trial `i`
+- NaN values indicate trials with no recorded spikes
+- We reshape 1D to 2D `(n_trials, 1)` for consistent NWB processing
+
+**Current solution**: The conversion automatically detects format and reshapes 1D arrays to 2D `(n_values, 1)` for consistent processing.
 
 
 ## Keywords

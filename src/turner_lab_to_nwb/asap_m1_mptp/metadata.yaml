@@ -29,6 +29,5 @@ NWBFile:
 Subject:
   species: Macaca mulatta  # Macaque monkey
   age: P2555D  # Approximately 7 years (typical adult research macaque)
-  sex: U  # Unknown
+  sex: F  # Female
   description: MPTP-treated parkinsonian macaque monkey used for motor cortex electrophysiology
-  subject_id: placeholder
