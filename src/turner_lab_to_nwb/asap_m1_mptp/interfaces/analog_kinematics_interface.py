@@ -157,7 +157,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
             if signal_name == 'x':
                 # Elbow joint angle data - raw manipulandum angle sensor data
                 angle_series = SpatialSeries(
-                    name="ElbowAngle",
+                    name="SpatialSeriesElbowAngle",
                     data=continuous_data.reshape(-1, 1),  # Make 2D
                     timestamps=timestamps,
                     unit="degrees",
@@ -167,7 +167,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
                 
                 # Wrap in CompassDirection for angular data
                 compass_direction = CompassDirection(
-                    name="ElbowAngleCompass",
+                    name="CompassDirectionElbowAngle",
                     spatial_series=angle_series
                 )
                 

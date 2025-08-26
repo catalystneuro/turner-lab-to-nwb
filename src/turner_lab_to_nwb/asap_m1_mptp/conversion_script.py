@@ -19,7 +19,7 @@ from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
 def convert_session_to_nwbfile(
     matlab_file_path: str,
     nwbfile_path: str,
-    session_metadata: dict,
+    session_info_dict: dict,
     inter_trial_time_interval: float = 3.0,
     verbose: bool = False,
 ):
@@ -32,16 +32,23 @@ def convert_session_to_nwbfile(
         Path to the MATLAB .mat file
     nwbfile_path : str
         Path where to save the NWB file
-    session_metadata : dict
-        Session-specific metadata from the metadata table
+    session_info_dict : dict
+        Structured session metadata containing:
+        - 'session_info': Dict with session-level data (Animal, MPTP, DateCollected, 
+          stereotactic coordinates A_P/M_L, Depth, etc.)
+        - 'units': List of unit-specific metadata dicts (UnitNum1, Antidrom, etc.)
     inter_trial_time_interval : float, optional
         Time interval between trials in seconds, by default 3.0
     verbose : bool, optional
         Whether to print verbose output, by default False
     """
+    # Extract session-level info
+    session_info = session_info_dict['session_info']
+    
     # Create interfaces
     spike_interface = M1MPTPSpikeTimesInterface(
         file_path=matlab_file_path,
+        session_metadata=session_info_dict['units'],
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
@@ -61,9 +68,10 @@ def convert_session_to_nwbfile(
     general_metadata = load_dict_from_file(metadata_file)
     
     # Update metadata with session-specific information
-    general_metadata['NWBFile']['session_description'] += f" MPTP condition: {session_metadata['MPTP']}. Cell type: {session_metadata['Antidrom']}."
-    general_metadata['Subject']['subject_id'] = f"monkey_{session_metadata['Animal']}"
-    general_metadata['Subject']['description'] = f"MPTP-treated parkinsonian macaque monkey. Recording date: {session_metadata['DateCollected']}"
+    cell_types = [unit['Antidrom'] for unit in session_info_dict['units']]
+    general_metadata['NWBFile']['session_description'] += f" MPTP condition: {session_info['MPTP']}. Cell types: {', '.join(cell_types)}."
+    general_metadata['Subject']['subject_id'] = f"monkey_{session_info['Animal']}"
+    general_metadata['Subject']['description'] = f"MPTP-treated parkinsonian macaque monkey. Recording date: {session_info['DateCollected']}. Stereotactic coordinates: A/P={session_info['A_P']}mm, M/L={session_info['M_L']}mm, Depth={session_info['Depth']}mm."
 
     data_interfaces = {"spike": spike_interface, "analog": analog_interface, "trials": trials_interface}
     converter = ConverterPipe(data_interfaces=data_interfaces)
@@ -91,7 +99,8 @@ if __name__ == "__main__":
     base_data_path = Path("/home/heberto/data/turner/Ven_All/")
     output_folder = Path("/home/heberto/development/turner-lab-to-nwb/nwbfiles/")
     inter_trial_time_interval = 3.0  # seconds
-    stub_test = True  # Set to True to convert only 5 sessions for testing
+    stub_test = False  # Set to True to convert only 5 sessions for testing
+    verbose = True  # Set to True to print progress information
 
     # Load metadata table
     metadata_table_path = Path(__file__).parent / "assets" / "metadata_table" / "ven_table.csv"
@@ -100,29 +109,44 @@ if __name__ == "__main__":
     # Create output directory if needed
     output_folder.mkdir(parents=True, exist_ok=True)
     
-    # Get unique filenames (some files have multiple units, we want each unique file)
-    unique_filenames = metadata_df['FName1'].unique()
+    # Group metadata by session (same file base, date, location)
+    session_groups = metadata_df.groupby(['FName1', 'DateCollected', 'Depth', 'A_P', 'M_L'])
     
-    # Limit to 5 files for testing if stub_test is True
+    # Convert groups to list for easier handling
+    sessions_to_convert = [(name, group) for name, group in session_groups]
+    
+    # Limit to 5 sessions for testing if stub_test is True
     if stub_test:
-        unique_filenames = unique_filenames[:5]
+        sessions_to_convert = sessions_to_convert[:5]
     
-    print(f"Converting {len(unique_filenames)} sessions...")
+    if verbose:
+        print(f"Converting {len(sessions_to_convert)} sessions...")
     
     # Convert all sessions
-    for filename_base in tqdm(unique_filenames, desc="Converting sessions"):
-        # Get metadata for this file (take first row if multiple units per file)
-        session_metadata_row = metadata_df[metadata_df['FName1'] == filename_base].iloc[0]
-        session_metadata = session_metadata_row.to_dict()
+    for (fname, date, depth, ap, ml), session_group in tqdm(sessions_to_convert, desc="Converting sessions"):
+        # Use first row for session-level info (all rows have same session data)
+        primary_unit = session_group.iloc[0]
         
-        # Construct session ID and file paths
-        session_id = f"{session_metadata['Animal']}_{session_metadata['MPTP']}_{filename_base}"
+        # Create structured session metadata dictionary
+        session_info_dict = {
+            'session_info': {
+                'Animal': primary_unit['Animal'],
+                'MPTP': primary_unit['MPTP'], 
+                'DateCollected': primary_unit['DateCollected'],
+                'FName1': fname,
+                'A_P': ap,
+                'M_L': ml,
+                'Depth': depth,
+            },
+            'units': [row.to_dict() for _, row in session_group.iterrows()]
+        }
         
-        # Determine unit number from metadata (UnitNum1 is always present, UnitNum2 may be NaN)
-        unit_num = session_metadata['UnitNum1']  # Use first unit for this filename
+        # Construct session ID (without unit number since one file represents whole session)
+        session_id = f"{primary_unit['Animal']}_{primary_unit['MPTP']}_{fname}"
         
-        # Construct MATLAB file path with appropriate unit number
-        matlab_file_path = base_data_path / f"{filename_base}.{int(unit_num)}.mat"
+        # Use first unit file as base (interface will discover other units automatically)
+        first_unit_num = primary_unit['UnitNum1']
+        matlab_file_path = base_data_path / f"{fname}.{int(first_unit_num)}.mat"
         
         if not matlab_file_path.exists():
             raise FileNotFoundError(f"MATLAB file not found: {matlab_file_path}")
@@ -132,11 +156,12 @@ if __name__ == "__main__":
         
         # Convert session
         convert_session_to_nwbfile(
-            str(matlab_file_path), 
-            str(nwbfile_path), 
-            session_metadata, 
+            matlab_file_path, 
+            nwbfile_path, 
+            session_info_dict, 
             inter_trial_time_interval, 
-            verbose=False
+            verbose=verbose
         )
     
-    print(f"Conversion complete! Files saved to {output_folder}")
+    if verbose:
+        print(f"Conversion complete! Files saved to {output_folder}")
