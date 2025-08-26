@@ -14,7 +14,6 @@ NWBFile:
   experimenter:
     - Turner, Robert S.
     - Pasquereau, Benjamin
-  session_start_time: "1900-01-01T00:00:00"  # Placeholder - actual times unknown
   experiment_description: |
     Investigation of motor cortical dysfunction in parkinsonism using single-unit recordings during 
     visuomotor motor tasks. MPTP-induced parkinsonian model used to study changes in pyramidal tract 

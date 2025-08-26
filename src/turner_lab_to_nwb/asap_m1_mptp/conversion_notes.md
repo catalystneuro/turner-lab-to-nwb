@@ -163,13 +163,12 @@ This session-based approach:
 3. Enables both single-session analysis and cross-session comparisons
 4. Properly represents the experimental methodology
 
-**🔗 Detailed NWB conversion strategy**: [NWB Conversion Documentation](assets/data_exploration/nwb_converison.md)
+**🔗 Detailed NWB conversion strategy**: [NWB Conversion Documentation](assets/data_exploration/nwb_conversion.md)
 
 ## Trial Structure Within Recording Sessions
 
 ### Visual Overview
-
-![Experimental Protocol](assets/papers_summary_and_notes/experimental_protocol_figure1A.png)
+![Experimental Protocol](./assets/figures/active_paper_figure_1_diagram.png)
 
 **Figure Analysis**: This experimental protocol diagram shows the visuomotor step-tracking task structure. The monkey begins by maintaining cursor position at a center hold target (top panel). After a variable hold period (~2.5s), a peripheral target appears requiring either flexion (FLX) or extension (EXT) elbow movement. The monkey must move the cursor from center to the target (movement phase), then maintain position at the target (target hold, 0.75-1.5s) to receive liquid reward. The paradigm tests elbow joint motor control through a simple center-out reaching task with two possible directions corresponding to anatomical flexion/extension movements.
 

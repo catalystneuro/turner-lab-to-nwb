@@ -26,7 +26,6 @@ dependencies = [
     "nwbwidgets",
     "nwbinspector",
     "pymatreader>=1.1.0",
-    "roiextractors>=0.6.1",
 ]
 
 [project.urls]
@@ -80,3 +79,11 @@ known-first-party = ["turner_lab_to_nwb"]
 profile = "black"
 reverse_relative = true
 known_first_party = ["turner_lab_to_nwb"]
+
+[tool.uv.sources]
+neuroconv = { path = "../neuroconv", editable = true }
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.30.1",
+]

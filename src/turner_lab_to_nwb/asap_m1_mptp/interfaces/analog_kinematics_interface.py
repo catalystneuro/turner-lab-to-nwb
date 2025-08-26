@@ -18,7 +18,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
     associated_suffixes = (".mat",)
     info = "Interface for Turner Lab M1 MPTP analog kinematics data from MATLAB files"
 
-    def __init__(self, file_path: FilePath, inter_trial_time_interval: float = 3.0, verbose: bool = False, **source_data):
+    def __init__(self, file_path: FilePath, inter_trial_time_interval: float = 3.0, verbose: bool = False):
         """
         Initialize the M1MPTPAnalogKinematicsInterface.
         
@@ -31,7 +31,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
         verbose : bool, optional
             Whether to print verbose output, by default False
         """
-        super().__init__(verbose=verbose, file_path=file_path, inter_trial_time_interval=inter_trial_time_interval, **source_data)
+        super().__init__(verbose=verbose)
         self.file_path = Path(file_path)
         self.inter_trial_time_interval = inter_trial_time_interval
 
@@ -168,8 +168,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
                 # Wrap in CompassDirection for angular data
                 compass_direction = CompassDirection(
                     name="ElbowAngleCompass",
-                    spatial_series=angle_series,
-                    description="Elbow joint angle orientation during visuomotor task"
+                    spatial_series=angle_series
                 )
                 
                 # Add raw sensor data to acquisition

@@ -32,44 +32,6 @@ Recording sessions were performed before and after the induction of hemi-parkins
 
 ## Variables
 
-### Events
-The primary events for each trial are stored in the `Events` structure. All times are in milliseconds relative to the beginning of each trial.
-
-- `Events.home_cue_on` = time of start position appearance
-- `Events.target_cue_on` = time of peripheral target appearance at end of start position hold period
-- `Events.targ_dir` = direction of target (1==flexion, 2==extension)
-- `Events.home_leave` = time of cursor exit from start position after appearance of peripheral target
-- `Events.reward` = time of reward delivery at the end of the peripheral target hold period
-
-Temporally-unpredictable proprioceptive perturbations were applied to the joint using a torque motor aligned with the axis of rotation of the involved joint. Perturbations were applied on randomly-selected subsets of trials.
-- `Events.tq_flex` = time of onset of a torque perturbation that produced joint flexion
-- `Events.tq_ext` = time of onset of a torque perturbation that produced joint extension
-
-#### Reading Events Data
-```python
-from pymatreader import read_mat
-import numpy as np
-
-mat_file = read_mat("/home/heberto/data/turner/Ven_All/v1401.1.mat")
-events = mat_file["Events"]
-
-# Get trial timing events
-home_cue_times = events["home_cue_on"]  # Start position appearance
-target_cue_times = events["targ_cue_on"]  # Target appearance (note: targ_cue_on not target_cue_on)
-target_directions = events["targ_dir"]  # 1=flexion, 2=extension
-movement_starts = events["home_leave"]  # Movement onset
-reward_times = events["reward"]  # Reward delivery
-
-# Check for perturbation trials (not all trials have perturbations)
-if "tq_flex" in events:
-    flexion_perturbations = events["tq_flex"]
-if "tq_ext" in events:
-    extension_perturbations = events["tq_ext"]
-
-print(f"Total trials: {len(target_directions)}")
-print(f"Flexion trials: {sum(np.array(target_directions) == 1)}")
-print(f"Extension trials: {sum(np.array(target_directions) == 2)}")
-```
 
 ### Analog
 `Analog` is an array of structures containing segments of analog data for each trial. Analog data were digitized at 500 Hz and interpolated to 1kHz (monkey Ven) or 200 Hz (monkey Leu). For trial number 'n':
@@ -110,6 +72,46 @@ if "lfp" in analog_data:
 print(f"Position data length: {len(position)} samples")
 print(f"Sampling rate: 1kHz (monkey Ven) or 200Hz (monkey Leu)")
 ```
+
+### Events
+The primary events for each trial are stored in the `Events` structure. All times are in milliseconds relative to the beginning of each trial.
+
+- `Events.home_cue_on` = time of start position appearance
+- `Events.target_cue_on` = time of peripheral target appearance at end of start position hold period
+- `Events.targ_dir` = direction of target (1==flexion, 2==extension)
+- `Events.home_leave` = time of cursor exit from start position after appearance of peripheral target
+- `Events.reward` = time of reward delivery at the end of the peripheral target hold period
+
+Temporally-unpredictable proprioceptive perturbations were applied to the joint using a torque motor aligned with the axis of rotation of the involved joint. Perturbations were applied on randomly-selected subsets of trials.
+- `Events.tq_flex` = time of onset of a torque perturbation that produced joint flexion
+- `Events.tq_ext` = time of onset of a torque perturbation that produced joint extension
+
+#### Reading Events Data
+```python
+from pymatreader import read_mat
+import numpy as np
+
+mat_file = read_mat("/home/heberto/data/turner/Ven_All/v1401.1.mat")
+events = mat_file["Events"]
+
+# Get trial timing events
+home_cue_times = events["home_cue_on"]  # Start position appearance
+target_cue_times = events["targ_cue_on"]  # Target appearance 
+target_directions = events["targ_dir"]  # 1=flexion, 2=extension
+movement_starts = events["home_leave"]  # Movement onset
+reward_times = events["reward"]  # Reward delivery
+
+# Check for perturbation trials (not all trials have perturbations)
+if "tq_flex" in events:
+    flexion_perturbations = events["tq_flex"]
+if "tq_ext" in events:
+    extension_perturbations = events["tq_ext"]
+
+print(f"Total trials: {len(target_directions)}")
+print(f"Flexion trials: {sum(np.array(target_directions) == 1)}")
+print(f"Extension trials: {sum(np.array(target_directions) == 2)}")
+```
+
 
 ### Movement (Mvt)
 `Mvt` contains trial-by-trial measures of motor performance extracted from analysis of `Analog.x` and `Analog.vel` signals. All times in milliseconds from beginning of the trial:
