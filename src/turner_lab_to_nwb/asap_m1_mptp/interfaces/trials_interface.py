@@ -22,17 +22,54 @@ class M1MPTPTrialsInterface(BaseDataInterface):
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None):
         mat_data = read_mat(str(self.file_path))
-        events = mat_data["Events"]
-        movement_data = mat_data["Mvt"]
 
-        # Extract event times and convert from milliseconds to seconds
+        # STEP 1: Extract all Events data first
+        events = mat_data["Events"]
         home_cue_times = np.array(events["home_cue_on"]) / 1000.0
         target_cue_times = np.array(events["targ_cue_on"]) / 1000.0
         target_directions = np.array(events["targ_dir"])
         movement_onsets = np.array(events["home_leave"]) / 1000.0
         reward_times = np.array(events["reward"]) / 1000.0
+        n_trials = len(target_directions)
 
-        # Extract movement parameters and convert from milliseconds to seconds
+        # STEP 2: Add trial columns for Events data
+        nwbfile.add_trial_column("home_cue_time", "time of the start position appearance (seconds)")
+        nwbfile.add_trial_column("target_cue_time", "time of the target appearance (seconds)")
+        nwbfile.add_trial_column("movement_onset_time", "movement initiation time relative to trial start (seconds)")
+        nwbfile.add_trial_column("reward_time", "reward delivery time relative to trial start (seconds)")
+
+        # STEP 3: Process transformed Events variables to a tidy format
+        flexion_perturbations = np.array(events.get("tq_flex", [np.nan] * n_trials))
+        extension_perturbations = np.array(events.get("tq_ext", [np.nan] * n_trials))
+
+        # Create movement_type array (flexion=1, extension=2 -> "flexion"/"extension")
+        movement_type = ["flexion" if direction == 1 else "extension" for direction in target_directions]
+
+        # Create perturbation_type and perturbation_time arrays
+        perturbation_type = []
+        perturbation_time = []
+        
+        for i in range(n_trials):
+            # Check for flexion perturbation
+            if not np.isnan(flexion_perturbations[i]):
+                perturbation_type.append("flex")
+                perturbation_time.append(flexion_perturbations[i] / 1000.0)
+            # Check for extension perturbation
+            elif not np.isnan(extension_perturbations[i]):
+                perturbation_type.append("ext")
+                perturbation_time.append(extension_perturbations[i] / 1000.0)
+            # No perturbation
+            else:
+                perturbation_type.append("none")
+                perturbation_time.append(np.nan)
+
+        # Add trial columns for transformed Events variables
+        nwbfile.add_trial_column("movement_type", "flexion or extension")
+        nwbfile.add_trial_column("perturbation_type", "torque perturbation type (flex/ext/none)")
+        nwbfile.add_trial_column("perturbation_time", "perturbation onset time relative to trial start (seconds)")
+
+        # STEP 4: Extract movement Mvt data
+        movement_data = mat_data["Mvt"]
         movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
         movement_end_times = np.array(movement_data["end_t"]) / 1000.0
         peak_velocities = np.array(movement_data["pkvel"])
@@ -40,51 +77,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         end_positions = np.array(movement_data["end_posn"])
         movement_amplitudes = np.array(movement_data["mvt_amp"])
 
-        n_trials = len(target_directions)
-
-        # Calculate trial start and stop times based on actual analog data durations
-        # This approach preserves all recorded data while maintaining inter-trial intervals
-        analog_data = mat_data["Analog"]
-        
-        # Get actual trial durations from analog data (using position signal as reference)
-        trial_durations = []
-        for trial_index in range(n_trials):
-            trial_analog = analog_data["x"][trial_index]
-            duration_s = len(trial_analog) / 1000.0  # Assuming 1kHz sampling, convert to seconds
-            trial_durations.append(duration_s)
-        
-        # Create continuous timeline with inter-trial intervals
-        trial_start_times = []
-        trial_stop_times = []
-        current_time = 0.0
-        
-        for trial_index in range(n_trials):
-            trial_start = current_time
-            trial_stop = trial_start + trial_durations[trial_index]
-            
-            trial_start_times.append(trial_start)
-            trial_stop_times.append(trial_stop)
-            
-            # Next trial starts after inter-trial interval
-            current_time = trial_stop + self.inter_trial_time_interval
-        
-        trial_start_times = np.array(trial_start_times)
-        trial_stop_times = np.array(trial_stop_times)
-        
-        if self.verbose:
-            print(f"Trial durations (s): min={min(trial_durations):.1f}, max={max(trial_durations):.1f}, mean={np.mean(trial_durations):.1f}")
-            print(f"Total session duration: {trial_stop_times[-1]:.1f}s with {self.inter_trial_time_interval}s inter-trial intervals")
-
-        # Add trial columns with descriptions
-        nwbfile.add_trial_column("movement_type", "movement direction (flexion or extension)")
-        nwbfile.add_trial_column("home_cue_time", "start position cue onset relative to trial start (seconds)")
-        nwbfile.add_trial_column("target_cue_time", "peripheral target cue onset relative to trial start (seconds)")
-        nwbfile.add_trial_column("movement_onset_time", "movement initiation time relative to trial start (seconds)")
-        nwbfile.add_trial_column("reward_time", "reward delivery time relative to trial start (seconds)")
-        nwbfile.add_trial_column("perturbation_type", "torque perturbation type (flex/ext/none)")
-        nwbfile.add_trial_column("perturbation_time", "perturbation onset time relative to trial start (seconds)")
-
-        # Add movement parameter columns
+        # STEP 5: Add trial columns for movement data
         nwbfile.add_trial_column(
             "extracted_movement_onset_time", "extracted movement onset time relative to trial start (seconds)"
         )
@@ -94,50 +87,44 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         nwbfile.add_trial_column("movement_amplitude", "movement amplitude")
         nwbfile.add_trial_column("end_position", "final joint position")
 
-        # Handle perturbation data - check if present and extract
-        flexion_perturbations = events.get("tq_flex", [None] * n_trials)
-        extension_perturbations = events.get("tq_ext", [None] * n_trials)
-
-        # Convert perturbation times to arrays, handling None values
-        if flexion_perturbations is not None:
-            flexion_perturbations = np.array(flexion_perturbations)
-        if extension_perturbations is not None:
-            extension_perturbations = np.array(extension_perturbations)
-
-        # Add trials to NWB file
+        # STEP 6: Extract analog data for trial timing
+        analog_data = mat_data["Analog"]
+        trial_durations = []
         for trial_index in range(n_trials):
-            # Determine perturbation type and time
-            perturbation_type = "none"
-            perturbation_time = np.nan
+            trial_analog = analog_data["x"][trial_index]
+            duration_s = len(trial_analog) / 1000.0  # Assuming 1kHz sampling, convert to seconds
+            trial_durations.append(duration_s)
 
-            # Check for flexion perturbation
-            if (
-                flexion_perturbations is not None
-                and trial_index < len(flexion_perturbations)
-                and not np.isnan(flexion_perturbations[trial_index])
-            ):
-                perturbation_type = "flex"
-                perturbation_time = flexion_perturbations[trial_index] / 1000.0
+        # Calculate trial start and stop times based on actual analog data durations
+        trial_start_times = []
+        trial_stop_times = []
+        current_time = 0.0
 
-            # Check for extension perturbation
-            elif (
-                extension_perturbations is not None
-                and trial_index < len(extension_perturbations)
-                and not np.isnan(extension_perturbations[trial_index])
-            ):
-                perturbation_type = "ext"
-                perturbation_time = extension_perturbations[trial_index] / 1000.0
+        for trial_index in range(n_trials):
+            trial_start = current_time
+            trial_stop = trial_start + trial_durations[trial_index]
 
+            trial_start_times.append(trial_start)
+            trial_stop_times.append(trial_stop)
+
+            # Next trial starts after inter-trial interval
+            current_time = trial_stop + self.inter_trial_time_interval
+
+        trial_start_times = np.array(trial_start_times)
+        trial_stop_times = np.array(trial_stop_times)
+
+        # Add trials to NWB file using processed arrays
+        for trial_index in range(n_trials):
             nwbfile.add_trial(
                 start_time=trial_start_times[trial_index],
                 stop_time=trial_stop_times[trial_index],
-                movement_type="flexion" if target_directions[trial_index] == 1 else "extension",
+                movement_type=movement_type[trial_index],
                 home_cue_time=home_cue_times[trial_index],
                 target_cue_time=target_cue_times[trial_index],
                 movement_onset_time=movement_onsets[trial_index],
                 reward_time=reward_times[trial_index],
-                perturbation_type=perturbation_type,
-                perturbation_time=perturbation_time,
+                perturbation_type=perturbation_type[trial_index],
+                perturbation_time=perturbation_time[trial_index],
                 extracted_movement_onset_time=movement_onset_times[trial_index],
                 movement_end_time=movement_end_times[trial_index],
                 peak_velocity=peak_velocities[trial_index],
@@ -150,21 +137,3 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             print(f"Added {n_trials} trials to NWB file")
             print(f"Flexion trials: {sum(target_directions == 1)}")
             print(f"Extension trials: {sum(target_directions == 2)}")
-            if flexion_perturbations is not None or extension_perturbations is not None:
-                perturbation_count = sum(
-                    1
-                    for i in range(n_trials)
-                    if (
-                        (
-                            flexion_perturbations is not None
-                            and i < len(flexion_perturbations)
-                            and not np.isnan(flexion_perturbations[i])
-                        )
-                        or (
-                            extension_perturbations is not None
-                            and i < len(extension_perturbations)
-                            and not np.isnan(extension_perturbations[i])
-                        )
-                    )
-                )
-                print(f"Trials with perturbations: {perturbation_count}")

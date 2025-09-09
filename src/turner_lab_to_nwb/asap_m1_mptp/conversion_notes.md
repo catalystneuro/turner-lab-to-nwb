@@ -332,6 +332,10 @@ movement["mvt_amp"]   # [20] array - movement amplitude per trial
 
 ### Trial Variability and Randomization
 
+The description of the trial in the paper is the following:
+
+> A trial began when a centre target appeared on the monitor and the monkey aligned the cursor with the target. After holding the cursor at this start-position hold period (2–5 s, uniform random distribution), the target jumped to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. After a target-hold interval (0.75–1.5 s), the animal received a drop of juice or food, followed by an intertrial interval (1.2–1.7 s).
+
 **Randomized Elements**:
 - **Target direction**: 1 (flexion) or 2 (extension) chosen randomly
 - **Hold duration**: Variable center hold period before target appearance
