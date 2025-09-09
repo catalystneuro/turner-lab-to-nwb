@@ -93,42 +93,35 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
             signal_data_list = analog_data[signal_name]  # List of trial arrays
             n_trials = len(signal_data_list)
 
-            # Handle variable trial lengths and different data shapes
-            continuous_data = []
+            # Handle variable trial lengths and any dimensionality 
+            trial_data_list = []
             timestamps = []
 
+            # Build cumulative timeline matching trials interface (Option 2: analog-based boundaries)
+            current_time = 0.0
+            
             for trial_index in range(n_trials):
                 trial_data = signal_data_list[trial_index]
-                trial_start_time = trial_index * self.inter_trial_time_interval
+                trial_start_time = current_time
 
-                # Calculate actual trial duration from sampling rate and samples
-                if len(trial_data.shape) == 1:
-                    # Single channel data (x, vel, torq, lfp)
-                    n_samples = len(trial_data)
-                    trial_duration = n_samples / analog_sampling_rate  # Actual duration in seconds
-                    trial_timestamps = np.linspace(trial_start_time, trial_start_time + trial_duration, n_samples)
-                    continuous_data.extend(trial_data)
-                    timestamps.extend(trial_timestamps)
-
-                elif len(trial_data.shape) == 2:
-                    # Multi-channel data (emg: time_points x n_muscles)
-                    n_samples = trial_data.shape[0]
-                    trial_duration = n_samples / analog_sampling_rate  # Actual duration in seconds
-                    trial_timestamps = np.linspace(trial_start_time, trial_start_time + trial_duration, n_samples)
-
-                    if signal_name == "emg":
-                        # EMG has multiple channels - take first channel for now
-                        continuous_data.extend(trial_data[:, 0])  # First EMG channel
-                        timestamps.extend(trial_timestamps)
-                    else:
-                        # Unexpected 2D data for non-EMG signal
-                        raise ValueError(f"Unexpected 2D data shape for signal '{signal_name}': {trial_data.shape}")
-                else:
-                    raise ValueError(f"Unsupported data shape for signal '{signal_name}': {trial_data.shape}")
+                # Get trial duration from first dimension (time samples) - works for any dimensionality
+                n_samples = trial_data.shape[0]
+                trial_duration = n_samples / analog_sampling_rate  # Actual duration in seconds
+                trial_timestamps = np.linspace(trial_start_time, trial_start_time + trial_duration, n_samples)
+                
+                # Always concatenate along trial dimension (axis 0) - preserves all channels/dimensions
+                trial_data_list.append(trial_data)
+                timestamps.extend(trial_timestamps)
+                
+                # Update current time for next trial (matching trials interface)
+                current_time = trial_start_time + trial_duration + self.inter_trial_time_interval
+            
+            # Concatenate all trial data along trial dimension (handles 1D, 2D, 3D, etc. automatically)
+            continuous_data = np.concatenate(trial_data_list, axis=0) if trial_data_list else np.array([])
 
             # Store concatenated signal data
             concatenated_signals[signal_name] = {
-                "data": np.array(continuous_data),
+                "data": continuous_data,
                 "timestamps": np.array(timestamps),
                 "n_trials": n_trials,
                 "sampling_rate": analog_sampling_rate,

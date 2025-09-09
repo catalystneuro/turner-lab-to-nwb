@@ -16,11 +16,11 @@ class M1MPTPTrialsInterface(BaseDataInterface):
     - center_target_appearance_time: Emphasizes discrete visual event (not "onset")
     - lateral_target_appearance_time: Matches experimental papers terminology 
     - subject_movement_onset_time: Purposefully emphasizes subject's behavioral action 
-      vs. experimental setup events; distinguishes animal behavior from apparatus/stimuli
+        vs. experimental setup events; distinguishes animal behavior from apparatus/stimuli
     - torque_perturbation_*: Scientific precision for stimulus parameters
     - derived_*: Movement parameters obtained from kinematic analysis post-processing
     - "onset" vs "appearance": "Onset" for events that initiate ongoing states (subject 
-      movement); "appearance" for punctual visual stimuli
+        movement); "appearance" for punctual visual stimuli
     - Full names: "flexion"/"extension" not "flex"/"ext" for clarity
     """
 
@@ -126,21 +126,24 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         trial_stop_times = np.array(trial_stop_times)
 
         # Add trials to NWB file using processed arrays
+        # CRITICAL: All event times must be offset by trial start time to align with session timeline
         for trial_index in range(n_trials):
+            trial_start = trial_start_times[trial_index]
+            
             nwbfile.add_trial(
-                start_time=trial_start_times[trial_index],
+                start_time=trial_start,
                 stop_time=trial_stop_times[trial_index],
                 movement_type=movement_type[trial_index],
-                center_target_appearance_time=center_target_appearance_times[trial_index],
-                lateral_target_appearance_time=lateral_target_appearance_times[trial_index],
-                subject_movement_onset_time=subject_movement_onset_times[trial_index],
-                reward_time=reward_times[trial_index],
+                center_target_appearance_time=trial_start + center_target_appearance_times[trial_index],
+                lateral_target_appearance_time=trial_start + lateral_target_appearance_times[trial_index],
+                subject_movement_onset_time=trial_start + subject_movement_onset_times[trial_index],
+                reward_time=trial_start + reward_times[trial_index],
                 torque_perturbation_type=torque_perturbation_type[trial_index],
-                torque_perturbation_onset_time=torque_perturbation_onset_times[trial_index],
-                derived_movement_onset_time=derived_movement_onset_times[trial_index],
-                derived_movement_end_time=derived_movement_end_times[trial_index],
+                torque_perturbation_onset_time=trial_start + torque_perturbation_onset_times[trial_index] if not np.isnan(torque_perturbation_onset_times[trial_index]) else np.nan,
+                derived_movement_onset_time=trial_start + derived_movement_onset_times[trial_index],
+                derived_movement_end_time=trial_start + derived_movement_end_times[trial_index],
                 derived_peak_velocity=derived_peak_velocities[trial_index],
-                derived_peak_velocity_time=derived_peak_velocity_times[trial_index],
+                derived_peak_velocity_time=trial_start + derived_peak_velocity_times[trial_index],
                 derived_movement_amplitude=derived_movement_amplitudes[trial_index],
                 derived_end_position=derived_end_positions[trial_index],
             )
