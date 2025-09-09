@@ -42,6 +42,10 @@ def convert_session_to_nwbfile(
     verbose : bool, optional
         Whether to print verbose output, by default False
     """
+    if not matlab_file_path.exists():
+        raise FileNotFoundError(f"MATLAB file not found: {matlab_file_path}")
+        
+    
     # Extract session-level info
     session_info = session_info_dict['session_info']
     
@@ -148,9 +152,7 @@ if __name__ == "__main__":
         first_unit_num = primary_unit['UnitNum1']
         matlab_file_path = base_data_path / f"{fname}.{int(first_unit_num)}.mat"
         
-        if not matlab_file_path.exists():
-            raise FileNotFoundError(f"MATLAB file not found: {matlab_file_path}")
-        
+
         # Construct output path
         nwbfile_path = output_folder / f"{session_id}.nwb"
         

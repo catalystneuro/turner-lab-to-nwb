@@ -9,6 +9,20 @@ from pymatreader import read_mat
 
 
 class M1MPTPTrialsInterface(BaseDataInterface):
+    """
+    Interface for converting trial structure and behavioral events to NWB format.
+    
+    TERMINOLOGY CHOICES:
+    - center_target_appearance_time: Emphasizes discrete visual event (not "onset")
+    - lateral_target_appearance_time: Matches experimental papers terminology 
+    - subject_movement_onset_time: Purposefully emphasizes subject's behavioral action 
+      vs. experimental setup events; distinguishes animal behavior from apparatus/stimuli
+    - torque_perturbation_*: Scientific precision for stimulus parameters
+    - derived_*: Movement parameters obtained from kinematic analysis post-processing
+    - "onset" vs "appearance": "Onset" for events that initiate ongoing states (subject 
+      movement); "appearance" for punctual visual stimuli
+    - Full names: "flexion"/"extension" not "flex"/"ext" for clarity
+    """
 
     def __init__(
         self,
@@ -25,18 +39,18 @@ class M1MPTPTrialsInterface(BaseDataInterface):
 
         # STEP 1: Extract all Events data first
         events = mat_data["Events"]
-        home_cue_times = np.array(events["home_cue_on"]) / 1000.0
-        target_cue_times = np.array(events["targ_cue_on"]) / 1000.0
+        center_target_appearance_times = np.array(events["home_cue_on"]) / 1000.0
+        lateral_target_appearance_times = np.array(events["targ_cue_on"]) / 1000.0
         target_directions = np.array(events["targ_dir"])
-        movement_onsets = np.array(events["home_leave"]) / 1000.0
+        subject_movement_onset_times = np.array(events["home_leave"]) / 1000.0
         reward_times = np.array(events["reward"]) / 1000.0
         n_trials = len(target_directions)
 
         # STEP 2: Add trial columns for Events data
-        nwbfile.add_trial_column("home_cue_time", "time of the start position appearance (seconds)")
-        nwbfile.add_trial_column("target_cue_time", "time of the target appearance (seconds)")
-        nwbfile.add_trial_column("movement_onset_time", "movement initiation time relative to trial start (seconds)")
-        nwbfile.add_trial_column("reward_time", "reward delivery time relative to trial start (seconds)")
+        nwbfile.add_trial_column("center_target_appearance_time", "Time when center target appeared for monkey to align cursor and initiate trial (seconds)")
+        nwbfile.add_trial_column("lateral_target_appearance_time", "Time when lateral target appeared signaling monkey to move from center to flexion/extension position (seconds)")
+        nwbfile.add_trial_column("subject_movement_onset_time", "Time when monkey began moving from center position toward lateral target (seconds)")
+        nwbfile.add_trial_column("reward_time", "Reward delivery. The animal received a drop of juice or food for successful completion of the task (seconds)")
 
         # STEP 3: Process transformed Events variables to a tidy format
         flexion_perturbations = np.array(events.get("tq_flex", [np.nan] * n_trials))
@@ -45,47 +59,45 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         # Create movement_type array (flexion=1, extension=2 -> "flexion"/"extension")
         movement_type = ["flexion" if direction == 1 else "extension" for direction in target_directions]
 
-        # Create perturbation_type and perturbation_time arrays
-        perturbation_type = []
-        perturbation_time = []
+        # Create torque_perturbation_type and torque_perturbation_onset_time arrays
+        torque_perturbation_type = []
+        torque_perturbation_onset_times = []
         
         for i in range(n_trials):
             # Check for flexion perturbation
             if not np.isnan(flexion_perturbations[i]):
-                perturbation_type.append("flex")
-                perturbation_time.append(flexion_perturbations[i] / 1000.0)
+                torque_perturbation_type.append("flexion")
+                torque_perturbation_onset_times.append(flexion_perturbations[i] / 1000.0)
             # Check for extension perturbation
             elif not np.isnan(extension_perturbations[i]):
-                perturbation_type.append("ext")
-                perturbation_time.append(extension_perturbations[i] / 1000.0)
+                torque_perturbation_type.append("extension")
+                torque_perturbation_onset_times.append(extension_perturbations[i] / 1000.0)
             # No perturbation
             else:
-                perturbation_type.append("none")
-                perturbation_time.append(np.nan)
+                torque_perturbation_type.append("none")
+                torque_perturbation_onset_times.append(np.nan)
 
         # Add trial columns for transformed Events variables
         nwbfile.add_trial_column("movement_type", "flexion or extension")
-        nwbfile.add_trial_column("perturbation_type", "torque perturbation type (flex/ext/none)")
-        nwbfile.add_trial_column("perturbation_time", "perturbation onset time relative to trial start (seconds)")
+        nwbfile.add_trial_column("torque_perturbation_type", "direction of torque perturbation causing muscle stretch (flexion/extension/none)")
+        nwbfile.add_trial_column("torque_perturbation_onset_time", "onset time of unpredictable torque impulse (0.1 Nm, 50ms) applied to manipulandum 1-2s after center target capture (seconds)")
 
         # STEP 4: Extract movement Mvt data
         movement_data = mat_data["Mvt"]
-        movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
-        movement_end_times = np.array(movement_data["end_t"]) / 1000.0
-        peak_velocities = np.array(movement_data["pkvel"])
-        peak_velocity_times = np.array(movement_data["pkvel_t"]) / 1000.0
-        end_positions = np.array(movement_data["end_posn"])
-        movement_amplitudes = np.array(movement_data["mvt_amp"])
+        derived_movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
+        derived_movement_end_times = np.array(movement_data["end_t"]) / 1000.0
+        derived_peak_velocities = np.array(movement_data["pkvel"])
+        derived_peak_velocity_times = np.array(movement_data["pkvel_t"]) / 1000.0
+        derived_end_positions = np.array(movement_data["end_posn"])
+        derived_movement_amplitudes = np.array(movement_data["mvt_amp"])
 
         # STEP 5: Add trial columns for movement data
-        nwbfile.add_trial_column(
-            "extracted_movement_onset_time", "extracted movement onset time relative to trial start (seconds)"
-        )
-        nwbfile.add_trial_column("movement_end_time", "extracted movement end time relative to trial start (seconds)")
-        nwbfile.add_trial_column("peak_velocity", "peak velocity during movement")
-        nwbfile.add_trial_column("peak_velocity_time", "time of peak velocity relative to trial start (seconds)")
-        nwbfile.add_trial_column("movement_amplitude", "movement amplitude")
-        nwbfile.add_trial_column("end_position", "final joint position")
+        nwbfile.add_trial_column("derived_movement_onset_time", "onset time of target capture movement derived from kinematic analysis (seconds)")
+        nwbfile.add_trial_column("derived_movement_end_time", "end time of target capture movement derived from kinematic analysis (seconds)")
+        nwbfile.add_trial_column("derived_peak_velocity", "peak velocity during target capture movement derived from kinematic analysis")
+        nwbfile.add_trial_column("derived_peak_velocity_time", "time of peak velocity during target capture movement derived from kinematic analysis (seconds)")
+        nwbfile.add_trial_column("derived_movement_amplitude", "amplitude of target capture movement derived from kinematic analysis")
+        nwbfile.add_trial_column("derived_end_position", "angular joint position at end of target capture movement (degrees)")
 
         # STEP 6: Extract analog data for trial timing
         analog_data = mat_data["Analog"]
@@ -119,18 +131,18 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 start_time=trial_start_times[trial_index],
                 stop_time=trial_stop_times[trial_index],
                 movement_type=movement_type[trial_index],
-                home_cue_time=home_cue_times[trial_index],
-                target_cue_time=target_cue_times[trial_index],
-                movement_onset_time=movement_onsets[trial_index],
+                center_target_appearance_time=center_target_appearance_times[trial_index],
+                lateral_target_appearance_time=lateral_target_appearance_times[trial_index],
+                subject_movement_onset_time=subject_movement_onset_times[trial_index],
                 reward_time=reward_times[trial_index],
-                perturbation_type=perturbation_type[trial_index],
-                perturbation_time=perturbation_time[trial_index],
-                extracted_movement_onset_time=movement_onset_times[trial_index],
-                movement_end_time=movement_end_times[trial_index],
-                peak_velocity=peak_velocities[trial_index],
-                peak_velocity_time=peak_velocity_times[trial_index],
-                movement_amplitude=movement_amplitudes[trial_index],
-                end_position=end_positions[trial_index],
+                torque_perturbation_type=torque_perturbation_type[trial_index],
+                torque_perturbation_onset_time=torque_perturbation_onset_times[trial_index],
+                derived_movement_onset_time=derived_movement_onset_times[trial_index],
+                derived_movement_end_time=derived_movement_end_times[trial_index],
+                derived_peak_velocity=derived_peak_velocities[trial_index],
+                derived_peak_velocity_time=derived_peak_velocity_times[trial_index],
+                derived_movement_amplitude=derived_movement_amplitudes[trial_index],
+                derived_end_position=derived_end_positions[trial_index],
             )
 
         if self.verbose:

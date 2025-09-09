@@ -1,6 +1,6 @@
 # Timing Structure Analysis Summary
 
-**Generated**: 2025-08-25 20:13:51
+**Generated**: 2025-09-09 15:12:31
 
 **Files analyzed**: 359
 **Total trials**: 9949
@@ -14,9 +14,9 @@
 
 | Event | Min (ms) | Max (ms) | Mean (ms) | Std (ms) | Total Events |
 |-------|----------|----------|-----------|----------|--------------|
-| Home Cue | 1272 | 11420 | 2453 | 756 | 9827 |
-| Target Cue | 4042 | 20586 | 6563 | 1288 | 9770 |
-| Movement Onset | 4330 | 21362 | 6993 | 1291 | 9263 |
+| Center Target Appearance | 1272 | 11420 | 2453 | 756 | 9827 |
+| Lateral Target Appearance | 4042 | 20586 | 6563 | 1288 | 9770 |
+| Subject Movement Onset | 4330 | 21362 | 6993 | 1291 | 9263 |
 | Reward Delivery | 5305 | 22331 | 7950 | 1319 | 9181 |
 
 ## Movement Parameters
@@ -25,17 +25,17 @@
 
 | Parameter | Min (ms) | Max (ms) | Mean (ms) | Std (ms) | Values |
 |-----------|----------|----------|-----------|----------|---------|
-| Movement Onset Time | 4334 | 21103 | 6898 | 1273 | 8910 |
-| Movement End Time | 4697 | 21563 | 7286 | 1276 | 8895 |
-| Peak Velocity Time | 4518 | 21386 | 7089 | 1272 | 8895 |
+| Derived Movement Onset Time | 4334 | 21103 | 6898 | 1273 | 8910 |
+| Derived Movement End Time | 4697 | 21563 | 7286 | 1276 | 8895 |
+| Derived Peak Velocity Time | 4518 | 21386 | 7089 | 1272 | 8895 |
 
 ### Kinematic Parameters
 
 | Parameter | Min | Max | Mean | Std | Values |
 |-----------|-----|-----|------|-----|---------|
-| Peak Velocity | 20.2 | 254.8 | 101.9 | 37.5 | 8895 |
-| Movement Amplitude | -37.9 | 30.4 | -3.4 | 19.7 | 8895 |
-| End Position | -28.8 | 30.1 | -1.3 | 19.5 | 8895 |
+| Derived Peak Velocity | 20.2 | 254.8 | 101.9 | 37.5 | 8895 |
+| Derived Movement Amplitude | -37.9 | 30.4 | -3.4 | 19.7 | 8895 |
+| Derived End Position | -28.8 | 30.1 | -1.3 | 19.5 | 8895 |
 
 ## Analog Data Duration
 
@@ -55,21 +55,21 @@
 ```
 Trial Start (0ms)
     |
-    ├── Home Cue (1272-11420ms): Visual cue for center hold position
+    ├── Center Target Appearance (1272-11420ms): Center target appears for monkey to align cursor
     |
-    ├── Target Cue (4042-20586ms): Peripheral target presentation
+    ├── Lateral Target Appearance (4042-20586ms): Lateral target appears signaling movement direction
     |
-    ├── Movement Onset (4330-21362ms): Subject leaves home position
+    ├── Subject Movement Onset (4330-21362ms): Subject begins movement from center toward lateral target
     |
     ├── Reward Delivery (5305-22331ms): Liquid reward for successful trial
     |
-    ├── Movement Parameters (Mvt structure):
-    |   ├── Movement Onset Time (4334-21103ms)
-    |   ├── Movement End Time (4697-21563ms)
-    |   ├── Peak Velocity Time (4518-21386ms)
-    |   ├── Peak Velocity (pkvel): Maximum velocity value (scalar)
-    |   ├── Movement Amplitude (mvt_amp): Total movement distance (scalar)
-    |   └── End Position (end_posn): Final joint angle (scalar)
+    ├── Derived Movement Parameters (from kinematic analysis):
+    |   ├── Derived Movement Onset Time (4334-21103ms)
+    |   ├── Derived Movement End Time (4697-21563ms)
+    |   ├── Derived Peak Velocity Time (4518-21386ms)
+    |   ├── Derived Peak Velocity: Maximum velocity during target capture
+    |   ├── Derived Movement Amplitude: Amplitude of target capture movement
+    |   └── Derived End Position: Angular joint position at movement end
     |
     ├── Analog Data Streams (0-23068ms, 1kHz sampling):
     |   ├── Position (x): Elbow joint angle throughout trial
@@ -87,8 +87,8 @@ Trial Start (0ms)
 
 ## Key Timing Statistics
 
-- **Home cue to target**: ~4110ms
-- **Target to movement**: ~430ms
-- **Movement to reward**: ~957ms
+- **Center target to lateral target**: ~4110ms
+- **Lateral target to subject movement**: ~430ms
+- **Subject movement to reward**: ~957ms
 - **Analog recording duration**: 1.5-23.1s per trial
 - **Data beyond reward**: ~799ms average

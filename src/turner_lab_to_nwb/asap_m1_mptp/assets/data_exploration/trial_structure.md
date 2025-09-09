@@ -8,56 +8,66 @@ The Turner Lab MPTP dataset presents an important design decision regarding how 
 
 ### Trial-Relative Timing
 All data in the MATLAB files is stored relative to individual trial starts:
-- **Event times**: Stored in milliseconds relative to trial start (e.g., home_cue=2199ms, reward=8177ms)
+- **Event times**: Stored in milliseconds relative to trial start (e.g., center_target_appearance=2199ms, reward=8177ms)
 - **Spike times**: Stored in milliseconds relative to trial start
 - **Analog data**: Stored as separate arrays per trial (e.g., `Analog.x[trial_idx]`)
-- **Movement parameters**: Extracted kinematics relative to trial start
+- **Derived movement parameters**: Extracted kinematics from post-processing analysis relative to trial start
 
 ### Typical Trial Timeline
-Based on analysis of multiple files (v0502, v3601, v0601):
+**UPDATED**: Based on comprehensive analysis of 359 MATLAB files containing 9,949 trials:
 ```
 Trial Start (0ms)
     |
-    ├── Home Cue (1439-4096ms): Visual cue for center hold position
+    ├── Center Target Appearance (2,453ms ± 756ms)
+    |   • Range: 1,272-11,420ms across dataset
+    |   • Visual cue for monkey to align cursor with center position
+    |   
+    ├── [Hold Period: ~4.1s average]
+    |   • Monkey maintains cursor at center target
+    |   • Torque perturbations applied here when present (1-2s after capture)
+    |     └── Torque Impulse: 0.1 Nm, 50ms, causing ~10° displacement
     |
-    ├── Target Cue (4796-8037ms): Peripheral target presentation  
+    ├── Lateral Target Appearance (6,563ms ± 1,288ms)
+    |   • Range: 4,042-20,586ms across dataset
+    |   • Peripheral target signals movement direction (flexion/extension)
     |
-    ├── Movement Onset (5026-8334ms): Subject leaves home position
+    ├── [Reaction Time: ~430ms average]
+    |   • Motor planning and decision period
     |
-    ├── Reward Delivery (5699-9343ms): Liquid reward for successful trial
+    ├── Subject Movement Onset (6,993ms ± 1,291ms)
+    |   • Range: 4,330-21,362ms across dataset
+    |   • Monkey begins movement from center toward lateral target
+    |   │
+    |   ├── Derived Movement Onset (6,898ms ± 1,273ms)
+    |   │   • Algorithmically detected movement start from kinematics
+    |   │   • Range: 4,334-21,103ms
+    |   │
+    |   ├── Peak Velocity Time (7,089ms ± 1,272ms)
+    |   │   • Range: 4,518-21,386ms
+    |   │   • Maximum velocity: 101.9±37.5°/s (range: 20.2-254.8°/s)
+    |   │
+    |   └── Derived Movement End (7,286ms ± 1,276ms)
+    |       • Range: 4,697-21,563ms
+    |       • Movement amplitude: -3.4±19.7° (range: -37.9° to 30.4°)
+    |       • End position: -1.3±19.5° (range: -28.8° to 30.1°)
     |
-    ├── Perturbations (when present):
-    |   ├── Flexion Torque (tq_flex, 3135-5417ms): Applied during movement phase
-    |   └── Extension Torque (tq_ext, 3281-4431ms): Applied during movement phase
+    ├── Reward Delivery (7,950ms ± 1,319ms)
+    |   • Range: 5,305-22,331ms across dataset
+    |   • Liquid reward for successful target acquisition
     |
-    ├── Movement Parameters (Mvt structure):
-    |   ├── Movement Onset Time (onset_t, 4970-8271ms): Extracted movement start
-    |   ├── Movement End Time (end_t, 5335-8522ms): Extracted movement completion
-    |   ├── Peak Velocity Time (pkvel_t, 5115-8415ms): Time of maximum velocity
-    |   ├── Peak Velocity (pkvel): Maximum velocity value (scalar)
-    |   ├── Movement Amplitude (mvt_amp): Total movement distance (scalar)
-    |   └── End Position (end_posn): Final joint angle (scalar)
-    |
-    ├── Analog Data Streams (0-10288ms, 1kHz sampling):
-    |   ├── Position (x): Elbow joint angle throughout trial
-    |   ├── Velocity (vel): Angular velocity (derived from position)
-    |   ├── Torque (torq): Motor torque commands
-    |   ├── EMG (emg): Muscle activity (5-6 channels, when collected)
-    |   └── LFP (lfp): Local field potentials (when collected)
-    |
-    ├── Spike Times (unit_ts, 0-10288ms):
-    |   ├── 2D format: Multiple spikes per trial (trials × max_spikes)
-    |   └── 1D format: Single spike per trial (some sessions)
-    |
-    └── Analog Recording End (6406-10288ms): Full neural/behavioral data
+    └── Recording End (8,748ms ± 1,382ms)
+        • Range: 1,548-23,068ms across dataset
+        • Analog data capture continues ~799ms beyond reward
+        • 1kHz sampling for position, velocity, torque, EMG, LFP
+        • Spike times recorded throughout with millisecond precision
 ```
 
-### Key Timing Statistics
-- **Home cue to target**: ~4100ms (SD: 600ms)
-- **Target to movement**: ~300ms (SD: 150ms)  
-- **Movement to reward**: ~950ms (SD: 170ms)
-- **Analog recording duration**: 6.4-10.1s per trial
-- **Data beyond reward**: ~700ms average
+### Key Timing Statistics (Updated from 9,949 trials)
+- **Center target to lateral target**: ~4,110ms (SD: 1,288ms)
+- **Lateral target to subject movement**: ~430ms (SD: varies)  
+- **Subject movement to reward**: ~957ms (SD: varies)
+- **Analog recording duration**: 1.5-23.1s per trial (mean: 8.7s)
+- **Data beyond reward**: ~799ms average
 
 ## Trial Boundary Options
 
@@ -121,14 +131,14 @@ trial_stop = cumulative_time + len(analog_data[trial]) / 1000.0
 cumulative_time = trial_stop + inter_trial_interval
 ```
 
-### Option 3: Home Cue to Reward + Buffer
+### Option 3: Center Target to Reward + Buffer
 
 **Definition**:
-- `start_time = home_cue_time` (first behavioral event)
+- `start_time = center_target_appearance_time` (first behavioral event)
 - `stop_time = reward_time + 0.5s`
 
 **Rationale**:
-- Trial starts with first task-relevant event
+- Trial starts with first task-relevant event (center target appearance)
 - Minimal pre-task baseline included
 - Focuses on behaviorally relevant period
 - Reduces data storage for pre-task periods
@@ -140,7 +150,7 @@ cumulative_time = trial_stop + inter_trial_interval
 - ✅ Smaller file sizes
 
 **Disadvantages**:
-- ❌ Loses pre-cue baseline activity
+- ❌ Loses pre-center-target baseline activity
 - ❌ May miss preparatory neural signals
 - ❌ Incompatible with some baseline correction methods
 - ❌ Doesn't contain full analog recordings
@@ -148,7 +158,7 @@ cumulative_time = trial_stop + inter_trial_interval
 **Implementation**:
 ```python
 trial_start = cumulative_time
-trial_stop = cumulative_time + (reward_time - home_cue_time)/1000 + 0.5
+trial_stop = cumulative_time + (reward_time - center_target_appearance_time)/1000 + 0.5
 cumulative_time = trial_stop + inter_trial_interval
 ```
 
@@ -162,15 +172,16 @@ Testing across three representative files (v0502.1.mat, v3601.1.mat, v0601.1.mat
 |----------|--------|--------|--------|-------------|
 | 0 to reward+1.0s | ✅ 100% | ✅ 100% | ✅ 100% | High |
 | 0 to analog_end | ✅ 100% | ✅ 100% | ✅ 100% | High |
-| home_cue to reward+0.5s | ✅ 100% | ❌ 60% | ❌ 70% | Medium |
+| center_target to reward+0.5s | ✅ 100% | ❌ 60% | ❌ 70% | Medium |
 
 ### Trial Duration Distribution
+**UPDATED**: Based on comprehensive analysis of 9,949 trials:
 
 | Approach | Min | Max | Mean | StdDev |
 |----------|-----|-----|------|--------|
-| Event-based (0 to reward+1s) | 7.3s | 10.3s | 8.3s | 0.8s |
-| Analog-based | 6.4s | 10.1s | 8.0s | 1.0s |
-| Home cue to reward+0.5s | 4.4s | 6.7s | 5.9s | 0.6s |
+| Event-based (0 to reward+1s) | 6.3s | 23.3s | 9.0s | 1.3s |
+| Analog-based (actual recordings) | 1.5s | 23.1s | 8.7s | 1.4s |
+| Center target to reward+0.5s | 4.8s | 22.8s | 8.4s | 1.3s |
 
 ## Inter-Trial Intervals
 
@@ -207,7 +218,7 @@ If preserving every millisecond of recorded data is critical, using analog bound
 
 3. **Inter-trial intervals**: Is the 3.0s default inter-trial interval accurate for the experimental protocol?
 
-4. **Pre-cue activity**: Is the pre-home-cue period (0 to ~2s) scientifically important for baseline or preparatory activity analysis?
+4. **Pre-center-target activity**: Is the pre-center-target period (0 to ~2.5s) scientifically important for baseline or preparatory activity analysis?
 
 5. **Data completeness priority**: Should we prioritize preserving all recorded data (Option 2) or focus on behaviorally relevant periods (Option 1)?
 

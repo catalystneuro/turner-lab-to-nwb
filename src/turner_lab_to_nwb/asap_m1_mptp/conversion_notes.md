@@ -251,126 +251,84 @@ This session-based approach:
 
 ## Trial Structure Within Recording Sessions
 
+### Trial description in the papers
+The description of the trial in the paper is the following:
+
+** active movement paper**
+> A trial began when a centre target appeared on the monitor and the monkey aligned the cursor with the target. After holding the cursor at this start-position hold period (2–5 s, uniform random distribution), the target jumped to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. After a target-hold interval (0.75–1.5 s), the animal received a drop of juice or food, followed by an intertrial interval (1.2–1.7 s).
+
+** Stretch paper ** 
+The description in another paper:
+> A trial began when a center target appeared and the monkey made the appropriate joint movement to align the cursor with the target. The monkey maintained this position for the duration of a start-position hold period (random duration, 2–5 s), during which the animal could not predict the location of the upcoming lateral target. The target then shifted to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. The animal received a drop of juice for successful completion of the task.
+
+> On two‑thirds of the trials (selected at random), single flexing or extending torque impulses (0.1 Nm–50 ms duration) were applied to the manipulandum by a DC brushless torque motor (TQ40W, Aerotech Inc., Pittsburgh PA) at an unpredictable time beginning 1–2 s (uniform randomized distribution) after initial capture of the center target. Each square‑wave torque impulse induced an angular displacement of the joint (mean = 10‑deg) causing a sudden stretch of arm extensor or flexor muscles. The animals were not trained to produce a specific response to these unpredictable perturbations, but the animals naturally adopted a strategy that returned the joint to its initial pre‑impulse position.
+
+** Pyramidal tract neurons paper**
+> On each behavioral trial, the animal was required to align the cursor with a series of targets displayed on the monitor. A trial began when a center target appeared and the monkey made the appropriate joint movement to align the cursor with the target. The monkey maintained this position for the duration of a start-position hold period (random duration, 2–5 s), during which the animal could not predict the location of the upcoming lateral target. The target then shifted to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. The animal received a drop of juice or food for successful completion of the task.
+
+
 ### Visual Overview
 ![Experimental Protocol](./assets/figures/active_paper_figure_1_diagram.png)
 
 **Figure Analysis**: This experimental protocol diagram shows the visuomotor step-tracking task structure. The monkey begins by maintaining cursor position at a center hold target (top panel). After a variable hold period (~2.5s), a peripheral target appears requiring either flexion (FLX) or extension (EXT) elbow movement. The monkey must move the cursor from center to the target (movement phase), then maintain position at the target (target hold, 0.75-1.5s) to receive liquid reward. The paradigm tests elbow joint motor control through a simple center-out reaching task with two possible directions corresponding to anatomical flexion/extension movements.
 
-### What Constitutes a Trial
-
-Each trial in the Turner Lab dataset represents **one complete behavioral episode** of the flexion/extension motor task:
-
-**Trial Definition**: A single reach from center position to a peripheral target, encompassing the complete sequence from initial cue presentation through reward delivery.
-
-**What Changes Between Trials**:
-- **Target direction**: Randomized flexion (1) or extension (2) movement
-- **Hold period duration**: Pseudo-random center position hold time before target appearance
-- **Torque perturbations**: Random subset of trials include unexpected torque pulses
-- **Motor performance**: Natural variability in movement kinematics, reaction times, peak velocities
-
-**What Remains Constant Within Session**:
-- Task paradigm and experimental setup
-- Electrode placement and recorded units
-- Sampling rates and recording parameters
-- Subject and experimental condition (Pre/Post MPTP)
 
 ### Trial Temporal Structure
 
-Each trial follows a stereotyped sequence:
+Based on analysis of 359 MATLAB files containing 9,949 trials, the experimental protocol follows this chronological sequence:
 
-1. **Center Hold Period** (variable duration)
-   - Monkey maintains cursor at start position
-   - Baseline neural activity recorded
+```
+Trial Timeline (mean timings from 9,949 trials):
 
-2. **Target Presentation** 
-   - Peripheral target appears (left/right → flexion/extension)
-   - Cue-related neural responses
-
-3. **Movement Execution**
-   - Cursor leaves center position
-   - Reaching movement to target
-   - Peak motor cortex activity
-
-4. **Target Hold & Reward**
-   - Cursor held within target zone
-   - Reward delivery upon successful completion
-
-**Trial Duration**: Variable (~2-4 seconds typical), depending on hold periods and movement speed
-
-### Data Storage Structure in MATLAB Files
-
-**Trial-indexed data organization**:
-
-```python
-# Example from v1401.1.mat with 20 trials
-mat_file = read_mat("v1401.1.mat")
-
-# Event timing (trial x event)
-events = mat_file["Events"]
-events["home_cue_on"]    # [20] array - start cue times for each trial
-events["targ_cue_on"]    # [20] array - target cue times for each trial  
-events["targ_dir"]       # [20] array - target direction per trial (1 or 2)
-events["home_leave"]     # [20] array - movement onset times per trial
-events["reward"]         # [20] array - reward delivery times per trial
-
-# Spike data (trial x spike_times)
-spike_times = mat_file["unit_ts"]  # Shape: (20, 29) - 20 trials, up to 29 spikes
-# Each row = one trial's spike times, NaN-padded
-
-# Analog data (signal_type -> trial array)
-analog = mat_file["Analog"]
-analog["x"]    # List of 20 arrays - position data per trial
-analog["vel"]  # List of 20 arrays - velocity data per trial  
-analog["emg"]  # List of 20 arrays - EMG data per trial (when present)
-
-# Movement parameters (extracted per trial)
-movement = mat_file["Mvt"]
-movement["onset_t"]   # [20] array - movement onset per trial
-movement["pkvel"]     # [20] array - peak velocity per trial
-movement["mvt_amp"]   # [20] array - movement amplitude per trial
+Trial Start (0ms)
+    │
+    ├── Center Target Appearance (2,453ms ± 756ms)
+    │   • Visual cue for monkey to align cursor with center position
+    │   • Range: 1.3-11.4s, establishes baseline elbow position
+    │   
+    ├── [Hold Period: ~4.1s average]
+    │   • Monkey maintains cursor at center target
+    │   • Torque perturbations applied here when present (1-2s after capture)
+    │     └── Torque Impulse: 0.1 Nm, 50ms, causing ~10° displacement
+    │
+    ├── Lateral Target Appearance (6,563ms ± 1,288ms)
+    │   • Peripheral target signals movement direction (flexion/extension)  
+    │   • Range: 4.0-20.6s, determines required motor response
+    │
+    ├── [Reaction Time: ~430ms average]
+    │   • Motor planning and decision period
+    │
+    ├── Subject Movement Onset (6,993ms ± 1,291ms)
+    │   • Monkey begins movement from center toward lateral target
+    │   • Range: 4.3-21.4s, volitional movement initiation
+    │   │
+    │   ├── Derived Movement Onset (6,898ms ± 1,273ms)
+    │   │   • Algorithmically detected movement start from kinematics
+    │   │
+    │   ├── Peak Velocity Time (7,089ms ± 1,272ms) 
+    │   │   • Maximum velocity: 101.9±37.5°/s (range: 20.2-254.8°/s)
+    │   │
+    │   └── Derived Movement End (7,286ms ± 1,276ms)
+    │       • Movement amplitude: -3.4±19.7° (range: -37.9° to 30.4°)
+    │       • End position: -1.3±19.5° (range: -28.8° to 30.1°)
+    │
+    ├── Reward Delivery (7,950ms ± 1,319ms)
+    │   • Liquid reward for successful target acquisition
+    │   • Range: 5.3-22.3s, ~957ms after movement onset
+    │
+    └── Recording End (8,748ms ± 1,382ms)
+        • Analog data capture continues ~799ms beyond reward
+        • Total duration: 1.5-23.1s per trial (mean: 8.7s)
+        • 1kHz sampling for position, velocity, torque, EMG, LFP
+        • Spike times recorded throughout with millisecond precision
 ```
 
-### Trial Variability and Randomization
+**Key Temporal Features:**
+- Variable trial durations accommodate different behavioral states in parkinsonian monkeys
+- Extended hold periods ensure stable starting positions for movement analysis  
+- Post-reward data collection captures movement completion and return-to-baseline
+- High temporal resolution (1ms) enables precise neural-behavioral correlations
 
-The description of the trial in the paper is the following:
-
-> A trial began when a centre target appeared on the monitor and the monkey aligned the cursor with the target. After holding the cursor at this start-position hold period (2–5 s, uniform random distribution), the target jumped to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. After a target-hold interval (0.75–1.5 s), the animal received a drop of juice or food, followed by an intertrial interval (1.2–1.7 s).
-
-**Randomized Elements**:
-- **Target direction**: 1 (flexion) or 2 (extension) chosen randomly
-- **Hold duration**: Variable center hold period before target appearance
-- **Perturbation timing**: Random subset of trials include torque perturbations
-
-**Example trial sequence** from metadata analysis:
-```python
-# Sample from v1401.1.mat
-target_directions = [1, 2, 2, 1, 2, 1, 1, 2, 1, 2, ...]  # Random sequence
-# Roughly equal numbers of flexion (1) and extension (2) trials
-```
-
-**Trial Independence**: Each trial represents an independent behavioral measurement, allowing statistical analysis of:
-- Movement kinematics across conditions
-- Neural firing patterns by target direction  
-- Reaction time variability
-- Motor learning or adaptation effects
-
-### Neural Data Trial Structure
-
-**Spike timing within trials**:
-- All spike times referenced to trial start (t=0)
-- Typical trial events occur at predictable relative times:
-  - Home cue: ~2-4 seconds into trial
-  - Target cue: Variable (after hold period)
-  - Movement: ~300-500ms after target cue
-  - Reward: ~1-2 seconds after movement
-
-**Cross-trial analysis enabled**:
-- Peri-event time histograms aligned to task events
-- Population vector analysis across movement directions
-- Trial-averaged firing rates by condition
-- Movement parameter correlations with neural activity
-
-This trial-based organization preserves the experimental structure essential for understanding motor cortex function during voluntary reaching movements.
 
 ## Scientific Papers and Experimental Protocols
 
@@ -445,15 +403,15 @@ All studies used the same **visuomotor step-tracking paradigm**:
 │             │ • Elicit stretch reflex responses   │            │
 │             └─────────────────────────────────────┘            │
 └─────────────────────────────────────────────────────────────────┘
-
-              DATA ANALYSIS FOCUS BY STUDY
-
-Paper 1: Movement Phase        Paper 2: Perturbation Trials    Paper 3: Hold/Rest Periods
-• Target → Movement phase      • tq_flex/tq_ext responses     • Center hold baseline
-• Kinematic encoding          • Stretch-evoked activity      • Inter-trial intervals  
-• Direction-specific activity • LLSR timing analysis         • Spontaneous firing
-• Movement parameter decoding • Proprioceptive processing    • Cell-type comparisons
 ```
+## DATA ANALYSIS FOCUS BY STUDY
+
+| Paper 1: Movement Phase | Paper 2: Perturbation Trials | Paper 3: Hold/Rest Periods |
+|---|---|---|
+| Target → Movement phase | tq_flex/tq_ext responses | Center hold baseline |
+| Kinematic encoding | Stretch-evoked activity | Inter-trial intervals |
+| Direction-specific activity | LLSR timing analysis | Spontaneous firing |
+| Movement parameter decoding | Proprioceptive processing | Cell-type comparisons |
 
 ## Data Organization for Multi-Study Support
 

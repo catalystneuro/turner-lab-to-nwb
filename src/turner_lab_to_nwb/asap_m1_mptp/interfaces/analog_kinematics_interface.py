@@ -41,7 +41,6 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
 
         metadata["NWBFile"]["session_description"] = f"Turner Lab MPTP analog kinematics from {self.file_path.stem}"
         metadata["NWBFile"]["session_id"] = self.file_path.stem
-        metadata["NWBFile"]["session_start_time"] = "1900-01-01T00:00:00"
 
         return metadata
 
@@ -86,9 +85,9 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
         if "analog_fs" not in file_info:
             raise ValueError(f"No 'analog_fs' field found in file_info for file: {self.file_path}")
 
-        analog_fs = file_info["analog_fs"]
+        analog_sampling_rate = file_info["analog_fs"]
         if self.verbose:
-            print(f"Analog sampling rate: {analog_fs} Hz")
+            print(f"Analog sampling rate: {analog_sampling_rate} Hz")
 
         for signal_name in available_signals:
             signal_data_list = analog_data[signal_name]  # List of trial arrays
@@ -106,7 +105,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
                 if len(trial_data.shape) == 1:
                     # Single channel data (x, vel, torq, lfp)
                     n_samples = len(trial_data)
-                    trial_duration = n_samples / analog_fs  # Actual duration in seconds
+                    trial_duration = n_samples / analog_sampling_rate  # Actual duration in seconds
                     trial_timestamps = np.linspace(trial_start_time, trial_start_time + trial_duration, n_samples)
                     continuous_data.extend(trial_data)
                     timestamps.extend(trial_timestamps)
@@ -114,7 +113,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
                 elif len(trial_data.shape) == 2:
                     # Multi-channel data (emg: time_points x n_muscles)
                     n_samples = trial_data.shape[0]
-                    trial_duration = n_samples / analog_fs  # Actual duration in seconds
+                    trial_duration = n_samples / analog_sampling_rate  # Actual duration in seconds
                     trial_timestamps = np.linspace(trial_start_time, trial_start_time + trial_duration, n_samples)
 
                     if signal_name == "emg":
@@ -132,7 +131,7 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
                 "data": np.array(continuous_data),
                 "timestamps": np.array(timestamps),
                 "n_trials": n_trials,
-                "sampling_rate": analog_fs,
+                "sampling_rate": analog_sampling_rate,
             }
 
             if self.verbose:

@@ -6,8 +6,8 @@ Analyze timing structure of MATLAB files and generate markdown summary.
 import numpy as np
 from pymatreader import read_mat
 from pathlib import Path
-import sys
 from datetime import datetime
+from tqdm import tqdm
 
 def analyze_single_file(file_path):
     """Analyze timing elements in a single MATLAB file"""
@@ -136,15 +136,15 @@ def compile_across_files(file_data_list):
     # Compile event data
     event_fields = ["home_cue_on", "targ_cue_on", "home_leave", "reward"]
     event_names = {
-        "home_cue_on": "Home Cue",
-        "targ_cue_on": "Target Cue", 
-        "home_leave": "Movement Onset",
+        "home_cue_on": "Center Target Appearance",
+        "targ_cue_on": "Lateral Target Appearance", 
+        "home_leave": "Subject Movement Onset",
         "reward": "Reward Delivery"
     }
     
     for field in event_fields:
         all_values = []
-        for data in file_data_list:
+        for data in tqdm(file_data_list, desc=f"Compiling {field}", leave=False):
             if field in data['events']:
                 # Collect individual event times, not just min/max
                 mat_data = read_mat(f"/home/heberto/data/turner/Ven_All/{data['filename']}")
@@ -167,17 +167,17 @@ def compile_across_files(file_data_list):
     # Compile movement data
     mvt_fields = ["onset_t", "end_t", "pkvel_t", "pkvel", "mvt_amp", "end_posn"]
     mvt_names = {
-        "onset_t": "Movement Onset Time",
-        "end_t": "Movement End Time",
-        "pkvel_t": "Peak Velocity Time",
-        "pkvel": "Peak Velocity",
-        "mvt_amp": "Movement Amplitude", 
-        "end_posn": "End Position"
+        "onset_t": "Derived Movement Onset Time",
+        "end_t": "Derived Movement End Time",
+        "pkvel_t": "Derived Peak Velocity Time",
+        "pkvel": "Derived Peak Velocity",
+        "mvt_amp": "Derived Movement Amplitude", 
+        "end_posn": "Derived End Position"
     }
     
     for field in mvt_fields:
         all_values = []
-        for data in file_data_list:
+        for data in tqdm(file_data_list, desc=f"Compiling {field}", leave=False):
             if field in data['movement']:
                 mat_data = read_mat(f"/home/heberto/data/turner/Ven_All/{data['filename']}")
                 values = np.array(mat_data["Mvt"][field])
@@ -298,24 +298,24 @@ def generate_markdown_summary(compiled_data, output_file, failed_files=None):
                 data = compiled_data['events_compiled'][field]
                 f.write(f"    ├── {data['name']} ({data['min']:.0f}-{data['max']:.0f}ms): ")
                 if field == "home_cue_on":
-                    f.write("Visual cue for center hold position\n")
+                    f.write("Center target appears for monkey to align cursor\n")
                 elif field == "targ_cue_on":
-                    f.write("Peripheral target presentation\n")
+                    f.write("Lateral target appears signaling movement direction\n")
                 elif field == "home_leave":
-                    f.write("Subject leaves home position\n")
+                    f.write("Subject begins movement from center toward lateral target\n")
                 elif field == "reward":
                     f.write("Liquid reward for successful trial\n")
                 f.write("    |\n")
         
         # Movement parameters
-        f.write("    ├── Movement Parameters (Mvt structure):\n")
+        f.write("    ├── Derived Movement Parameters (from kinematic analysis):\n")
         for field in ["onset_t", "end_t", "pkvel_t"]:
             if field in compiled_data['movement_compiled']:
                 data = compiled_data['movement_compiled'][field]
                 f.write(f"    |   ├── {data['name']} ({data['min']:.0f}-{data['max']:.0f}ms)\n")
-        f.write("    |   ├── Peak Velocity (pkvel): Maximum velocity value (scalar)\n")
-        f.write("    |   ├── Movement Amplitude (mvt_amp): Total movement distance (scalar)\n")
-        f.write("    |   └── End Position (end_posn): Final joint angle (scalar)\n")
+        f.write("    |   ├── Derived Peak Velocity: Maximum velocity during target capture\n")
+        f.write("    |   ├── Derived Movement Amplitude: Amplitude of target capture movement\n")
+        f.write("    |   └── Derived End Position: Angular joint position at movement end\n")
         f.write("    |\n")
         
         # Analog and spike data
@@ -337,19 +337,19 @@ def generate_markdown_summary(compiled_data, output_file, failed_files=None):
         # Key statistics
         f.write("## Key Timing Statistics\n\n")
         if "home_cue_on" in compiled_data['events_compiled'] and "targ_cue_on" in compiled_data['events_compiled']:
-            home_cue = compiled_data['events_compiled']["home_cue_on"]['mean']
-            target_cue = compiled_data['events_compiled']["targ_cue_on"]['mean']
-            f.write(f"- **Home cue to target**: ~{target_cue - home_cue:.0f}ms\n")
+            center_target = compiled_data['events_compiled']["home_cue_on"]['mean']
+            lateral_target = compiled_data['events_compiled']["targ_cue_on"]['mean']
+            f.write(f"- **Center target to lateral target**: ~{lateral_target - center_target:.0f}ms\n")
         
         if "targ_cue_on" in compiled_data['events_compiled'] and "home_leave" in compiled_data['events_compiled']:
-            target_cue = compiled_data['events_compiled']["targ_cue_on"]['mean']
-            movement = compiled_data['events_compiled']["home_leave"]['mean']
-            f.write(f"- **Target to movement**: ~{movement - target_cue:.0f}ms\n")
+            lateral_target = compiled_data['events_compiled']["targ_cue_on"]['mean']
+            subject_movement = compiled_data['events_compiled']["home_leave"]['mean']
+            f.write(f"- **Lateral target to subject movement**: ~{subject_movement - lateral_target:.0f}ms\n")
         
         if "home_leave" in compiled_data['events_compiled'] and "reward" in compiled_data['events_compiled']:
-            movement = compiled_data['events_compiled']["home_leave"]['mean']
+            subject_movement = compiled_data['events_compiled']["home_leave"]['mean']
             reward = compiled_data['events_compiled']["reward"]['mean']
-            f.write(f"- **Movement to reward**: ~{reward - movement:.0f}ms\n")
+            f.write(f"- **Subject movement to reward**: ~{reward - subject_movement:.0f}ms\n")
         
         f.write(f"- **Analog recording duration**: {analog['min']/1000:.1f}-{analog['max']/1000:.1f}s per trial\n")
         
@@ -379,13 +379,12 @@ def main():
     file_data_list = []
     failed_files = []
     
-    for i, file_path in enumerate(existing_files, 1):
+    for file_path in tqdm(existing_files, desc="Analyzing files", unit="files"):
         try:
-            print(f"  [{i:3d}/{len(existing_files)}] {file_path.name}")
             data = analyze_single_file(file_path)
             file_data_list.append(data)
         except Exception as e:
-            print(f"  [{i:3d}/{len(existing_files)}] {file_path.name} - FAILED: {str(e)}")
+            tqdm.write(f"FAILED: {file_path.name} - {str(e)}")
             failed_files.append(file_path.name)
             continue
     

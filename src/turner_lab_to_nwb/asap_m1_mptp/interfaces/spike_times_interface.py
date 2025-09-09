@@ -125,8 +125,10 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             y=self.session_info['A_P'],  # Anterior-Posterior (mm, + = anterior from chamber center)
             z=self.session_info['Depth'],  # Depth (mm, + = below chamber reference point)
             imp=float('nan'),  # Electrode impedance not recorded
-            location="M1 arm area, Layer 5 (chamber coordinates: A/P={:.1f}, M/L={:.1f}, Depth={:.1f}mm)".format(
-                self.session_info['A_P'], self.session_info['M_L'], self.session_info['Depth']),
+            location=(
+            f"M1 arm area, Layer 5 (chamber coordinates: A/P={self.session_info['A_P']:.1f}, "
+            f"M/L={self.session_info['M_L']:.1f}, Depth={self.session_info['Depth']:.1f}mm)"
+            ),
             filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
             group=electrode_group
         )

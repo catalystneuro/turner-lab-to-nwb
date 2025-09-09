@@ -95,29 +95,33 @@ nwbfile.add_processing_module(stim_module)
 #### **Trial Structure and Timing** (`Events` → NWB)
 **Source**: `Events` structure with trial timing
 **Target NWB Structure**: `Trials` table + `TimeIntervals`
-```python
-# Create trials table
-nwbfile.add_trial_column('target_direction', 'movement direction (1=flexion, 2=extension)')
-nwbfile.add_trial_column('home_cue_time', 'start position cue onset relative to trial start')
-nwbfile.add_trial_column('target_cue_time', 'peripheral target cue onset')
-nwbfile.add_trial_column('movement_onset', 'movement initiation time')
-nwbfile.add_trial_column('reward_time', 'reward delivery time')
-nwbfile.add_trial_column('perturbation_type', 'torque perturbation type (flex/ext/none)')
-nwbfile.add_trial_column('perturbation_time', 'perturbation onset time')
 
-# For each trial:
-for trial_idx in range(n_trials):
-    nwbfile.add_trial(
-        start_time=trial_start_times[trial_idx],
-        stop_time=trial_end_times[trial_idx],
-        target_direction=events['targ_dir'][trial_idx],
-        home_cue_time=events['home_cue_on'][trial_idx] / 1000,  # Convert ms to seconds
-        target_cue_time=events['targ_cue_on'][trial_idx] / 1000,
-        movement_onset=events['home_leave'][trial_idx] / 1000,
-        reward_time=events['reward'][trial_idx] / 1000,
-        perturbation_type=get_perturbation_type(events, trial_idx),
-        perturbation_time=get_perturbation_time(events, trial_idx) / 1000
-    )
+**TERMINOLOGY CHOICES:**
+- `center_target_appearance_time`: Discrete visual event (not "onset") when monkey aligns cursor
+- `lateral_target_appearance_time`: Matches experimental papers; signals movement direction  
+- `subject_movement_onset_time`: Purposefully emphasizes subject's behavioral action vs. experimental setup events; distinguishes animal behavior from apparatus/stimuli
+- `torque_perturbation_*`: Scientific precision for stimulus parameters (0.1 Nm, 50ms)
+- `derived_*`: Movement parameters from kinematic analysis post-processing
+- **"onset" vs "appearance"**: "Onset" for events that initiate ongoing states (subject movement); "appearance" for punctual visual stimuli
+- Full names: "flexion"/"extension" not abbreviated forms
+
+```python
+# Create trials table - UPDATED TERMINOLOGY
+nwbfile.add_trial_column('movement_type', 'flexion or extension')
+nwbfile.add_trial_column('center_target_appearance_time', 'time when center target appeared for monkey to align cursor and initiate trial (seconds)')
+nwbfile.add_trial_column('lateral_target_appearance_time', 'time when lateral target appeared signaling monkey to move from center to flexion/extension position (seconds)')
+nwbfile.add_trial_column('subject_movement_onset_time', 'time when monkey began moving from center position toward lateral target (seconds)')
+nwbfile.add_trial_column('reward_time', 'reward delivery time relative to trial start (seconds)')
+nwbfile.add_trial_column('torque_perturbation_type', 'direction of torque perturbation causing muscle stretch (flexion/extension/none)')
+nwbfile.add_trial_column('torque_perturbation_onset_time', 'onset time of unpredictable torque impulse (0.1 Nm, 50ms) applied to manipulandum 1-2s after center target capture (seconds)')
+
+# Derived movement parameters from kinematic analysis
+nwbfile.add_trial_column('derived_movement_onset_time', 'onset time of target capture movement derived from kinematic analysis (seconds)')
+nwbfile.add_trial_column('derived_movement_end_time', 'end time of target capture movement derived from kinematic analysis (seconds)')
+nwbfile.add_trial_column('derived_peak_velocity', 'peak velocity during target capture movement derived from kinematic analysis')
+nwbfile.add_trial_column('derived_peak_velocity_time', 'time of peak velocity during target capture movement derived from kinematic analysis (seconds)')
+nwbfile.add_trial_column('derived_movement_amplitude', 'amplitude of target capture movement derived from kinematic analysis')
+nwbfile.add_trial_column('derived_end_position', 'angular joint position at end of target capture movement (degrees)')
 ```
 
 ### 3. Analog Kinematics
