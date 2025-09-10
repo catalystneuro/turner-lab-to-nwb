@@ -5,6 +5,41 @@
 
 (this is private)
 
+## Data File vs Metadata Integrity Issues
+
+### File-CSV Correspondence Analysis
+
+**Total Data Files:** 360 files in `/home/heberto/data/turner/Ven_All/`
+- 359 unit data files (format: `vXXXX.N.mat`)
+- 1 metadata file: `VenTable.mat` (excluded from conversion)
+
+**CSV Metadata Entries:** 361 total entries in `ven_table.csv`
+
+### Identified Discrepancies
+
+#### 1. Missing Unit Files (CSV entries without corresponding files)
+**2 entries** in CSV indicate unit 2 exists, but `.2.mat` files are missing:
+- `v2701.2.mat` - CSV indicates UnitNum2=2, only `v2701.1.mat` exists
+- `v4807.2.mat` - CSV indicates UnitNum2=2, only `v4807.1.mat` exists
+
+*Likely cause: Files lost, corrupted, or never properly saved during recording*
+
+#### 2. Undocumented Unit Files (files exist but not in CSV metadata)
+**63 additional `.2.mat` files** exist but are NOT documented in the CSV as having a second unit:
+
+Examples include: `v1001.2.mat`, `v1102.2.mat`, `v1303.2.mat`, `v1802.2.mat`, `v2001.2.mat`, `v2705.2.mat`, `v2706.2.mat`, etc.
+
+*Complete list: 66 total `.2.mat` files exist, but only 3 are documented in CSV with UnitNum2=2*
+
+### Impact on Conversion
+
+1. **Missing files**: Conversion will skip 2 units that exist only in CSV metadata
+2. **Undocumented units**: 63 additional units will be discovered and processed during conversion, but will lack detailed metadata (antidromic classification, sensory properties, etc.)
+3. **File coverage**: 359/361 CSV entries (99.4%) have corresponding data files
+4. **Unit discovery**: Actual units available = 359 (unit 1) + 66 (unit 2) = 425 total units vs 361 documented in CSV
+
+The spike times interface automatically discovers all available unit files per session and processes them regardless of CSV documentation status.
+
 
 ### Data Streams to Convert
 
