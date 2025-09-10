@@ -185,13 +185,17 @@ class M1MPTPAnalogKinematicsInterface(BaseDataInterface):
                 nwbfile.add_acquisition(torque_series)
 
             elif signal_name == "emg":
-                # EMG data (first channel only) - preprocessed (rectified and low-pass filtered)
+                # EMG data from chronically-implanted intramuscular electrodes - preprocessed (rectified and low-pass filtered)
                 emg_series = TimeSeries(
                     name="TimeSeriesEMG",
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="arbitrary",
-                    description="EMG signal (first channel) from chronically-implanted electrodes - preprocessed (rectified and low-pass filtered)",
+                    description="EMG signals from chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
+                               "Multiple arm muscles recorded: flexor carpi ulnaris, flexor carpi radialis, biceps longus, "
+                               "brachioradialis, triceps lateralis (Monkey L); posterior deltoid, trapezius, triceps longus, "
+                               "triceps lateralis, brachioradialis (Monkey V). Electrode placement verified post-surgically. "
+                               "Data preprocessed (rectified and low-pass filtered).",
                 )
 
                 # Add to acquisition
