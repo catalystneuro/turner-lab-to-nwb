@@ -119,18 +119,23 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             device=device
         )
         
-        # Add electrode with chamber-relative coordinates (NOT absolute stereotactic coordinates)
+        # Add custom columns for electrode insertion positions (chamber-relative coordinates)
+        nwbfile.add_electrode_column(name="insertion_position_ap_mm", description="Electrode insertion position: Anterior-Posterior coordinate relative to chamber center (mm, positive = anterior)")
+        nwbfile.add_electrode_column(name="insertion_position_ml_mm", description="Electrode insertion position: Medial-Lateral coordinate relative to chamber center (mm, positive = lateral)")
+        nwbfile.add_electrode_column(name="insertion_position_depth_mm", description="Electrode insertion position: depth below chamber reference point (mm, positive = deeper)")
+        
+        # Add electrode with insertion positions as custom columns
         nwbfile.add_electrode(
-            x=self.session_info['M_L'],  # Medial-Lateral (mm, + = lateral from chamber center)
-            y=self.session_info['A_P'],  # Anterior-Posterior (mm, + = anterior from chamber center)
-            z=self.session_info['Depth'],  # Depth (mm, + = below chamber reference point)
+            x=0.0,  # Use neutral coordinates for standard x,y,z
+            y=0.0,
+            z=0.0,
             imp=float('nan'),  # Electrode impedance not recorded
-            location=(
-            f"M1 arm area, Layer 5 (chamber coordinates: A/P={self.session_info['A_P']:.1f}, "
-            f"M/L={self.session_info['M_L']:.1f}, Depth={self.session_info['Depth']:.1f}mm)"
-            ),
+            location="Primary motor cortex (M1), arm area, Layer 5",
             filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
-            group=electrode_group
+            group=electrode_group,
+            insertion_position_ap_mm=self.session_info['A_P'],
+            insertion_position_ml_mm=self.session_info['M_L'],
+            insertion_position_depth_mm=self.session_info['Depth']
         )
 
         # Discover all unit files for this session
