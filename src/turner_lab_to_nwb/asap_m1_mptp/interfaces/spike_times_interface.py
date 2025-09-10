@@ -42,17 +42,17 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         self.base_file_path = Path(file_path)
         self.session_metadata = session_metadata
         self.inter_trial_time_interval = inter_trial_time_interval
-        
+
         # Extract session-level info from first unit (all units have same session info)
         if self.session_metadata:
             first_unit = self.session_metadata[0]
             self.session_info = {
-                'Animal': first_unit['Animal'],
-                'MPTP': first_unit['MPTP'],
-                'DateCollected': first_unit['DateCollected'],
-                'A_P': first_unit['A_P'],
-                'M_L': first_unit['M_L'],
-                'Depth': first_unit['Depth']
+                "Animal": first_unit["Animal"],
+                "MPTP": first_unit["MPTP"],
+                "DateCollected": first_unit["DateCollected"],
+                "A_P": first_unit["A_P"],
+                "M_L": first_unit["M_L"],
+                "Depth": first_unit["Depth"],
             }
 
     def get_metadata(self) -> DeepDict:
@@ -100,46 +100,95 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         device = nwbfile.create_device(
             name="DeviceMicroelectrodeSystem",
             description="Turner Lab microelectrode recording system: Glass-coated PtIr microelectrode "
-                        "mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo) within "
-                        "cylindrical stainless steel recording chamber (35° coronal angle). "
-                        "Signal amplified ×10⁴, bandpass filtered 0.3-10kHz. "
-                        "Sampling: 20kHz for unit discrimination, 1kHz for analog/behavioral signals. "
-                        "Chamber-relative coordinate system with sub-millimeter precision."
+            "mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo) within "
+            "cylindrical stainless steel recording chamber (35° coronal angle). "
+            "Signal amplified ×10⁴, bandpass filtered 0.3-10kHz. "
+            "Sampling: 20kHz for unit discrimination, 1kHz for analog/behavioral signals. "
+            "Chamber-relative coordinate system with sub-millimeter precision.",
         )
-        
+
         electrode_group = nwbfile.create_electrode_group(
-            name="ElectrodeGroupM1Chamber", 
+            name="ElectrodeGroupM1Chamber",
             description="Primary motor cortex (M1) electrode group within chamber-relative coordinate system. "
-                        "Layer 5 pyramidal neurons targeted in arm representation area. "
-                        "Chamber surgically positioned over left M1 using stereotactic atlas coordinates. "
-                        "Daily electrode positions defined relative to chamber center/reference point. "
-                        "Functional verification via microstimulation (≤40μA, 10 pulses at 300Hz). "
-                        "Antidromic identification from cerebral peduncle (PTNs) and posterolateral striatum (CSNs).",
+            "Layer 5 pyramidal neurons targeted in arm representation area. "
+            "Chamber surgically positioned over left M1 using stereotactic atlas coordinates. "
+            "Daily electrode positions defined relative to chamber center/reference point. "
+            "Chamber grid system: A_P: -7 to +6mm (anterior-posterior), M_L: -6 to +2mm (medial-lateral), "
+            "Depth: 8.4-27.6mm (insertion depth from chamber reference). "
+            "Functional verification via microstimulation (≤40μA, 10 pulses at 300Hz). "
+            "Antidromic identification from cerebral peduncle (PTNs) and posterolateral striatum (CSNs).",
             location="Primary motor cortex (M1), arm area, Layer 5 - chamber coordinates",
-            device=device
+            device=device,
         )
-        
-        # Add custom columns for electrode insertion positions (chamber-relative coordinates)
-        nwbfile.add_electrode_column(name="insertion_position_ap_mm", description="Electrode insertion position: Anterior-Posterior coordinate relative to chamber center (mm, positive = anterior)")
-        nwbfile.add_electrode_column(name="insertion_position_ml_mm", description="Electrode insertion position: Medial-Lateral coordinate relative to chamber center (mm, positive = lateral)")
-        nwbfile.add_electrode_column(name="insertion_position_depth_mm", description="Electrode insertion position: depth below chamber reference point (mm, positive = deeper)")
-        
-        # Add electrode with insertion positions as custom columns
+
+        # Add custom columns for chamber grid coordinates and recording system metadata
+        nwbfile.add_electrode_column(
+            name="chamber_grid_ap_mm",
+            description=(
+                "Chamber grid position: Anterior-Posterior coordinate relative to chamber center "
+                "(mm, positive = anterior, range: -7 to +6mm)"
+            ),
+        )
+        nwbfile.add_electrode_column(
+            name="chamber_grid_ml_mm",
+            description=(
+                "Chamber grid position: Medial-Lateral coordinate relative to chamber center "
+                "(mm, positive = lateral, range: -6 to +2mm)"
+            ),
+        )
+        nwbfile.add_electrode_column(
+            name="chamber_insertion_depth_mm",
+            description=(
+                "Electrode insertion depth from chamber reference point "
+                "(mm, positive = deeper, range: 8.4-27.6mm)"
+            ),
+        )
+        nwbfile.add_electrode_column(
+            name="recording_site_index",
+            description=(
+                "Systematic cortical mapping site identifier: unique index for each chamber "
+                "penetration location sampled during the experimental period"
+            ),
+        )
+        nwbfile.add_electrode_column(
+            name="recording_session_index",
+            description=(
+                "Depth sampling session identifier: sequential recordings performed at different "
+                "electrode insertion depths within the same cortical penetration site"
+            ),
+        )
+
+        # Extract recording system metadata from file naming convention
+        base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811" from "v5811.1.mat"
+
+        # Parse file naming convention: v[Site][Session] where:
+        # Characters 2-3: incremental count of recording chamber penetration sites
+        # Characters 4-5: count of recording sessions at different penetration depths
+        if len(base_name) >= 5 and base_name.startswith("v"):
+            recording_site_index = int(base_name[1:3])  # Characters 2-3 (site index)
+            recording_session_index = int(base_name[3:5])  # Characters 4-5 (session index)
+        else:
+            # Fallback for unexpected naming patterns
+            recording_site_index = -1
+            recording_session_index = -1
+
+        # Add electrode with chamber grid coordinates and recording system metadata
         nwbfile.add_electrode(
             x=0.0,  # Use neutral coordinates for standard x,y,z
             y=0.0,
             z=0.0,
-            imp=float('nan'),  # Electrode impedance not recorded
+            imp=float("nan"),  # Electrode impedance not recorded
             location="Primary motor cortex (M1), arm area, Layer 5",
             filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
             group=electrode_group,
-            insertion_position_ap_mm=self.session_info['A_P'],
-            insertion_position_ml_mm=self.session_info['M_L'],
-            insertion_position_depth_mm=self.session_info['Depth']
+            chamber_grid_ap_mm=self.session_info["A_P"],
+            chamber_grid_ml_mm=self.session_info["M_L"],
+            chamber_insertion_depth_mm=self.session_info["Depth"],
+            recording_site_index=recording_site_index,
+            recording_session_index=recording_session_index,
         )
 
         # Discover all unit files for this session
-        base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811" from "v5811.1.mat"
         base_dir = self.base_file_path.parent
 
         unit_files = []
@@ -167,6 +216,10 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         if nwbfile.units is None:
             nwbfile.add_unit_column("cell_type", "Cell type classification (PTN/CSN/NR/NT)")
             nwbfile.add_unit_column("unit_number", "Original unit number from recording")
+            nwbfile.add_unit_column(
+                "session_tracking_id",
+                "Session tracking identifier from file naming convention (format: v[Site][Session][Unit])",
+            )
 
         # Process each unit
         for unit_file_path, unit_meta in zip(unit_files, unit_metadata_list):
@@ -179,40 +232,42 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
 
             # Load spike times matrix - handle both 1D and 2D formats
             spike_times_matrix = mat_data["unit_ts"]
-            
+
             if spike_times_matrix.ndim == 1:
                 # 1D format: one value per trial (or two values per trial for different conditions)
                 # Convert to 2D format for consistent processing
                 if self.verbose:
                     print(f"Converting 1D unit_ts array (shape {spike_times_matrix.shape}) to 2D format")
                 spike_times_matrix = spike_times_matrix.reshape(-1, 1)  # Each row is a trial with 1 spike max
-                n_trials, max_spikes_per_trial = spike_times_matrix.shape
+                n_trials, _ = spike_times_matrix.shape
             elif spike_times_matrix.ndim == 2:
                 # 2D format: trials x max_spikes_per_trial (standard format)
-                n_trials, max_spikes_per_trial = spike_times_matrix.shape
+                n_trials, _ = spike_times_matrix.shape
             else:
-                raise ValueError(f"Unexpected unit_ts array dimensions: {spike_times_matrix.ndim}. Expected 1D or 2D array.")
+                raise ValueError(
+                    f"Unexpected unit_ts array dimensions: {spike_times_matrix.ndim}. Expected 1D or 2D array."
+                )
 
             # Generate trial start times if not provided (should be same for all units in session)
             if trial_start_times is None:
                 # Use analog-based trial durations (same approach as trials_interface.py)
                 analog_data = mat_data["Analog"]
-                
+
                 # Get actual trial durations from analog data
                 trial_durations = []
                 for trial_index in range(n_trials):
                     trial_analog = analog_data["x"][trial_index]
                     duration_s = len(trial_analog) / 1000.0  # 1kHz sampling, convert to seconds
                     trial_durations.append(duration_s)
-                
+
                 # Create trial start times with inter-trial intervals
                 trial_start_times = []
                 current_time = 0.0
-                
+
                 for trial_index in range(n_trials):
                     trial_start_times.append(current_time)
                     current_time += trial_durations[trial_index] + self.inter_trial_time_interval
-                
+
                 trial_start_times = np.array(trial_start_times)
 
             # Convert trial-based spike times to continuous timeline
@@ -236,12 +291,16 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             cell_type = unit_meta.get("Antidrom", "unknown")
             unit_number = unit_meta.get("UnitNum1", 0)
 
+            # Create session tracking ID from file naming convention
+            session_tracking_id = unit_file_path.stem  # e.g., "v5811.1" from "v5811.1.mat"
+
             # Add unit to NWB file - link to electrode index 0
             nwbfile.add_unit(
                 spike_times=all_spike_times,
                 electrodes=[0],  # Link to electrode index 0
                 cell_type=cell_type,
                 unit_number=unit_number,
+                session_tracking_id=session_tracking_id,
             )
 
             if self.verbose:

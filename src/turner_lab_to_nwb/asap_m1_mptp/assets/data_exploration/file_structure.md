@@ -373,5 +373,8 @@ The CSV metadata table contains **24 columns** with comprehensive information ab
 - **`01`**: Session #1 at this site/depth
 - **`.1`**: Data from unit #1 (some files have .2 for second unit)
 
+Characters 2-3 incremental count of recording chamber epnetration sites. Individual chamber sites were often sampled from on >1 recording day.
+Characters 4-5 count of recording sessions at differnet penetration depths
+
 **Secondary files** (e.g., v1401b.1): Same unit recorded again, typically with 'b' suffix indicating second recording session.
 
