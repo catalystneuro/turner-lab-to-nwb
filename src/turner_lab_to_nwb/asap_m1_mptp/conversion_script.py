@@ -14,6 +14,7 @@ from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
     M1MPTPSpikeTimesInterface,
     M1MPTPAnalogKinematicsInterface,
     M1MPTPTrialsInterface,
+    M1MPTPAntidromicStimulationInterface,
 )
 
 
@@ -72,6 +73,12 @@ def convert_session_to_nwbfile(
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
+    antidromic_interface = M1MPTPAntidromicStimulationInterface(
+        file_path=matlab_file_path,
+        session_metadata=session_info_dict["units"],
+        antidromic_exploration_offset=4000.0,  # Place antidromic data 4000s after trial start
+        verbose=verbose,
+    )
 
     # Load base metadata from YAML file
     metadata_file = Path(__file__).parent / "metadata.yaml"
@@ -91,7 +98,8 @@ def convert_session_to_nwbfile(
         "electrodes": electrodes_interface,
         "spike": spike_interface, 
         "analog": analog_interface, 
-        "trials": trials_interface
+        "trials": trials_interface,
+        "antidromic": antidromic_interface
     }
     converter = ConverterPipe(data_interfaces=data_interfaces)
 

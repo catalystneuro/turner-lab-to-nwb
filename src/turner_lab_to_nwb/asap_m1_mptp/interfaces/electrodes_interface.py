@@ -115,6 +115,15 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             location="Cerebral peduncle (pre-pontine)",
             device=stimulation_device,
         )
+        
+        # Thalamus stimulation electrode group (left hemisphere)
+        thalamus_stim_group = nwbfile.create_electrode_group(
+            name="ElectrodeGroupStimThalamus",
+            description="Left VL thalamus stimulation electrode for antidromic identification. "
+            "Custom-built PtIr microwire electrode for thalamocortical projection testing.",
+            location="Ventrolateral thalamus",
+            device=stimulation_device,
+        )
 
         # Add custom columns for chamber grid coordinates and recording system metadata
         nwbfile.add_electrode_column(
@@ -231,7 +240,25 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 is_stimulation=True,
                 stim_notes=f"Electrode {i+1} of 3, posterolateral putamen for M1 CSN projections",
             )
+        
+        # Add VL thalamus electrode for antidromic identification
+        nwbfile.add_electrode(
+            x=float("nan"),
+            y=float("nan"),
+            z=float("nan"),
+            imp=float("nan"),
+            location="Ventrolateral thalamus",
+            filtering="Not applicable - stimulation electrode",
+            group=thalamus_stim_group,
+            chamber_grid_ap_mm=float("nan"),
+            chamber_grid_ml_mm=float("nan"),
+            chamber_insertion_depth_mm=float("nan"),
+            recording_site_index=-1,
+            recording_session_index=-1,
+            is_stimulation=True,
+            stim_notes="VL thalamus for thalamocortical projection identification",
+        )
 
         if self.verbose:
-            print(f"Added electrode configuration: 1 recording electrode + 4 stimulation electrodes")
+            print(f"Added electrode configuration: 1 recording electrode + 5 stimulation electrodes")
             print(f"Recording site index: {recording_site_index}, session index: {recording_session_index}")
