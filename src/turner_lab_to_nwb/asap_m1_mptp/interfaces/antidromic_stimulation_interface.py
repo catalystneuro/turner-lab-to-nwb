@@ -184,8 +184,13 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             stim_data = self.mat_data[stim_type]
             
             # Extract data components
-            unit_data = stim_data["Unit"]  # Shape: (1000, n_sweeps)
-            time_data = stim_data.get("Time", stim_data["time"])  # Shape: (1000,)
+            unit_data = stim_data["Unit"] 
+            if "Time" in stim_data:
+                time_data = stim_data["Time"]
+            elif "time" in stim_data:
+                time_data = stim_data["time"]
+            else:
+                raise ValueError(f"No 'Time' field found in {stim_type} data")
             current_data = stim_data["Curr"]  # Shape: (1000, n_sweeps)
             trace_names = stim_data["TraceName"]
             

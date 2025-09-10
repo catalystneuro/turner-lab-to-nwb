@@ -129,6 +129,19 @@ def convert_session_to_nwbfile(
     # Create NWB file - spike interface will add electrode table and units
     nwbfile = converter.create_nwbfile(metadata=metadata)
 
+    # Add temporal data limitation documentation
+    nwbfile.notes = (
+        "Temporal data limitation: Recording dates are accurate from experimental logs, "
+        "but precise session start times within each day are not available in source data. "
+        "session_start_time is set to midnight (Pittsburgh timezone) with 2-hour systematic "
+        "offsets for multiple sessions recorded on the same date, ordered by file sequence. "
+        "All relative timing within each session (trials, spikes, stimulation) maintains "
+        "original temporal accuracy. NOTE: Inter-trial intervals are not available in "
+        "source data - trials are separated by fixed 3-second intervals for temporal "
+        "organization purposes only and should not be interpreted as actual behavioral "
+        "inter-trial timing."
+    )
+
     configure_and_write_nwbfile(nwbfile=nwbfile, nwbfile_path=nwbfile_path)
 
     if verbose:
@@ -187,7 +200,7 @@ if __name__ == "__main__":
             "units": [row.to_dict() for _, row in session_group.iterrows()],
         }
 
-        # Construct session ID using format: {subject}++{PreMPTP|PostMPTP}++Depth{depth}++{YearMonthDay}
+        # Construct session ID using format: {subject}++{PreMPTP|PostMPTP}++Depth{depth_um}um++{YearMonthDay}
         # Convert date from "06-Apr-1999" to "19990406" format, use "NA" for missing dates
         if primary_unit["DateCollected"] == "NaT" or pd.isna(primary_unit["DateCollected"]):
             formatted_date = "NA"
@@ -196,8 +209,9 @@ if __name__ == "__main__":
             date_obj = datetime.strptime(primary_unit["DateCollected"], "%d-%b-%Y")
             formatted_date = date_obj.strftime("%Y%m%d")
 
-        # Format depth to 1 decimal place, replace dot with underscore for filename compatibility
-        depth_str = f"{primary_unit['Depth']:.1f}mm".replace(".", "_")
+        # Convert depth to micrometers to avoid decimals in session_id
+        depth_um = int(primary_unit['Depth'] * 1000)  # Convert mm to μm
+        depth_str = f"{depth_um}um"
 
         # Create session ID with your specified format
         mptp_condition = f"{primary_unit['MPTP']}MPTP"
