@@ -75,41 +75,45 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             metadata = self.get_metadata()
 
         # Create recording device
-        device = nwbfile.create_device(
-            name="DeviceMicroelectrodeSystem",
-            description="Turner Lab microelectrode recording system: Glass-coated PtIr microelectrode "
-            "mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo) within "
-            "cylindrical stainless steel recording chamber (35° coronal angle). "
-            "Signal amplified 10^4, bandpass filtered 0.3-10kHz. "
-            "Sampling: 20kHz for unit discrimination, 1kHz for analog/behavioral signals. "
-            "Chamber-relative coordinate system with sub-millimeter precision.",
+        recording_device = nwbfile.create_device(
+            name="DeviceMicroelectrodeRecording",
+            description="Glass-coated PtIr microelectrode mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo). "
+            "Signal amplified 10^4, bandpass filtered 0.3-10kHz. Sampling: 20kHz for unit discrimination.",
         )
         
-        # Recording electrode group for M1 chamber
+        # Create stimulation device
+        stimulation_device = nwbfile.create_device(
+            name="DeviceStimulationElectrodes",
+            description="Custom-built PtIr microwire electrodes for antidromic stimulation. "
+            "Chronically implanted at projection sites for neuron classification.",
+        )
+        
+        # Recording electrode group for M1 chamber (left hemisphere)
         recording_electrode_group = nwbfile.create_electrode_group(
             name="ElectrodeGroupM1Recording",
-            description="Primary motor cortex (M1) recording electrode group within chamber-relative coordinate system. "
-            "Layer 5 pyramidal neurons targeted in arm representation area. "
-            "Chamber surgically positioned over left M1 using stereotactic atlas coordinates. "
-            "Daily electrode positions defined relative to chamber center/reference point. "
-            "Chamber grid system: A_P: -7 to +6mm (anterior-posterior), M_L: -6 to +2mm (medial-lateral), "
-            "Depth: 8.4-27.6mm (insertion depth from chamber reference). "
-            "Functional verification via microstimulation (≤40μA, 10 pulses at 300Hz). "
-            "Glass-coated PtIr microelectrode in hydraulic microdrive for single-unit isolation.",
-            location="Primary motor cortex (M1), arm area, Layer 5 - chamber coordinates",
-            device=device,
+            description="Left primary motor cortex recording within chamber-relative coordinate system. "
+            "Chamber surgically positioned over left M1. Daily positions relative to chamber center. "
+            "Functional verification via microstimulation (≤40μA, 10 pulses at 300Hz).",
+            location="Primary motor cortex (M1), area 4, arm area",
+            device=recording_device,
         )
         
-        # Stimulation electrode group for antidromic identification
-        stimulation_electrode_group = nwbfile.create_electrode_group(
-            name="ElectrodeGroupAntidromicStimulation",
-            description="Stimulation electrodes for antidromic identification of cortical neuron projection targets. "
-            "Custom-built PtIr microwire electrodes chronically implanted at projection sites to classify "
-            "recorded M1 neurons as pyramidal tract neurons (PTNs) or corticostriatal neurons (CSNs). "
-            "Electrodes positioned using standard electrophysiological mapping techniques. "
-            "Histological reconstruction confirmed optimal placement for M1 projection targeting.",
-            location="Multiple subcortical projection targets - see individual electrode locations",
-            device=device,
+        # Putamen stimulation electrode group (left hemisphere)
+        putamen_stim_group = nwbfile.create_electrode_group(
+            name="ElectrodeGroupStimPutamen",
+            description="Left posterolateral putamen stimulation electrodes for CSN antidromic identification. "
+            "Three custom-built PtIr microwire electrodes. Histologically verified placement.",
+            location="Putamen (posterolateral)",
+            device=stimulation_device,
+        )
+        
+        # Peduncle stimulation electrode group (left hemisphere)
+        peduncle_stim_group = nwbfile.create_electrode_group(
+            name="ElectrodeGroupStimPeduncle",
+            description="Left cerebral peduncle stimulation electrode for PTN antidromic identification. "
+            "Single custom-built PtIr microwire electrode. Histologically verified placement.",
+            location="Cerebral peduncle (pre-pontine)",
+            device=stimulation_device,
         )
 
         # Add custom columns for chamber grid coordinates and recording system metadata
@@ -117,36 +121,46 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             name="chamber_grid_ap_mm",
             description=(
                 "Chamber grid position: Anterior-Posterior coordinate relative to chamber center "
-                "(mm, positive = anterior, range: -7 to +6mm)"
+                "(mm, positive = anterior, range: -7 to +6mm). NaN for stimulation electrodes."
             ),
         )
         nwbfile.add_electrode_column(
             name="chamber_grid_ml_mm",
             description=(
                 "Chamber grid position: Medial-Lateral coordinate relative to chamber center "
-                "(mm, positive = lateral, range: -6 to +2mm)"
+                "(mm, positive = lateral, range: -6 to +2mm). NaN for stimulation electrodes."
             ),
         )
         nwbfile.add_electrode_column(
             name="chamber_insertion_depth_mm",
             description=(
                 "Electrode insertion depth from chamber reference point "
-                "(mm, positive = deeper, range: 8.4-27.6mm)"
+                "(mm, positive = deeper, range: 8.4-27.6mm). NaN for stimulation electrodes."
             ),
         )
         nwbfile.add_electrode_column(
             name="recording_site_index",
             description=(
                 "Systematic cortical mapping site identifier: unique index for each chamber "
-                "penetration location sampled during the experimental period"
+                "penetration location sampled during the experimental period. -1 for stimulation electrodes."
             ),
         )
         nwbfile.add_electrode_column(
             name="recording_session_index",
             description=(
                 "Depth sampling session identifier: sequential recordings performed at different "
-                "electrode insertion depths within the same cortical penetration site"
+                "electrode insertion depths within the same cortical penetration site. -1 for stimulation electrodes."
             ),
+        )
+        
+        # Add structured metadata columns
+        nwbfile.add_electrode_column(
+            name="is_stimulation",
+            description="Boolean flag indicating whether electrode is used for stimulation (True) or recording (False).",
+        )
+        nwbfile.add_electrode_column(
+            name="stim_notes",
+            description="Additional notes for stimulation electrodes including stereotaxic details. Empty string for recording electrodes.",
         )
 
         # Extract recording system metadata from file naming convention
@@ -165,11 +179,11 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
 
         # Add recording electrode with chamber grid coordinates and recording system metadata
         nwbfile.add_electrode(
-            x=0.0,  # Use neutral coordinates for standard x,y,z
-            y=0.0,
-            z=0.0,
+            x=float("nan"),  # Unknown global coordinates
+            y=float("nan"),
+            z=float("nan"),
             imp=float("nan"),  # Electrode impedance not recorded
-            location="Primary motor cortex (M1), arm area, Layer 5",
+            location="Primary motor cortex (M1), area 4, arm area",
             filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
             group=recording_electrode_group,
             chamber_grid_ap_mm=self.session_info["A_P"],
@@ -177,74 +191,47 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             chamber_insertion_depth_mm=self.session_info["Depth"],
             recording_site_index=recording_site_index,
             recording_session_index=recording_session_index,
+            is_stimulation=False,
+            stim_notes="",
         )
         
-        # Add stimulation electrodes for antidromic identification
-        # Cerebral peduncle electrode for PTN identification
+        # Add cerebral peduncle stimulation electrode for PTN identification
         nwbfile.add_electrode(
-            x=0.0,
-            y=0.0, 
-            z=0.0,
+            x=float("nan"),
+            y=float("nan"), 
+            z=float("nan"),
             imp=float("nan"),
-            location="Cerebral peduncle, arm-responsive pre-pontine region",
+            location="Cerebral peduncle (pre-pontine)",
             filtering="Not applicable - stimulation electrode",
-            group=stimulation_electrode_group,
+            group=peduncle_stim_group,
             chamber_grid_ap_mm=float("nan"),  # Not applicable for stimulation electrodes
             chamber_grid_ml_mm=float("nan"),
             chamber_insertion_depth_mm=float("nan"),
             recording_site_index=-1,  # Not applicable for stimulation electrodes
             recording_session_index=-1,
+            is_stimulation=True,
+            stim_notes="Ventral to substantia nigra, arm-responsive pre-pontine region",
         )
         
-        # Posterolateral striatum electrodes for CSN identification (3 electrodes)
+        # Add posterolateral putamen electrodes for CSN identification (3 electrodes)
         for i in range(3):
             nwbfile.add_electrode(
-                x=0.0,
-                y=0.0,
-                z=0.0,
+                x=float("nan"),
+                y=float("nan"),
+                z=float("nan"),
                 imp=float("nan"),
-                location=f"Posterolateral striatum (putamen), electrode {i+1} of 3",
+                location="Putamen (posterolateral)",
                 filtering="Not applicable - stimulation electrode",
-                group=stimulation_electrode_group,
+                group=putamen_stim_group,
                 chamber_grid_ap_mm=float("nan"),
                 chamber_grid_ml_mm=float("nan"),
                 chamber_insertion_depth_mm=float("nan"),
                 recording_site_index=-1,
                 recording_session_index=-1,
+                is_stimulation=True,
+                stim_notes=f"Electrode {i+1} of 3, posterolateral putamen for M1 CSN projections",
             )
-        
-        # Thalamus stimulation electrode
-        nwbfile.add_electrode(
-            x=0.0,
-            y=0.0,
-            z=0.0,
-            imp=float("nan"),
-            location="Thalamus, motor-responsive region",
-            filtering="Not applicable - stimulation electrode",
-            group=stimulation_electrode_group,
-            chamber_grid_ap_mm=float("nan"),
-            chamber_grid_ml_mm=float("nan"),
-            chamber_insertion_depth_mm=float("nan"),
-            recording_site_index=-1,
-            recording_session_index=-1,
-        )
-        
-        # Subthalamic nucleus stimulation electrode
-        nwbfile.add_electrode(
-            x=0.0,
-            y=0.0,
-            z=0.0,
-            imp=float("nan"),
-            location="Subthalamic nucleus (STN)",
-            filtering="Not applicable - stimulation electrode",
-            group=stimulation_electrode_group,
-            chamber_grid_ap_mm=float("nan"),
-            chamber_grid_ml_mm=float("nan"),
-            chamber_insertion_depth_mm=float("nan"),
-            recording_site_index=-1,
-            recording_session_index=-1,
-        )
 
         if self.verbose:
-            print(f"Added electrode configuration: 1 recording electrode + 6 stimulation electrodes")
+            print(f"Added electrode configuration: 1 recording electrode + 4 stimulation electrodes")
             print(f"Recording site index: {recording_site_index}, session index: {recording_session_index}")
