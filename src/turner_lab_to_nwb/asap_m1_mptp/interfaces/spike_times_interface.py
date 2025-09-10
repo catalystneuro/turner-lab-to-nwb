@@ -96,99 +96,10 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         if metadata is None:
             metadata = self.get_metadata()
 
-        # Create electrode table first (before adding units)
-        device = nwbfile.create_device(
-            name="DeviceMicroelectrodeSystem",
-            description="Turner Lab microelectrode recording system: Glass-coated PtIr microelectrode "
-            "mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo) within "
-            "cylindrical stainless steel recording chamber (35° coronal angle). "
-            "Signal amplified ×10⁴, bandpass filtered 0.3-10kHz. "
-            "Sampling: 20kHz for unit discrimination, 1kHz for analog/behavioral signals. "
-            "Chamber-relative coordinate system with sub-millimeter precision.",
-        )
-
-        electrode_group = nwbfile.create_electrode_group(
-            name="ElectrodeGroupM1Chamber",
-            description="Primary motor cortex (M1) electrode group within chamber-relative coordinate system. "
-            "Layer 5 pyramidal neurons targeted in arm representation area. "
-            "Chamber surgically positioned over left M1 using stereotactic atlas coordinates. "
-            "Daily electrode positions defined relative to chamber center/reference point. "
-            "Chamber grid system: A_P: -7 to +6mm (anterior-posterior), M_L: -6 to +2mm (medial-lateral), "
-            "Depth: 8.4-27.6mm (insertion depth from chamber reference). "
-            "Functional verification via microstimulation (≤40μA, 10 pulses at 300Hz). "
-            "Antidromic identification from cerebral peduncle (PTNs) and posterolateral striatum (CSNs).",
-            location="Primary motor cortex (M1), arm area, Layer 5 - chamber coordinates",
-            device=device,
-        )
-
-        # Add custom columns for chamber grid coordinates and recording system metadata
-        nwbfile.add_electrode_column(
-            name="chamber_grid_ap_mm",
-            description=(
-                "Chamber grid position: Anterior-Posterior coordinate relative to chamber center "
-                "(mm, positive = anterior, range: -7 to +6mm)"
-            ),
-        )
-        nwbfile.add_electrode_column(
-            name="chamber_grid_ml_mm",
-            description=(
-                "Chamber grid position: Medial-Lateral coordinate relative to chamber center "
-                "(mm, positive = lateral, range: -6 to +2mm)"
-            ),
-        )
-        nwbfile.add_electrode_column(
-            name="chamber_insertion_depth_mm",
-            description=(
-                "Electrode insertion depth from chamber reference point "
-                "(mm, positive = deeper, range: 8.4-27.6mm)"
-            ),
-        )
-        nwbfile.add_electrode_column(
-            name="recording_site_index",
-            description=(
-                "Systematic cortical mapping site identifier: unique index for each chamber "
-                "penetration location sampled during the experimental period"
-            ),
-        )
-        nwbfile.add_electrode_column(
-            name="recording_session_index",
-            description=(
-                "Depth sampling session identifier: sequential recordings performed at different "
-                "electrode insertion depths within the same cortical penetration site"
-            ),
-        )
-
-        # Extract recording system metadata from file naming convention
-        base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811" from "v5811.1.mat"
-
-        # Parse file naming convention: v[Site][Session] where:
-        # Characters 2-3: incremental count of recording chamber penetration sites
-        # Characters 4-5: count of recording sessions at different penetration depths
-        if len(base_name) >= 5 and base_name.startswith("v"):
-            recording_site_index = int(base_name[1:3])  # Characters 2-3 (site index)
-            recording_session_index = int(base_name[3:5])  # Characters 4-5 (session index)
-        else:
-            # Fallback for unexpected naming patterns
-            recording_site_index = -1
-            recording_session_index = -1
-
-        # Add electrode with chamber grid coordinates and recording system metadata
-        nwbfile.add_electrode(
-            x=0.0,  # Use neutral coordinates for standard x,y,z
-            y=0.0,
-            z=0.0,
-            imp=float("nan"),  # Electrode impedance not recorded
-            location="Primary motor cortex (M1), arm area, Layer 5",
-            filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
-            group=electrode_group,
-            chamber_grid_ap_mm=self.session_info["A_P"],
-            chamber_grid_ml_mm=self.session_info["M_L"],
-            chamber_insertion_depth_mm=self.session_info["Depth"],
-            recording_site_index=recording_site_index,
-            recording_session_index=recording_session_index,
-        )
+        # Electrode table should already be created by electrodes interface
 
         # Discover all unit files for this session
+        base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811" from "v5811.1.mat"
         base_dir = self.base_file_path.parent
 
         unit_files = []

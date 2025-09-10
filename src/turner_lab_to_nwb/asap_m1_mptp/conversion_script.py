@@ -10,6 +10,7 @@ from neuroconv.tools import configure_and_write_nwbfile
 from neuroconv import ConverterPipe
 
 from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
+    M1MPTPElectrodesInterface,
     M1MPTPSpikeTimesInterface,
     M1MPTPAnalogKinematicsInterface,
     M1MPTPTrialsInterface,
@@ -49,6 +50,12 @@ def convert_session_to_nwbfile(
     session_info = session_info_dict["session_info"]
 
     # Create interfaces
+    # Electrodes interface must be first to set up electrode table
+    electrodes_interface = M1MPTPElectrodesInterface(
+        file_path=matlab_file_path,
+        session_metadata=session_info_dict["units"],
+        verbose=verbose,
+    )
     spike_interface = M1MPTPSpikeTimesInterface(
         file_path=matlab_file_path,
         session_metadata=session_info_dict["units"],
@@ -80,7 +87,12 @@ def convert_session_to_nwbfile(
         "description"
     ] = f"MPTP-treated parkinsonian macaque monkey. Recording date: {session_info['DateCollected']}. Stereotactic coordinates: A/P={session_info['A_P']}mm, M/L={session_info['M_L']}mm, Depth={session_info['Depth']}mm."
 
-    data_interfaces = {"spike": spike_interface, "analog": analog_interface, "trials": trials_interface}
+    data_interfaces = {
+        "electrodes": electrodes_interface,
+        "spike": spike_interface, 
+        "analog": analog_interface, 
+        "trials": trials_interface
+    }
     converter = ConverterPipe(data_interfaces=data_interfaces)
 
     # Get base metadata from interface and merge with YAML
