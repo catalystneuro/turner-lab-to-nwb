@@ -15,32 +15,6 @@
 
 **CSV Metadata Entries:** 361 total entries in `ven_table.csv`
 
-### Identified Discrepancies
-
-#### 1. Missing Unit Files (CSV entries without corresponding files)
-**2 entries** in CSV indicate unit 2 exists, but `.2.mat` files are missing:
-- `v2701.2.mat` - CSV indicates UnitNum2=2, only `v2701.1.mat` exists
-- `v4807.2.mat` - CSV indicates UnitNum2=2, only `v4807.1.mat` exists
-
-*Likely cause: Files lost, corrupted, or never properly saved during recording*
-
-#### 2. Undocumented Unit Files (files exist but not in CSV metadata)
-**63 additional `.2.mat` files** exist but are NOT documented in the CSV as having a second unit:
-
-Examples include: `v1001.2.mat`, `v1102.2.mat`, `v1303.2.mat`, `v1802.2.mat`, `v2001.2.mat`, `v2705.2.mat`, `v2706.2.mat`, etc.
-
-*Complete list: 66 total `.2.mat` files exist, but only 3 are documented in CSV with UnitNum2=2*
-
-### Impact on Conversion
-
-1. **Missing files**: Conversion will skip 2 units that exist only in CSV metadata
-2. **Undocumented units**: 63 additional units will be discovered and processed during conversion, but will lack detailed metadata (antidromic classification, sensory properties, etc.)
-3. **File coverage**: 359/361 CSV entries (99.4%) have corresponding data files
-4. **Unit discovery**: Actual units available = 359 (unit 1) + 66 (unit 2) = 425 total units vs 361 documented in CSV
-
-The spike times interface automatically discovers all available unit files per session and processes them regardless of CSV documentation status.
-
-
 ### Data Streams to Convert
 
 The conversion pipeline will handle the following data streams:
@@ -147,55 +121,7 @@ These coordinates do NOT directly correspond to standard macaque brain atlas coo
 
 ### Data Format Variations
 
-#### **Spike Times (`unit_ts`) Format Differences**
-
-During conversion development, we encountered two different `unit_ts` data formats that require special handling:
-
-**Standard 2D Format (Most files):**
-- Shape: `(n_trials, max_spikes_per_trial)`
-- Example: `(20, 138)` = 20 trials, up to 138 spikes per trial
-- Data: Multiple spike times per trial, NaN-padded
-- Usage: Typical format allowing multiple spikes per trial
-
-**Compact 1D Format (Some files like v3601.1.mat, v5604b.2.mat):**
-- Shape: `(n_values,)`  
-- Example: `(20,)` or `(40,)`
-- Data: Single representative spike time per trial/condition
-- Usage: Simplified format with one spike time per trial, NaN when no spike
-
-**What we observed:**
-- v3601.1.mat: 1D array shape `(20,)` with 4 non-NaN values out of 20
-- v5604b.2.mat: 1D array shape `(40,)` with 29 non-NaN values out of 40  
-- Standard files: 2D array like `(20, 138)` with multiple spikes per trial
-
-**Expected trial counts (verified from metadata table and file_info):**
-- v3601.1.mat: `ntrials1_1=10, ntrials1_2=10` (total=20), `file_info.trial_n=20`, Events confirms 20 behavioral trials
-- v5604b.2.mat: `ntrials1_1=20, ntrials1_2=20` (total=40), `file_info.trial_n=40`, Events confirms 40 behavioral trials
-- Standard files: Same pattern, e.g., v0502.1.mat has 20 behavioral trials but 2D `unit_ts` shape `(20, 138)`
-
-**Key insight**: The 1D `unit_ts` array length **exactly matches** the total number of behavioral trials:
-- 1D format: Array length = total behavioral trials (one-to-one mapping)
-- 2D format: First dimension = total behavioral trials, second dimension = max spikes per trial
-
-**What we expected:**
-- All files to follow the standard 2D format based on initial data exploration
-
-**What needs clarification with data authors:**
-1. **Data collection difference**: Why some sessions used 1D vs 2D spike recording format?
-2. **Temporal meaning**: In 1D format, does each element represent:
-   - Single spike per trial (most likely given one-to-one trial mapping)?
-   - Peak/representative firing time within each trial?
-   - First spike occurrence in each trial?
-3. **Recording methodology**: Was spike detection/sorting different for 1D vs 2D sessions?
-4. **Data completeness**: Are we losing spike data by using only one value per trial in 1D format?
-
-**Current assumptions in conversion:**
-- 1D format represents one spike time per behavioral trial
-- Direct mapping: `unit_ts[i]` corresponds to behavioral trial `i`
-- NaN values indicate trials with no recorded spikes
-- We reshape 1D to 2D `(n_trials, 1)` for consistent NWB processing
-
-**Current solution**: The conversion automatically detects format and reshapes 1D arrays to 2D `(n_values, 1)` for consistent processing.
+The conversion handles different data formats automatically. Technical details documented separately for data authors.
 
 
 ## Keywords
@@ -226,6 +152,34 @@ During conversion development, we encountered two different `unit_ts` data forma
 **Velmax / Acc**: Peak Velocity / Acceleration — Kinematic parameters encoded by M1 neurons and affected by MPTP.
 
 **TH**: Tyrosine Hydroxylase — Enzyme marker for dopaminergic neurons, used in histology to confirm MPTP-induced nigral cell loss.
+
+## Paper notes and metadata
+
+### Surgery
+
+From the active movement paper  
+> After training, each monkey was prepared for recording by aseptic surgery under isoflurane inhalation anaesthesia. A cylindrical stainless steel chamber was implanted with stereotaxic guidance over a burr hole allowing access to the arm-related regions of the left M1 and the putamen. The chamber was oriented parallel to the coronal plane at an angle of 35° so that electrode penetrations were orthogonal to the cortical surface. The chamber was fixed to the skull with bone screws and dental acrylic. Bolts were embedded in the acrylic to allow fixation of the head during recording sessions.
+
+From the stretch paper:
+> The animals were prepared surgically using aseptic techniques under Isoflurane inhalation anesthesia (Pasquereau and Turner, 2011). A cylindrical stainless steel chamber was implanted at an angle of 35◦ in the coronal plane to allow access to the arm-related regions of the left M1 and the posterior putamen. The chamber and hardware for head fixation were fixed to the skull with bone screws and methyl methacrylate polymer.
+
+From the pyramidal tract neurons paper:
+'After training, each monkey was prepared surgically for recording using aseptic surgery under Isoflurane inhalation anesthesia. A cylindrical stainless steel chamber was implanted with stereotaxic guidance over a burr hole allowing access to the arm-related regions of the left M1 and the posterior putamen. The chamber was oriented parallel to the coronal plane at an angle of 35° so that electrode penetrations were orthogonal to the cortical surface. The chamber was fixed to the skull with bone screws and dental acrylic. Bolts were embedded in the acrylic to allow fixation of the head during recording sessions. Prophylactic antibiotics and analgesics were administered postsurgically.'
+
+
+
+### EMG
+From the active movement paper
+
+> For EMG recording, pairs of Teflon-insulated multistranded stainless steel wires were implanted into: flexor carpi ulnaris, flexor carpi radialis, biceps longus, brachioradialis and triceps lateralis in Monkey L; and posterior deltoid, trapezius, triceps longus, triceps lateralis and brachioradialis in Monkey V. The wires were led subcutaneously to a connector fixed to the skull implant.
+
+Stretch paper
+
+> Pairs of fine Teflon‑insulated multistranded stainless steel wires were implanted into multiple arm muscles: flexor carpi ulnaris, flexor carpi radialis, biceps longus, brachioradialis, and triceps lateralis in Monkey L; and posterior deltoid, trapezius, triceps longus, triceps lateralis, and brachioradialis in Monkey V. The wires were led subcutaneously to a connector fixed to the skull implant. Accurate placement of electromyographic (EMG) electrodes was verified post‑surgically, and following surgery the animals received prophylactic antibiotics and analgesic medication.
+
+### Antidromic identification
+
+> The method used to implant chronically-indwelling stimulation electrodes has been described previously (Turner and DeLong, 2000; Pasquereau and Turner, 2011). In brief, PTNs and CSNs were identified by antidromic activation from electrodes implanted in the cerebral peduncle and posteriolateral striatum, respectively. Sites for implantation were identified using standard electrophysiological mapping techniques. Three custom-built PtIr microwire electrodes were implanted in the posterior putamen and one electrode was implanted in the arm-responsive portion of the pre-pontine peduncle (for details, see Turner and DeLong, 2000). Histological reconstruction confirmed that the striatal and peduncle electrodes were at sites known to receive the bulk of M1 CSN and PTN projections, respectively (Brodal, 1978; Flaherty and Graybiel, 1991; Takada et al., 1998).
 
 ## Trial Structure and Session Organization
 
