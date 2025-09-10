@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
+import pandas as pd
 from pydantic import FilePath
 from pynwb import NWBFile
 from pymatreader import read_mat
@@ -125,11 +126,45 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
 
         # Initialize units table if needed
         if nwbfile.units is None:
-            nwbfile.add_unit_column("cell_type", "Cell type classification (PTN/CSN/NR/NT)")
-            nwbfile.add_unit_column("unit_number", "Original unit number from recording")
             nwbfile.add_unit_column(
-                "session_tracking_id",
-                "Session tracking identifier from file naming convention (format: v[Site][Session][Unit])",
+                "neuron_projection_type",
+                "Neuron classification based on projection target identified through antidromic stimulation: "
+                "pyramidal_tract_neuron, corticostriatal_neuron, no_response, not_tested, "
+                "pyramidal_tract_and_corticostriatal_neuron, pyramidal_tract_and_thalamic_neuron, "
+                "thalamic_projection_neuron",
+            )
+            nwbfile.add_unit_column(
+                "antidromic_stimulation_sites",
+                "Anatomical sites where antidromic stimulation was performed during recording session: "
+                "cerebral_peduncle, posterolateral_striatum, cerebral_peduncle_and_posterolateral_striatum, "
+                "or empty string if no stimulation was attempted",
+            )
+            nwbfile.add_unit_column(
+                "antidromic_latency_ms",
+                "Antidromic response latency in milliseconds for primary stimulation site",
+            )
+            nwbfile.add_unit_column(
+                "antidromic_threshold",
+                "Stimulation threshold for antidromic response at primary stimulation site",
+            )
+            nwbfile.add_unit_column(
+                "antidromic_latency_2_ms",
+                "Antidromic response latency in milliseconds for secondary stimulation site (if applicable)",
+            )
+            nwbfile.add_unit_column(
+                "antidromic_threshold_2",
+                "Stimulation threshold for antidromic response at secondary stimulation site (if applicable)",
+            )
+            nwbfile.add_unit_column(
+                "sensory_region",
+                "General body region where sensory responsiveness was observed: "
+                "hand, wrist, elbow, forearm, shoulder, finger, mixed regions (e.g., hand/wrist), "
+                "no_response, not_tested",
+            )
+            nwbfile.add_unit_column(
+                "sensory_detail",
+                "Detailed description of the sensory stimulus or manipulation that elicited response: "
+                "proprioceptive manipulations, tactile stimulations, active movements, or descriptive combinations",
             )
 
         # Process each unit
@@ -198,21 +233,72 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             # Sort all spike times
             all_spike_times = np.array(sorted(all_spike_times))
 
-            # Get cell type from metadata
+            # Get cell type from metadata (used to determine neuron_projection_type)
             cell_type = unit_meta.get("Antidrom", "unknown")
-            unit_number = unit_meta.get("UnitNum1", 0)
+            
+            # Map antidromic classification to full neuron type names
+            neuron_type_mapping = {
+                "PED": "pyramidal_tract_neuron",
+                "STRI": "corticostriatal_neuron", 
+                "NR": "no_response",
+                "NT": "not_tested",
+                "PED/STRI": "pyramidal_tract_and_corticostriatal_neuron",
+                "PED/THAL": "pyramidal_tract_and_thalamic_neuron",
+                "THAL": "thalamic_projection_neuron"
+            }
+            neuron_projection_type = neuron_type_mapping.get(cell_type, "unknown")
+            
+            # Map stimulation sites to full anatomical names
+            stim_data = unit_meta.get("StimData", "")
+            stimulation_sites_mapping = {
+                "Ped": "cerebral_peduncle",
+                "Str": "posterolateral_striatum",
+                "Ped/Str": "cerebral_peduncle_and_posterolateral_striatum"
+            }
+            if pd.isna(stim_data) or stim_data == "":
+                antidromic_stimulation_sites = ""
+            else:
+                antidromic_stimulation_sites = stimulation_sites_mapping.get(stim_data, "")
 
-            # Create session tracking ID from file naming convention
-            session_tracking_id = unit_file_path.stem  # e.g., "v5811.1" from "v5811.1.mat"
+            # Get antidromic response properties from metadata
+            antidromic_latency = unit_meta.get("Latency", float("nan"))
+            antidromic_threshold = unit_meta.get("Threshold", float("nan"))
+            antidromic_latency_2 = unit_meta.get("LAT2", float("nan"))
+            antidromic_threshold_2 = unit_meta.get("Thresh2", float("nan"))
+            
+            # Get sensory receptive field properties from metadata
+            sensory_region_raw = unit_meta.get("SENSORY", "")
+            sensory_detail_raw = unit_meta.get("SENS_DETAIL", "")
+            
+            # Normalize sensory region values for consistency
+            if sensory_region_raw == "NR":
+                sensory_region = "no_response"
+            elif sensory_region_raw == "NT":
+                sensory_region = "not_tested"
+            elif pd.isna(sensory_region_raw) or sensory_region_raw == "":
+                sensory_region = "not_tested"
+            else:
+                sensory_region = sensory_region_raw.lower()  # Standardize case
+            
+            # Normalize sensory detail values
+            if sensory_detail_raw in ["NR", "NT"] or pd.isna(sensory_detail_raw) or sensory_detail_raw == "":
+                sensory_detail = sensory_detail_raw if sensory_detail_raw in ["NR", "NT"] else ""
+            else:
+                sensory_detail = sensory_detail_raw  # Keep verbatim for richness
 
             # Add unit to NWB file - link to electrode index 0
             nwbfile.add_unit(
                 spike_times=all_spike_times,
                 electrodes=[0],  # Link to electrode index 0
-                cell_type=cell_type,
-                unit_number=unit_number,
-                session_tracking_id=session_tracking_id,
+                neuron_projection_type=neuron_projection_type,
+                antidromic_stimulation_sites=antidromic_stimulation_sites,
+                antidromic_latency_ms=antidromic_latency,
+                antidromic_threshold=antidromic_threshold,
+                antidromic_latency_2_ms=antidromic_latency_2,
+                antidromic_threshold_2=antidromic_threshold_2,
+                sensory_region=sensory_region,
+                sensory_detail=sensory_detail,
             )
 
             if self.verbose:
-                print(f"Added unit {unit_number} with {len(all_spike_times)} spikes, cell_type: {cell_type}")
+                print(f"Added unit with {len(all_spike_times)} spikes")
