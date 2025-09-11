@@ -13,6 +13,9 @@ from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
     M1MPTPElectrodesInterface,
     M1MPTPSpikeTimesInterface,
     M1MPTPAnalogKinematicsInterface,
+    M1MPTPManipulandumInterface,
+    M1MPTPLFPInterface,
+    M1MPTPEMGInterface,
     M1MPTPTrialsInterface,
     M1MPTPAntidromicStimulationInterface,
 )
@@ -63,7 +66,24 @@ def convert_session_to_nwbfile(
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
+    # Keep original analog interface for backward compatibility
     analog_interface = M1MPTPAnalogKinematicsInterface(
+        file_path=matlab_file_path,
+        inter_trial_time_interval=inter_trial_time_interval,
+        verbose=verbose,
+    )
+    # Add new specialized interfaces
+    manipulandum_interface = M1MPTPManipulandumInterface(
+        file_path=matlab_file_path,
+        inter_trial_time_interval=inter_trial_time_interval,
+        verbose=verbose,
+    )
+    lfp_interface = M1MPTPLFPInterface(
+        file_path=matlab_file_path,
+        inter_trial_time_interval=inter_trial_time_interval,
+        verbose=verbose,
+    )
+    emg_interface = M1MPTPEMGInterface(
         file_path=matlab_file_path,
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
@@ -97,7 +117,10 @@ def convert_session_to_nwbfile(
     data_interfaces = {
         "electrodes": electrodes_interface,
         "spike": spike_interface, 
-        "analog": analog_interface, 
+        "analog": analog_interface,  # Keep for backward compatibility
+        "manipulandum": manipulandum_interface,
+        "lfp": lfp_interface,
+        "emg": emg_interface,
         "trials": trials_interface,
         "antidromic": antidromic_interface
     }

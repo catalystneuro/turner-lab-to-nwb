@@ -42,14 +42,14 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         center_target_appearance_times = np.array(events["home_cue_on"]) / 1000.0
         lateral_target_appearance_times = np.array(events["targ_cue_on"]) / 1000.0
         target_directions = np.array(events["targ_dir"])
-        subject_movement_onset_times = np.array(events["home_leave"]) / 1000.0
+        cursor_departure_times = np.array(events["home_leave"]) / 1000.0
         reward_times = np.array(events["reward"]) / 1000.0
         n_trials = len(target_directions)
 
         # STEP 2: Add trial columns for Events data
         nwbfile.add_trial_column("center_target_appearance_time", "Time when center target appeared for monkey to align cursor and initiate trial (seconds)")
         nwbfile.add_trial_column("lateral_target_appearance_time", "Time when lateral target appeared signaling monkey to move from center to flexion/extension position (seconds)")
-        nwbfile.add_trial_column("subject_movement_onset_time", "Time when monkey began moving from center position toward lateral target (seconds)")
+        nwbfile.add_trial_column("cursor_departure_time", "Time when cursor exited from start position after lateral target appearance. Detected by cursor position leaving start zone boundary (seconds)")
         nwbfile.add_trial_column("reward_time", "Reward delivery. The animal received a drop of juice or food for successful completion of the task (seconds)")
 
         # STEP 3: Process transformed Events variables to a tidy format
@@ -136,7 +136,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 movement_type=movement_type[trial_index],
                 center_target_appearance_time=trial_start + center_target_appearance_times[trial_index],
                 lateral_target_appearance_time=trial_start + lateral_target_appearance_times[trial_index],
-                subject_movement_onset_time=trial_start + subject_movement_onset_times[trial_index],
+                cursor_departure_time=trial_start + cursor_departure_times[trial_index],
                 reward_time=trial_start + reward_times[trial_index],
                 torque_perturbation_type=torque_perturbation_type[trial_index],
                 torque_perturbation_onset_time=trial_start + torque_perturbation_onset_times[trial_index] if not np.isnan(torque_perturbation_onset_times[trial_index]) else np.nan,
