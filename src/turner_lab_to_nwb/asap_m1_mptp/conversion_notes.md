@@ -164,7 +164,7 @@ From the stretch paper:
 > The animals were prepared surgically using aseptic techniques under Isoflurane inhalation anesthesia (Pasquereau and Turner, 2011). A cylindrical stainless steel chamber was implanted at an angle of 35◦ in the coronal plane to allow access to the arm-related regions of the left M1 and the posterior putamen. The chamber and hardware for head fixation were fixed to the skull with bone screws and methyl methacrylate polymer.
 
 From the pyramidal tract neurons paper:
-'After training, each monkey was prepared surgically for recording using aseptic surgery under Isoflurane inhalation anesthesia. A cylindrical stainless steel chamber was implanted with stereotaxic guidance over a burr hole allowing access to the arm-related regions of the left M1 and the posterior putamen. The chamber was oriented parallel to the coronal plane at an angle of 35° so that electrode penetrations were orthogonal to the cortical surface. The chamber was fixed to the skull with bone screws and dental acrylic. Bolts were embedded in the acrylic to allow fixation of the head during recording sessions. Prophylactic antibiotics and analgesics were administered postsurgically.'
+> After training, each monkey was prepared surgically for recording using aseptic surgery under Isoflurane inhalation anesthesia. A cylindrical stainless steel chamber was implanted with stereotaxic guidance over a burr hole allowing access to the arm-related regions of the left M1 and the posterior putamen. The chamber was oriented parallel to the coronal plane at an angle of 35° so that electrode penetrations were orthogonal to the cortical surface. The chamber was fixed to the skull with bone screws and dental acrylic. Bolts were embedded in the acrylic to allow fixation of the head during recording sessions. Prophylactic antibiotics and analgesics were administered postsurgically.'
 
 
 
@@ -180,6 +180,67 @@ Stretch paper
 ### Antidromic identification
 
 > The method used to implant chronically-indwelling stimulation electrodes has been described previously (Turner and DeLong, 2000; Pasquereau and Turner, 2011). In brief, PTNs and CSNs were identified by antidromic activation from electrodes implanted in the cerebral peduncle and posteriolateral striatum, respectively. Sites for implantation were identified using standard electrophysiological mapping techniques. Three custom-built PtIr microwire electrodes were implanted in the posterior putamen and one electrode was implanted in the arm-responsive portion of the pre-pontine peduncle (for details, see Turner and DeLong, 2000). Histological reconstruction confirmed that the striatal and peduncle electrodes were at sites known to receive the bulk of M1 CSN and PTN projections, respectively (Brodal, 1978; Flaherty and Graybiel, 1991; Takada et al., 1998).
+
+#### Explanation for me: What is Antidromic Identification?
+
+**The Basic Concept:**
+
+Antidromic identification is a neurophysiological technique used to determine where a neuron sends its axon (its projection target). The term "antidromic" means "backward-traveling" - instead of waiting for a signal to travel naturally from the cell body down the axon (orthodromic), you stimulate at the axon terminal and measure the signal traveling backward to the cell body.
+
+**How It Works:**
+
+1. **Recording**: Place a microelectrode in the cortex (M1) to record from a single neuron
+2. **Stimulation**: Electrically stimulate at a known projection target (e.g., cerebral peduncle for spinal cord projections, or striatum for basal ganglia projections)
+3. **Detection**: If the neuron projects to that target, the electrical stimulation will trigger an action potential that travels backward (antidromically) up the axon to the cell body
+4. **Measurement**: This antidromic spike appears in your cortical recording with a short, fixed latency
+
+**The Hypothesis Being Tested:**
+
+The fundamental hypothesis is: **"Does this cortical neuron project to location X?"**
+
+For this study:
+- **Hypothesis 1**: If stimulating the cerebral peduncle causes an antidromic spike → the neuron is a Pyramidal Tract Neuron (PTN) projecting to spinal cord
+- **Hypothesis 2**: If stimulating the striatum causes an antidromic spike → the neuron is a Corticostriatal Neuron (CSN) projecting to basal ganglia
+- **Null result**: No antidromic response → neuron projects elsewhere or response too weak to detect
+
+**Key Characteristics of Antidromic Spikes:**
+
+- **Fixed latency**: Same delay every time (because it's a direct electrical connection)
+- **Collision test**: An orthodromic spike will "collide with" and cancel an antidromic spike traveling in the opposite direction on the same axon
+- **High-frequency following**: Can reliably respond to repeated stimulation (unlike synaptic transmission which fatigues)
+
+**How This Study Used Antidromic Identification:**
+
+1. **Chronic implantation**: Stimulation electrodes were permanently implanted in:
+   - **Cerebral peduncle** (pre-pontine, arm-responsive region): Tests for PTNs
+   - **Posterior putamen** (posterolateral striatum, 3 electrodes): Tests for CSNs
+   - Additional sites: Thalamus and STN in some sessions
+
+2. **Classification during recording**: While recording from M1 neurons during behavioral tasks, researchers periodically delivered electrical pulses to each stimulation site to identify:
+   - **PED response** → Pyramidal tract neuron (projects to spinal cord via corticospinal tract)
+   - **STRI response** → Corticostriatal neuron (projects to basal ganglia)
+   - **NT (Not Tested)** → Antidromic testing not performed
+   - **NR (No Response)** → No antidromic response detected at any site
+
+3. **Data stored in this dataset**:
+   - **Stimulation traces**: Raw voltage recordings during antidromic testing (StrStim, PedStim, ThalStim, STNStim arrays in MATLAB files)
+   - **Classification metadata**: Cell type labels in `ven_table.csv` (Antidrom column: PED, STRI, NT, NR)
+   - **Latency and threshold**: Response timing (ms) and minimum stimulation current (μA) needed to trigger antidromic spike
+
+**Why This Matters for the Study:**
+
+The central question of this research is whether MPTP-induced parkinsonism differentially affects neurons based on their **output targets**. Antidromic identification allowed researchers to compare:
+
+- **PTNs** (spinal cord projections): Direct motor output neurons that command movement
+- **CSNs** (basal ganglia projections): Neurons that feed into the motor planning circuit
+
+The study found that PTNs were more severely affected by MPTP than CSNs, revealing that the motor cortex dysfunction in parkinsonism is projection-specific, not just a general cortical impairment.
+
+**Location in Converted NWB Files:**
+
+- Antidromic stimulation traces: `nwbfile.processing['antidromic_identification']`
+- Cell type classification: `nwbfile.units['neuron_projection_type']` (pyramidal_tract_neuron, corticostriatal_neuron, not_tested, no_response)
+- Response properties: `nwbfile.units['antidromic_latency_ms']`, `nwbfile.units['antidromic_threshold']`
 
 ## Trial Structure and Session Organization
 
@@ -226,6 +287,24 @@ Example from metadata analysis:
 
 This approach enabled systematic exploration of cortical space and identification of different neuron types within single experimental days.
 
+### Special Case: "b" Suffix Files
+
+Four sessions have variant recordings denoted by a "b" suffix (v3607b, v4527b, v4810b, v5604b):
+
+| Session Pair | Base Session | "b" Variant | Relationship |
+|--------------|--------------|-------------|--------------|
+| v3607/v3607b | PED, 20 trials | STRI, 20 trials | Same date, different neurons, different cell types |
+| v4527/v4527b | PED+NT, 47 trials (2 units) | PED, 27 trials | Same date, different neuron, fewer trials |
+| v4810/v4810b | PED, 80 trials | NR, 40 trials | Same date, different neuron, fewer trials |
+| v5604/v5604b | PED, 80 trials | STRI, 40 trials | Same date, different neurons, fewer trials |
+
+**Key characteristics of "b" files:**
+- Recorded on the same date as their base counterpart
+- Contain data from different isolated neurons
+- May have different trial counts (often fewer trials)
+- Represent distinct recording sessions despite same-day collection
+- Often have different cell type classifications (e.g., PED vs STRI)
+
 ### NWB Conversion Implications
 
 **Conclusion**: **One MATLAB file → One NWB session**
@@ -235,24 +314,30 @@ This session-based approach:
 2. Maintains spatial and temporal relationships within each session
 3. Enables both single-session analysis and cross-session comparisons
 4. Properly represents the experimental methodology
+5. Treats "b" suffix files as independent sessions with unique session IDs
 
-**🔗 Detailed NWB conversion strategy**: [NWB Conversion Documentation](assets/data_exploration/nwb_conversion.md)
+**Conversion Statistics:**
+- **299 unique sessions** converted from 359 MATLAB unit files
+- **100% conversion rate** (all sessions successfully converted)
+- Session ID format preserves original filename including "b" suffix when present
+
+**Detailed NWB conversion strategy**: [NWB Conversion Documentation](assets/data_exploration/nwb_conversion.md)
 
 ## Trial Structure Within Recording Sessions
 
 ### Trial description in the papers
 The description of the trial in the paper is the following:
 
-** active movement paper**
+**active movement paper**
 > A trial began when a centre target appeared on the monitor and the monkey aligned the cursor with the target. After holding the cursor at this start-position hold period (2–5 s, uniform random distribution), the target jumped to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. After a target-hold interval (0.75–1.5 s), the animal received a drop of juice or food, followed by an intertrial interval (1.2–1.7 s).
 
-** Stretch paper ** 
+**stretch paper**
 The description in another paper:
 > A trial began when a center target appeared and the monkey made the appropriate joint movement to align the cursor with the target. The monkey maintained this position for the duration of a start-position hold period (random duration, 2–5 s), during which the animal could not predict the location of the upcoming lateral target. The target then shifted to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. The animal received a drop of juice for successful completion of the task.
 
 > On two‑thirds of the trials (selected at random), single flexing or extending torque impulses (0.1 Nm–50 ms duration) were applied to the manipulandum by a DC brushless torque motor (TQ40W, Aerotech Inc., Pittsburgh PA) at an unpredictable time beginning 1–2 s (uniform randomized distribution) after initial capture of the center target. Each square‑wave torque impulse induced an angular displacement of the joint (mean = 10‑deg) causing a sudden stretch of arm extensor or flexor muscles. The animals were not trained to produce a specific response to these unpredictable perturbations, but the animals naturally adopted a strategy that returned the joint to its initial pre‑impulse position.
 
-** Pyramidal tract neurons paper**
+**Pyramidal tract neurons paper**
 > On each behavioral trial, the animal was required to align the cursor with a series of targets displayed on the monitor. A trial began when a center target appeared and the monkey made the appropriate joint movement to align the cursor with the target. The monkey maintained this position for the duration of a start-position hold period (random duration, 2–5 s), during which the animal could not predict the location of the upcoming lateral target. The target then shifted to the left or right (chosen at random), and the animal moved the cursor to capture the lateral target. The animal received a drop of juice or food for successful completion of the task.
 
 

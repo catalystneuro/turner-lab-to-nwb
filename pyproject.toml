@@ -82,7 +82,7 @@ reverse_relative = true
 known_first_party = ["turner_lab_to_nwb"]
 
 [tool.uv.sources]
-neuroconv = { path = "../neuroconv", editable = true }
+neuroconv = { path = "../../work_repos/neuroconv", editable = true }
 
 [dependency-groups]
 dev = [

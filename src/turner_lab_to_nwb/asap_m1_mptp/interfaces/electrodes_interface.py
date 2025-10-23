@@ -74,55 +74,99 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
         if metadata is None:
             metadata = self.get_metadata()
 
-        # Create recording device
+        # Create device for M1 recording electrode
         recording_device = nwbfile.create_device(
             name="DeviceMicroelectrodeRecording",
             description="Glass-coated PtIr microelectrode mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo). "
             "Signal amplified 10^4, bandpass filtered 0.3-10kHz. Sampling: 20kHz for unit discrimination.",
         )
-        
-        # Create stimulation device
-        stimulation_device = nwbfile.create_device(
-            name="DeviceStimulationElectrodes",
-            description="Custom-built PtIr microwire electrodes for antidromic stimulation. "
-            "Chronically implanted at projection sites for neuron classification.",
+
+        # Create device for cerebral peduncle stimulation electrode
+        peduncle_device = nwbfile.create_device(
+            name="DeviceMicrowirePeduncleStimulation",
+            description="Custom-built PtIr microwire electrode for antidromic stimulation in cerebral peduncle. "
+            "Chronically implanted for PTN identification.",
         )
-        
+
+        # Create devices for putamen stimulation electrodes (3 electrodes)
+        putamen_device_1 = nwbfile.create_device(
+            name="DeviceMicrowirePutamenStimulation1",
+            description="Custom-built PtIr microwire electrode 1 of 3 for antidromic stimulation in posterolateral putamen. "
+            "Chronically implanted for CSN identification.",
+        )
+        putamen_device_2 = nwbfile.create_device(
+            name="DeviceMicrowirePutamenStimulation2",
+            description="Custom-built PtIr microwire electrode 2 of 3 for antidromic stimulation in posterolateral putamen. "
+            "Chronically implanted for CSN identification.",
+        )
+        putamen_device_3 = nwbfile.create_device(
+            name="DeviceMicrowirePutamenStimulation3",
+            description="Custom-built PtIr microwire electrode 3 of 3 for antidromic stimulation in posterolateral putamen. "
+            "Chronically implanted for CSN identification.",
+        )
+
+        # Create device for thalamus stimulation electrode
+        thalamus_device = nwbfile.create_device(
+            name="DeviceMicrowireThalamicStimulation",
+            description="Custom-built PtIr microwire electrode for antidromic stimulation in VL thalamus. "
+            "Chronically implanted for thalamocortical projection identification.",
+        )
+
         # Recording electrode group for M1 chamber (left hemisphere)
         recording_electrode_group = nwbfile.create_electrode_group(
-            name="ElectrodeGroupM1Recording",
+            name="ElectrodeGroupMicroelectrodeRecording",
             description="Left primary motor cortex recording within chamber-relative coordinate system. "
             "Chamber surgically positioned over left M1. Daily positions relative to chamber center. "
             "Functional verification via microstimulation (≤40μA, 10 pulses at 300Hz).",
             location="Primary motor cortex (M1), area 4, arm area",
             device=recording_device,
         )
-        
-        # Putamen stimulation electrode group (left hemisphere)
-        putamen_stim_group = nwbfile.create_electrode_group(
-            name="ElectrodeGroupStimPutamen",
-            description="Left posterolateral putamen stimulation electrodes for CSN antidromic identification. "
-            "Three custom-built PtIr microwire electrodes. Histologically verified placement.",
-            location="Putamen (posterolateral)",
-            device=stimulation_device,
-        )
-        
+
         # Peduncle stimulation electrode group (left hemisphere)
         peduncle_stim_group = nwbfile.create_electrode_group(
-            name="ElectrodeGroupStimPeduncle",
+            name="ElectrodeGroupMicrowirePeduncleStimulation",
             description="Left cerebral peduncle stimulation electrode for PTN antidromic identification. "
             "Single custom-built PtIr microwire electrode. Histologically verified placement.",
             location="Cerebral peduncle (pre-pontine)",
-            device=stimulation_device,
+            device=peduncle_device,
         )
-        
+
+        # Putamen stimulation electrode groups (left hemisphere) - one per electrode
+        putamen_stim_group_1 = nwbfile.create_electrode_group(
+            name="ElectrodeGroupMicrowirePutamenStimulation1",
+            description="Left posterolateral putamen stimulation electrode 1 of 3 for CSN antidromic identification. "
+            "Custom-built PtIr microwire electrode. Histologically verified placement. "
+            "Note: Source MATLAB data (StrStim) does not distinguish between the 3 electrodes; "
+            "this electrode (index 2) is used as representative for all StrStim data.",
+            location="Putamen (posterolateral)",
+            device=putamen_device_1,
+        )
+
+        putamen_stim_group_2 = nwbfile.create_electrode_group(
+            name="ElectrodeGroupMicrowirePutamenStimulation2",
+            description="Left posterolateral putamen stimulation electrode 2 of 3 for CSN antidromic identification. "
+            "Custom-built PtIr microwire electrode. Histologically verified placement. "
+            "Note: Source MATLAB data (StrStim) does not distinguish between the 3 electrodes.",
+            location="Putamen (posterolateral)",
+            device=putamen_device_2,
+        )
+
+        putamen_stim_group_3 = nwbfile.create_electrode_group(
+            name="ElectrodeGroupMicrowirePutamenStimulation3",
+            description="Left posterolateral putamen stimulation electrode 3 of 3 for CSN antidromic identification. "
+            "Custom-built PtIr microwire electrode. Histologically verified placement. "
+            "Note: Source MATLAB data (StrStim) does not distinguish between the 3 electrodes.",
+            location="Putamen (posterolateral)",
+            device=putamen_device_3,
+        )
+
         # Thalamus stimulation electrode group (left hemisphere)
         thalamus_stim_group = nwbfile.create_electrode_group(
-            name="ElectrodeGroupStimThalamus",
+            name="ElectrodeGroupMicrowireThalamicStimulation",
             description="Left VL thalamus stimulation electrode for antidromic identification. "
             "Custom-built PtIr microwire electrode for thalamocortical projection testing.",
             location="Ventrolateral thalamus",
-            device=stimulation_device,
+            device=thalamus_device,
         )
 
         # Add custom columns for chamber grid coordinates and recording system metadata
@@ -223,7 +267,16 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
         )
         
         # Add posterolateral putamen electrodes for CSN identification (3 electrodes)
+        putamen_groups = [putamen_stim_group_1, putamen_stim_group_2, putamen_stim_group_3]
         for i in range(3):
+            # Note: Only the first electrode (index 2) is used as reference in antidromic data
+            # since source MATLAB files do not distinguish between the 3 electrodes
+            stim_note = f"Electrode {i+1} of 3, posterolateral putamen for M1 CSN projections. "
+            if i == 0:
+                stim_note += "Used as representative electrode reference for all StrStim data."
+            else:
+                stim_note += "Physical electrode documented but not distinguished in source data."
+
             nwbfile.add_electrode(
                 x=float("nan"),
                 y=float("nan"),
@@ -231,14 +284,14 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 imp=float("nan"),
                 location="Putamen (posterolateral)",
                 filtering="Not applicable - stimulation electrode",
-                group=putamen_stim_group,
+                group=putamen_groups[i],
                 chamber_grid_ap_mm=float("nan"),
                 chamber_grid_ml_mm=float("nan"),
                 chamber_insertion_depth_mm=float("nan"),
                 recording_site_index=-1,
                 recording_session_index=-1,
                 is_stimulation=True,
-                stim_notes=f"Electrode {i+1} of 3, posterolateral putamen for M1 CSN projections",
+                stim_notes=stim_note,
             )
         
         # Add VL thalamus electrode for antidromic identification

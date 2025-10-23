@@ -166,9 +166,17 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "Detailed description of the sensory stimulus or manipulation that elicited response: "
                 "proprioceptive manipulations, tactile stimulations, active movements, or descriptive combinations",
             )
+            nwbfile.add_unit_column(
+                "unit_name",
+                "Unit identifier from source MATLAB filename (1 or 2 for multi-unit sessions)",
+            )
 
         # Process each unit
         for unit_file_path, unit_meta in zip(unit_files, unit_metadata_list):
+            # Extract unit number from filename (e.g., "v1001.1.mat" -> 1)
+            from pathlib import Path
+            unit_num = int(Path(unit_file_path).stem.split('.')[1])
+
             # Load MATLAB data for this unit
             mat_data = read_mat(str(unit_file_path))
 
@@ -298,6 +306,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 antidromic_threshold_2=antidromic_threshold_2,
                 sensory_region=sensory_region,
                 sensory_detail=sensory_detail,
+                unit_name=unit_num,
             )
 
             if self.verbose:

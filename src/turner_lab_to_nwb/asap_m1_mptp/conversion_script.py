@@ -12,7 +12,6 @@ from neuroconv import ConverterPipe
 from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
     M1MPTPElectrodesInterface,
     M1MPTPSpikeTimesInterface,
-    M1MPTPAnalogKinematicsInterface,
     M1MPTPManipulandumInterface,
     M1MPTPLFPInterface,
     M1MPTPEMGInterface,
@@ -66,13 +65,7 @@ def convert_session_to_nwbfile(
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
-    # Keep original analog interface for backward compatibility
-    analog_interface = M1MPTPAnalogKinematicsInterface(
-        file_path=matlab_file_path,
-        inter_trial_time_interval=inter_trial_time_interval,
-        verbose=verbose,
-    )
-    # Add new specialized interfaces
+    # Specialized interfaces for different analog data types
     manipulandum_interface = M1MPTPManipulandumInterface(
         file_path=matlab_file_path,
         inter_trial_time_interval=inter_trial_time_interval,
@@ -97,6 +90,7 @@ def convert_session_to_nwbfile(
         file_path=matlab_file_path,
         session_metadata=session_info_dict["units"],
         antidromic_exploration_offset=4000.0,  # Place antidromic data 4000s after trial start
+        inter_sweep_interval=0.1,  # 100ms between sweeps
         verbose=verbose,
     )
 
@@ -116,8 +110,7 @@ def convert_session_to_nwbfile(
 
     data_interfaces = {
         "electrodes": electrodes_interface,
-        "spike": spike_interface, 
-        "analog": analog_interface,  # Keep for backward compatibility
+        "spike": spike_interface,
         "manipulandum": manipulandum_interface,
         "lfp": lfp_interface,
         "emg": emg_interface,
@@ -174,13 +167,16 @@ def convert_session_to_nwbfile(
 if __name__ == "__main__":
     # Configuration
     base_data_path = Path("/home/heberto/data/turner/Ven_All/")
-    output_folder = Path("/home/heberto/development/turner-lab-to-nwb/nwbfiles/")
+    root_folder_path = Path(__file__).parent.parent.parent.parent
+    output_folder = root_folder_path / "nwbfiles"
     inter_trial_time_interval = 3.0  # seconds
     stub_test = False  # Set to True to convert only 5 sessions for testing
     verbose = False  # Set to True to print progress information
 
     # Load metadata table
-    metadata_table_path = Path(__file__).parent / "assets" / "metadata_table" / "ven_table.csv"
+    conversion_folder_path = root_folder_path / "src" / "turner_lab_to_nwb" / "asap_m1_mptp"
+    assets_folder_path = conversion_folder_path / "assets"
+    metadata_table_path = assets_folder_path / "metadata_table" / "ven_table.csv"
     metadata_df = pd.read_csv(metadata_table_path)
 
     # Create output directory if needed
@@ -236,9 +232,9 @@ if __name__ == "__main__":
         depth_um = int(primary_unit['Depth'] * 1000)  # Convert mm to μm
         depth_str = f"{depth_um}um"
 
-        # Extract filename code (characters 2-5 inclusive) from fname
-        # Example: "v5811" -> "5811", "v0502" -> "0502"
-        filename_code = fname[1:5]  # Characters 2-5 (inclusive, 0-indexed)
+        # Extract filename code from fname, preserving full code including "b" suffix
+        # Example: "v5811" -> "5811", "v0502" -> "0502", "v3607b" -> "3607b"
+        filename_code = fname[1:]  # All characters after 'v' prefix
         
         # Create session ID with subject and filename code combined
         mptp_condition = f"{primary_unit['MPTP']}MPTP"
