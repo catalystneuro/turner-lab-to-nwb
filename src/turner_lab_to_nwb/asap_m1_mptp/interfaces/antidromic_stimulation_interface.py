@@ -1,8 +1,9 @@
 from typing import Optional
 
 from pydantic import FilePath
-from pynwb import NWBFile
+from pynwb import NWBFile, TimeSeries
 from pynwb.ecephys import ElectricalSeries, DynamicTableRegion
+from pynwb.file import TimeIntervals
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
@@ -224,8 +225,83 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 "unit numbers in the series names to distinguish them.",
             )
 
-        # Use configured offset for stimulation data placement
-        stim_start_time = self.antidromic_exploration_offset
+        # Get or create intervals table for antidromic sweeps
+        # For multi-unit sessions, multiple units add to the same table
+        if "TimeIntervalsAntidromicProtocol" not in nwbfile.intervals:
+            antidromic_sweeps = TimeIntervals(
+                name="TimeIntervalsAntidromicProtocol",
+                description="Intervals table for antidromic stimulation sweeps. Each row represents one sweep "
+                "with links to the corresponding stimulation current and neural response ElectricalSeries. "
+                "Includes metadata about test type, stimulation location, and unit number. "
+                "The 50ms sweeps are centered at t=0 (pulse_time), with 25ms pre-stimulation and 25ms post-stimulation windows.",
+            )
+
+            # Add custom columns in order: start_time, stop_time, stimulation_onset_time,
+            # unit_name, location, stimulation_protocol, sweep_number,
+            # response, stimulation, response_series_name, stimulation_series_name
+            antidromic_sweeps.add_column(
+                name="stimulation_onset_time",
+                description="Time of electrical stimulation pulse delivery (t=0 in the original MATLAB sweep). "
+                "The 50ms sweep extends from stimulation_onset_time-0.025s to stimulation_onset_time+0.025s. "
+                "Corresponds to the center point of the sweep where the stimulation current is injected.",
+            )
+            antidromic_sweeps.add_column(
+                name="unit_name",
+                description="Unit number (1 or 2) from source filename, matching the unit_name in the units table",
+            )
+            antidromic_sweeps.add_column(
+                name="location",
+                description="Anatomical location of stimulation electrode: 'Striatum', 'Peduncle', 'Thalamus', or 'STN'",
+            )
+            antidromic_sweeps.add_column(
+                name="stimulation_protocol",
+                description="Antidromic stimulation protocol used: 'Collision' (paired spontaneous and antidromic spikes), "
+                "'FrequencyFollowing' (high-frequency train), or 'Orthodromic' (sub-threshold control)",
+            )
+            antidromic_sweeps.add_column(
+                name="sweep_number",
+                description="Sweep index number from the original MATLAB data array (0-based)",
+            )
+            antidromic_sweeps.add_column(
+                name="response",
+                description="Reference to the ElectricalSeries containing neural voltage response (in volts) for this sweep",
+            )
+            antidromic_sweeps.add_column(
+                name="stimulation",
+                description="Reference to the TimeSeries containing stimulation current (in amperes) for this sweep",
+            )
+            antidromic_sweeps.add_column(
+                name="response_series_name",
+                description="Name of the ElectricalSeries containing neural voltage response for this sweep",
+            )
+            antidromic_sweeps.add_column(
+                name="stimulation_series_name",
+                description="Name of the TimeSeries containing stimulation current for this sweep",
+            )
+
+            nwbfile.add_time_intervals(antidromic_sweeps)
+            if self.verbose:
+                print("Created TimeIntervalsAntidromicProtocol intervals table")
+        else:
+            antidromic_sweeps = nwbfile.intervals["TimeIntervalsAntidromicProtocol"]
+            if self.verbose:
+                print("Adding to existing TimeIntervalsAntidromicProtocol table (multi-unit session)")
+
+        # Calculate start time for antidromic data based on actual trial end times
+        # Place antidromic data after all behavioral trials with a buffer
+        if len(nwbfile.trials) > 0:
+            # Find the maximum stop_time from all trials
+            max_trial_stop_time = max(nwbfile.trials['stop_time'][:])
+            # Add a buffer (e.g., 10 seconds) after the last trial
+            buffer_after_trials = 10.0  # seconds
+            stim_start_time = max_trial_stop_time + buffer_after_trials
+            if self.verbose:
+                print(f"Antidromic data start time: {stim_start_time:.1f}s (last trial ended at {max_trial_stop_time:.1f}s)")
+        else:
+            # Fallback to configured offset if no trials exist
+            stim_start_time = self.antidromic_exploration_offset
+            if self.verbose:
+                print(f"No trials found, using configured offset: {stim_start_time:.1f}s")
 
         # Define electrode mapping (indices in the electrode table)
         electrode_map = {
@@ -274,16 +350,10 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 location = location_map[stim_type]
 
                 # Get electrode indices
-                stim_electrode_index = electrode_map[stim_type]
                 recording_electrode_index = electrode_map["recording"]
 
-                # Create electrode table regions (shared across all sweeps for this stim type)
-                stim_electrode_region = DynamicTableRegion(
-                    name="electrodes",
-                    data=[stim_electrode_index],
-                    description=f"Stimulation electrode in {location.lower()}",
-                    table=nwbfile.electrodes
-                )
+                # Create electrode table region for recording (used by ElectricalSeries response)
+                # Note: Stimulation uses TimeSeries (not ElectricalSeries) so doesn't need electrode region
                 recording_electrode_region = DynamicTableRegion(
                     name="electrodes",
                     data=[recording_electrode_index],
@@ -291,8 +361,15 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     table=nwbfile.electrodes
                 )
 
-                # Convert relative time to seconds (shared template for all sweeps)
+                # Calculate sampling rate from time data
+                # Time data is in milliseconds, convert to seconds
                 time_seconds = time_data / 1000.0  # Convert ms to seconds
+                n_samples = len(time_seconds)
+                duration_seconds = time_seconds[-1] - time_seconds[0]
+                sampling_rate = (n_samples - 1) / duration_seconds  # Hz
+
+                if self.verbose:
+                    print(f"  Calculated sampling rate: {sampling_rate:.2f} Hz from {n_samples} samples over {duration_seconds*1000:.2f} ms")
 
                 # Process each sweep individually
                 for sweep_idx in range(n_sweeps):
@@ -301,15 +378,15 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     test_type = self._parse_test_type_name(trace_name)
 
                     # Use sweep index for unique naming (trace names can have duplicates)
-                    # Calculate absolute timestamps for this sweep
+                    # Calculate starting time for this sweep
                     # Space stim types 1000s apart, sweeps within type by inter_sweep_interval
                     stim_type_offset = stim_index * 1000.0
                     sweep_offset = sweep_idx * self.inter_sweep_interval
                     sweep_start_time = stim_start_time + stim_type_offset + sweep_offset
 
-                    # Create absolute timestamps for this sweep
-                    timestamps = sweep_start_time + time_seconds
-                    all_timestamps.append(timestamps)
+                    # Calculate the actual starting time (accounting for the offset in original time data)
+                    # time_seconds[0] is the offset from sweep_start_time (typically -0.025s)
+                    starting_time = sweep_start_time + time_seconds[0]
 
                     # Extract data for this specific sweep
                     response_data = unit_data[:, sweep_idx].reshape(-1, 1)  # (n_samples, 1)
@@ -323,20 +400,49 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     series_name_base = f"Unit{unit_num}{test_type}{location}Sweep{sweep_idx:02d}"
 
                     # Create stimulation current series for this sweep
-                    stim_series = ElectricalSeries(
-                        name=f"ElectricalSeriesStimulation{series_name_base}",
+                    # Use TimeSeries (not ElectricalSeries) because units are amperes, not volts
+                    #
+                    # CALIBRATION NOTE: The conversion factor is estimated based on:
+                    # 1. Metadata "Threshold" values range 1-1000 (likely µA based on typical antidromic stimulation)
+                    # 2. Raw ADC int16 range: -16285 to +16628 counts
+                    # 3. Assuming 16-bit ADC with ±10V range and gain similar to neural recordings
+                    # 4. Estimated conversion: ~6.0e-08 A/count gives 0-1000 µA range (matches metadata)
+                    #
+                    # HOWEVER, the exact calibration is UNKNOWN (file_structure.md notes "Calibration tbd").
+                    # Current conversion (1.526e-08) assumes 10000x gain and ±5V ADC based on:
+                    # - LFP recordings documented as "10k gain" in same dataset
+                    # - Standard neurophysiology recording system specifications
+                    #
+                    # TODO: Confirm with Turner lab - see email_communication.md Question 5
+                    stim_series = TimeSeries(
+                        name=f"TimeSeriesStimulation{series_name_base}",
                         description=f"{test_type} test sweep (index {sweep_idx}): Stimulation current delivered to {location.lower()}. "
                         f"50ms sweep centered on stimulation onset (t=0). "
                         f"Original trace name: '{trace_name}'. "
-                        f"Data in amperes (conversion=1e-6 applied). Time 0 = stimulation pulse delivery.",
+                        f"Data in amperes. CALIBRATION UNCERTAIN: conversion factor estimated from typical recording "
+                        f"system specs (10000x gain, ±5V ADC). Awaiting confirmation from data authors. "
+                        f"Time 0 = stimulation pulse delivery.",
                         data=stim_current,
-                        timestamps=timestamps,
-                        electrodes=stim_electrode_region,
-                        conversion=1e-6,  # Convert to amperes (SI unit)
-                        comments=f"Stimulation current trace in amperes.",
+                        starting_time=starting_time,
+                        rate=sampling_rate,
+                        unit="amperes",
+                        conversion=1.526e-08,  # Estimated: (5V / 32768) / 10000 gain ≈ 1.526e-08 V/count
+                        comments=f"Stimulation current trace in amperes. Conversion factor estimated pending lab confirmation.",
                     )
 
                     # Create neural response series for this sweep
+                    #
+                    # CALIBRATION NOTE: The conversion factor is estimated based on:
+                    # 1. Typical extracellular spike amplitudes: 50-500 µV for well-isolated units
+                    # 2. Raw ADC int16 range: -17568 to +17264 counts (peak-to-peak ~35k counts)
+                    # 3. LFP recordings in same dataset documented as "10k gain"
+                    # 4. Assuming same 10000x gain for unit recordings with ±5V ADC
+                    # 5. Formula: conversion = (ADC_range / 2^15) / gain = (5V / 32768) / 10000
+                    #
+                    # This gives spike amplitudes of ~50-270 µV (realistic for extracellular recording).
+                    # The exact calibration is UNKNOWN (file_structure.md notes "Calibration tbd").
+                    #
+                    # TODO: Confirm with Turner lab - see email_communication.md Question 5
                     response_series = ElectricalSeries(
                         name=f"ElectricalSeriesResponse{series_name_base}",
                         description=f"{test_type} test sweep (index {sweep_idx}): Neural response from M1 to {location.lower()} stimulation. "
@@ -344,17 +450,43 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                         f"Collision tests verify antidromic spike collision with spontaneous spikes. "
                         f"Frequency-following tests verify consistent latency at high stimulation rates. "
                         f"Original trace name: '{trace_name}'. "
-                        f"Data in volts (conversion=1e-6 applied). Time 0 = stimulation pulse delivery.",
+                        f"Data in volts. CALIBRATION UNCERTAIN: conversion factor estimated from typical recording "
+                        f"system specs (10000x gain, ±5V ADC) and documented 10k gain for LFP. Awaiting confirmation. "
+                        f"Time 0 = stimulation pulse delivery.",
                         data=response_data,
-                        timestamps=timestamps,
+                        starting_time=starting_time,
+                        rate=sampling_rate,
                         electrodes=recording_electrode_region,
-                        conversion=1e-6,  # Convert to volts (SI unit)
-                        comments=f"Neural voltage trace in volts.",
+                        conversion=1.526e-08,  # Estimated: (5V / 32768) / 10000 gain ≈ 1.526e-08 V/count
+                        comments=f"Neural voltage trace in volts. Conversion factor estimated pending lab confirmation.",
                     )
 
                     # Add to processing module
                     antidromic_module.add(stim_series)
                     antidromic_module.add(response_series)
+
+                    # Add interval to the antidromic_sweeps table
+                    # start_time and stop_time are calculated from starting_time and duration
+                    start_time = starting_time
+                    duration = (n_samples - 1) / sampling_rate  # Duration in seconds
+                    stop_time = starting_time + duration
+                    # stimulation_onset_time is the center of the sweep (t=0 in original MATLAB data)
+                    stimulation_onset_time = sweep_start_time
+
+                    antidromic_sweeps.add_interval(
+                        start_time=start_time,
+                        stop_time=stop_time,
+                        sweep_number=sweep_idx,
+                        stimulation_onset_time=stimulation_onset_time,
+                        stimulation_series_name=stim_series.name,
+                        response_series_name=response_series.name,
+                        stimulation=stim_series,
+                        response=response_series,
+                        stimulation_protocol=test_type,
+                        location=location,
+                        unit_name=str(unit_num),  # Convert to string for consistency with units table
+                    )
+
                     total_sweeps_added += 1
 
                 if self.verbose:
