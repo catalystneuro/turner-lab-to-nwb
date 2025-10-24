@@ -1,0 +1,33 @@
+NWBFile:
+  related_publications:
+    - "https://doi.org/10.1093/cercor/bhq217"
+    - "https://doi.org/10.3389/fnsys.2013.00098"
+    - "https://doi.org/10.1093/brain/awv312"
+  session_description: |
+    Single-unit recordings from primary motor cortex (M1) of MPTP-treated parkinsonian macaque monkeys 
+    performing visuomotor step-tracking flexion/extension elbow movements. Data includes spike times from 
+    pyramidal tract neurons (PTNs) and corticostriatal neurons (CSNs) identified through antidromic stimulation.
+    Task involves center hold, target presentation, movement execution, and reward phases with optional 
+    torque perturbations on random trials.
+  institution: Emory University
+  lab: Turner Lab
+  experimenter:
+    - Turner, Robert S.
+    - Pasquereau, Benjamin
+  experiment_description: |
+    Investigation of motor cortical dysfunction in parkinsonism using single-unit recordings during 
+    visuomotor motor tasks. MPTP-induced parkinsonian model used to study changes in pyramidal tract 
+    and corticostriatal neuron activity patterns.
+  keywords:
+    - MPTP
+    - parkinsonism
+    - motor cortex
+    - single unit recording
+    - pyramidal tract neurons
+    - corticostriatal neurons
+    - visuomotor task
+Subject:
+  species: Macaca mulatta  # Macaque monkey
+  age: P2555D  # Approximately 7 years (typical adult research macaque)
+  sex: F  # Female
+  description: MPTP-treated parkinsonian macaque monkey used for motor cortex electrophysiology
