@@ -372,16 +372,16 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     print(f"  Calculated sampling rate: {sampling_rate:.2f} Hz from {n_samples} samples over {duration_seconds*1000:.2f} ms")
 
                 # Process each sweep individually
-                for sweep_idx in range(n_sweeps):
+                for sweep_index in range(n_sweeps):
                     # Get test type for this sweep
-                    trace_name = trace_names[sweep_idx]
+                    trace_name = trace_names[sweep_index]
                     test_type = self._parse_test_type_name(trace_name)
 
                     # Use sweep index for unique naming (trace names can have duplicates)
                     # Calculate starting time for this sweep
                     # Space stim types 1000s apart, sweeps within type by inter_sweep_interval
                     stim_type_offset = stim_index * 1000.0
-                    sweep_offset = sweep_idx * self.inter_sweep_interval
+                    sweep_offset = sweep_index * self.inter_sweep_interval
                     sweep_start_time = stim_start_time + stim_type_offset + sweep_offset
 
                     # Calculate the actual starting time (accounting for the offset in original time data)
@@ -389,15 +389,15 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     starting_time = sweep_start_time + time_seconds[0]
 
                     # Extract data for this specific sweep
-                    response_data = unit_data[:, sweep_idx].reshape(-1, 1)  # (n_samples, 1)
-                    stim_current = current_data[:, sweep_idx].reshape(-1, 1)  # (n_samples, 1)
+                    response_data = unit_data[:, sweep_index].reshape(-1, 1)  # (n_samples, 1)
+                    stim_current = current_data[:, sweep_index].reshape(-1, 1)  # (n_samples, 1)
 
                     # Create unique names for this sweep
                     # Format: ElectricalSeries{Response|Stimulation}Unit{UnitNum}{TestType}{Location}Sweep{SweepIndex:02d}
                     # Location needed because sessions can have multiple stim sites (e.g., both Ped and Str)
-                    # Use sweep_idx (not trace name number) because trace names can have duplicates
+                    # Use sweep_index (not trace name number) because trace names can have duplicates
                     # Unit number from filename is critical for multi-unit sessions
-                    series_name_base = f"Unit{unit_num}{test_type}{location}Sweep{sweep_idx:02d}"
+                    series_name_base = f"Unit{unit_num}{test_type}{location}Sweep{sweep_index:02d}"
 
                     # Create stimulation current series for this sweep
                     # Use TimeSeries (not ElectricalSeries) because units are amperes, not volts
@@ -416,7 +416,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     # TODO: Confirm with Turner lab - see email_communication.md Question 5
                     stim_series = TimeSeries(
                         name=f"TimeSeriesStimulation{series_name_base}",
-                        description=f"{test_type} test sweep (index {sweep_idx}): Stimulation current delivered to {location.lower()}. "
+                        description=f"{test_type} test sweep (index {sweep_index}): Stimulation current delivered to {location.lower()}. "
                         f"50ms sweep centered on stimulation onset (t=0). "
                         f"Original trace name: '{trace_name}'. "
                         f"Data in amperes. CALIBRATION UNCERTAIN: conversion factor estimated from typical recording "
@@ -445,7 +445,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     # TODO: Confirm with Turner lab - see email_communication.md Question 5
                     response_series = ElectricalSeries(
                         name=f"ElectricalSeriesResponse{series_name_base}",
-                        description=f"{test_type} test sweep (index {sweep_idx}): Neural response from M1 to {location.lower()} stimulation. "
+                        description=f"{test_type} test sweep (index {sweep_index}): Neural response from M1 to {location.lower()} stimulation. "
                         f"50ms sweep at 20kHz centered on stimulation (t=0). "
                         f"Collision tests verify antidromic spike collision with spontaneous spikes. "
                         f"Frequency-following tests verify consistent latency at high stimulation rates. "
@@ -476,7 +476,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     antidromic_sweeps.add_interval(
                         start_time=start_time,
                         stop_time=stop_time,
-                        sweep_number=sweep_idx,
+                        sweep_number=sweep_index,
                         stimulation_onset_time=stimulation_onset_time,
                         stimulation_series_name=stim_series.name,
                         response_series_name=response_series.name,
