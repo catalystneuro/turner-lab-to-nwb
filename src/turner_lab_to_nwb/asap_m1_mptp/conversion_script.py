@@ -123,9 +123,11 @@ def convert_session_to_nwbfile(
     }
     converter = ConverterPipe(data_interfaces=data_interfaces)
 
-    # Get base metadata from in terface and merge with YAML
+    # Get base metadata from interface and merge with YAML
+    # Note: dict_deep_update(a, b) updates a with b, so put converter_metadata first
+    # so that general_metadata (with our session-specific values) takes precedence
     converter_metadata = converter.get_metadata()
-    metadata = dict_deep_update(general_metadata, converter_metadata)
+    metadata = dict_deep_update(converter_metadata, general_metadata)
 
     # Set session_start_time using actual recording date at midnight with Pittsburgh timezone
     pittsburgh_tz = ZoneInfo("America/New_York")  # Turner Lab - University of Pittsburgh
