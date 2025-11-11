@@ -56,25 +56,6 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "Depth": first_unit["Depth"],
             }
 
-    def get_metadata(self) -> DeepDict:
-        """Get metadata for the NWB file."""
-        metadata = super().get_metadata()
-
-        metadata["NWBFile"][
-            "session_description"
-        ] = f"Turner Lab MPTP motor cortex recording session from {self.base_file_path.stem}"
-        metadata["NWBFile"]["session_id"] = self.base_file_path.stem
-        metadata["NWBFile"]["session_start_time"] = "1900-01-01T00:00:00"
-
-        # Subject information
-        metadata["Subject"] = {
-            "subject_id": "unknown",
-            "species": "Macaca mulatta",  # Macaque monkey
-            "sex": "U",  # Unknown
-            "description": "MPTP-treated parkinsonian macaque monkey",
-        }
-
-        return metadata
 
     def add_to_nwbfile(
         self, nwbfile: NWBFile, metadata: Optional[dict] = None, trial_start_times: Optional[np.ndarray] = None
@@ -169,6 +150,13 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             nwbfile.add_unit_column(
                 "unit_name",
                 "Unit identifier from source MATLAB filename (1 or 2 for multi-unit sessions)",
+            )
+            nwbfile.add_unit_column(
+                "related_session_id",
+                "Session ID of related recording session where this same neuron was recorded again. "
+                "Value is 'none' if the unit was not re-recorded in another session, or the full session_id "
+                "(format: {Animal}{FName}++{MPTP}++Depth{depth}um++{date}) of the continuation session if it exists. "
+                "This links neurons that were recorded across multiple sessions at the same electrode location.",
             )
 
         # Process each unit
@@ -294,6 +282,45 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             else:
                 sensory_detail = sensory_detail_raw  # Keep verbatim for richness
 
+            # Determine related_session_id for cross-referenced recordings
+            # If FName2 and UnitNum2 are present, this unit continues in another session
+            fname2 = unit_meta.get("FName2", "")
+            unitnum2 = unit_meta.get("UnitNum2", float("nan"))
+
+            if pd.notna(fname2) and fname2 != "" and pd.notna(unitnum2):
+                # This unit has a cross-reference to another session
+                # Construct the related session_id using the same format as current session
+                from datetime import datetime
+
+                # Get metadata for constructing session_id
+                animal = unit_meta.get("Animal", "V")
+                mptp_condition = unit_meta.get("MPTP", "Pre")
+                date_str = unit_meta.get("DateCollected", "")
+                depth_mm = unit_meta.get("Depth", 0.0)
+
+                # Format date from "29-Jul-1999" to "19990729"
+                if date_str and date_str != "NaT" and not pd.isna(date_str):
+                    try:
+                        date_obj = datetime.strptime(date_str, "%d-%b-%Y")
+                        formatted_date = date_obj.strftime("%Y%m%d")
+                    except:
+                        formatted_date = "NA"
+                else:
+                    formatted_date = "NA"
+
+                # Convert depth to micrometers
+                depth_um = int(depth_mm * 1000) if pd.notna(depth_mm) else 0
+
+                # Extract filename code from FName2 (everything after 'v' prefix)
+                fname2_code = fname2[1:] if fname2.startswith('v') else fname2
+
+                # Construct related session_id
+                mptp_str = f"{mptp_condition}MPTP"
+                related_session_id = f"{animal}{fname2_code}++{mptp_str}++Depth{depth_um}um++{formatted_date}"
+            else:
+                # No cross-reference for this unit
+                related_session_id = "none"
+
             # Add unit to NWB file - link to electrode index 0
             nwbfile.add_unit(
                 spike_times=all_spike_times,
@@ -307,6 +334,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 sensory_region=sensory_region,
                 sensory_detail=sensory_detail,
                 unit_name=unit_num,
+                related_session_id=related_session_id,
             )
 
             if self.verbose:
