@@ -242,6 +242,35 @@ The study found that PTNs were more severely affected by MPTP than CSNs, reveali
 - Cell type classification: `nwbfile.units['neuron_projection_type']` (pyramidal_tract_neuron, corticostriatal_neuron, not_tested, no_response)
 - Response properties: `nwbfile.units['antidromic_latency_ms']`, `nwbfile.units['antidromic_threshold']`
 
+### NWB Surgery and Pharmacology Metadata
+
+The converted NWB files include detailed surgical and pharmacological metadata extracted from the published papers. This information is stored in structured NWB fields to document the experimental procedures.
+
+**Surgery Information** (`nwbfile.surgery`):
+- Chamber implantation procedure under Isoflurane anesthesia
+- Cylindrical stainless steel recording chamber positioned over left M1 and posterior putamen
+- Chamber orientation: 35° to coronal plane for orthogonal cortical penetration
+- Implanted stimulating electrodes for antidromic identification:
+  - 3 custom floating electrodes (Teflon-coated PtIr microwires, 50-μm diameter) in posterior putamen
+  - 1 electrode in prepontine cerebral peduncle
+- Prophylactic antibiotics and analgesics administered perioperatively
+
+**Pharmacology Information** (`nwbfile.pharmacology`):
+- MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine) administration details:
+  - Dose: 0.5 mg/kg
+  - Route: Unilateral left internal carotid artery under general anesthesia
+  - Timeline: Post-MPTP recordings obtained >30 days following administration (range: 36-117 days)
+  - Histological verification: 67% loss of tyrosine hydroxylase-positive neurons in substantia nigra pars compacta (MPTP-treated hemisphere)
+- Session-specific MPTP status appended to pharmacology field:
+  - Pre-MPTP sessions: "This recording was obtained BEFORE MPTP administration (baseline control condition)"
+  - Post-MPTP sessions: "This recording was obtained AFTER MPTP administration (parkinsonian condition)"
+
+**MPTP Condition Tracking**:
+MPTP treatment status is documented in multiple locations for comprehensive tracking:
+- `nwbfile.session_id`: Includes PreMPTP or PostMPTP designation (e.g., "V0502++PreMPTP++Depth22130um++19990406")
+- `nwbfile.session_description`: Includes MPTP condition summary
+- `nwbfile.pharmacology`: Contains detailed protocol and session-specific status
+
 ## Trial Structure and Session Organization
 
 ### Dataset Organization Analysis

@@ -112,6 +112,17 @@ def convert_session_to_nwbfile(
         "description"
     ] = f"MPTP-treated parkinsonian macaque monkey. Recording date: {session_info['DateCollected']}. Stereotactic coordinates: A/P={session_info['A_P']}mm, M/L={session_info['M_L']}mm, Depth={session_info['Depth']}mm."
 
+    # Add session-specific MPTP status to pharmacology field
+    mptp_condition = session_info["MPTP"]
+    if mptp_condition == "Pre":
+        general_metadata["NWBFile"]["pharmacology"] += (
+            "\n\nSession-specific information: This recording was obtained BEFORE MPTP administration (baseline control condition)."
+        )
+    elif mptp_condition == "Post":
+        general_metadata["NWBFile"]["pharmacology"] += (
+            "\n\nSession-specific information: This recording was obtained AFTER MPTP administration (parkinsonian condition)."
+        )
+
     data_interfaces = {
         "electrodes": electrodes_interface,
         "spike": spike_interface,
