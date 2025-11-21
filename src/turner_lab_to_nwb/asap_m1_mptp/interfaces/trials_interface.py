@@ -53,7 +53,6 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         n_trials = len(target_directions)
 
         # STEP 2: Add trial columns for Events data
-        # Use col_cls=HedValueVector for center_target_appearance_time with HED annotations
         nwbfile.add_trial_column(
             name="center_target_appearance_time",
             description="Time when center target appeared for monkey to align cursor and initiate trial (seconds)",
