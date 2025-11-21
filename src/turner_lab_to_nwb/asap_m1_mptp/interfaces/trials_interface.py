@@ -6,6 +6,19 @@ from neuroconv.basedatainterface import BaseDataInterface
 from pydantic import FilePath
 from pynwb import NWBFile
 from pymatreader import read_mat
+from ndx_hed import HedLabMetaData
+
+from turner_lab_to_nwb.asap_m1_mptp.hed_utils import (
+    HED_VERSION,
+    HED_DEFINITIONS,
+    HED_COLUMN_DESCRIPTIONS,
+    get_center_hold_hed,
+    get_movement_cue_hed,
+    get_movement_execution_hed,
+    get_perturbation_hed,
+    get_reward_hed,
+    get_trial_context_hed,
+)
 
 
 class M1MPTPTrialsInterface(BaseDataInterface):
@@ -28,14 +41,27 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         self,
         file_path: FilePath,
         inter_trial_time_interval: float = 3.0,
+        mptp_condition: Optional[str] = None,
+        neuron_types: Optional[list] = None,
         verbose: bool = False,
     ):
         super().__init__(verbose=verbose)
         self.file_path = Path(file_path)
         self.inter_trial_time_interval = inter_trial_time_interval
+        self.mptp_condition = mptp_condition
+        self.neuron_types = neuron_types or []
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None):
         mat_data = read_mat(str(self.file_path))
+
+        # Add HED metadata to NWB file (schema version and definitions)
+        # Convert definitions dict to string format - comma-separated, not newline-separated
+        definitions_str = ", ".join(HED_DEFINITIONS.values())
+        hed_metadata = HedLabMetaData(
+            hed_schema_version=HED_VERSION,
+            definitions=definitions_str
+        )
+        nwbfile.add_lab_meta_data(hed_metadata)
 
         # STEP 1: Extract all Events data first
         events = mat_data["Events"]
@@ -82,6 +108,33 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         nwbfile.add_trial_column("torque_perturbation_type", "direction of torque perturbation causing muscle stretch (flexion/extension/none)")
         nwbfile.add_trial_column("torque_perturbation_onset_time", "onset time of unpredictable torque impulse (0.1 Nm, 50ms) applied to manipulandum 1-2s after center target capture (seconds)")
 
+        # Add HED annotation columns as regular string columns
+        # HED version and definitions are stored in HedLabMetaData object added above
+        nwbfile.add_trial_column(
+            name="center_hold_HED",
+            description=HED_COLUMN_DESCRIPTIONS["center_hold_HED"]
+        )
+        nwbfile.add_trial_column(
+            name="movement_cue_HED",
+            description=HED_COLUMN_DESCRIPTIONS["movement_cue_HED"]
+        )
+        nwbfile.add_trial_column(
+            name="movement_execution_HED",
+            description=HED_COLUMN_DESCRIPTIONS["movement_execution_HED"]
+        )
+        nwbfile.add_trial_column(
+            name="perturbation_HED",
+            description=HED_COLUMN_DESCRIPTIONS["perturbation_HED"]
+        )
+        nwbfile.add_trial_column(
+            name="reward_HED",
+            description=HED_COLUMN_DESCRIPTIONS["reward_HED"]
+        )
+        nwbfile.add_trial_column(
+            name="trial_context_HED",
+            description=HED_COLUMN_DESCRIPTIONS["trial_context_HED"]
+        )
+
         # STEP 4: Extract movement Mvt data
         movement_data = mat_data["Mvt"]
         derived_movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
@@ -125,20 +178,25 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         trial_start_times = np.array(trial_start_times)
         trial_stop_times = np.array(trial_stop_times)
 
+        # Prepare trial context HED annotation (same for all trials in session)
+        trial_context_hed = get_trial_context_hed(self.mptp_condition, self.neuron_types) if self.mptp_condition else ""
+
         # Add trials to NWB file using processed arrays
         # CRITICAL: All event times must be offset by trial start time to align with session timeline
         for trial_index in range(n_trials):
             trial_start = trial_start_times[trial_index]
-            
+            current_movement_type = movement_type[trial_index]
+            current_perturbation_type = torque_perturbation_type[trial_index]
+
             nwbfile.add_trial(
                 start_time=trial_start,
                 stop_time=trial_stop_times[trial_index],
-                movement_type=movement_type[trial_index],
+                movement_type=current_movement_type,
                 center_target_appearance_time=trial_start + center_target_appearance_times[trial_index],
                 lateral_target_appearance_time=trial_start + lateral_target_appearance_times[trial_index],
                 cursor_departure_time=trial_start + cursor_departure_times[trial_index],
                 reward_time=trial_start + reward_times[trial_index],
-                torque_perturbation_type=torque_perturbation_type[trial_index],
+                torque_perturbation_type=current_perturbation_type,
                 torque_perturbation_onset_time=trial_start + torque_perturbation_onset_times[trial_index] if not np.isnan(torque_perturbation_onset_times[trial_index]) else np.nan,
                 derived_movement_onset_time=trial_start + derived_movement_onset_times[trial_index],
                 derived_movement_end_time=trial_start + derived_movement_end_times[trial_index],
@@ -146,6 +204,13 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 derived_peak_velocity_time=trial_start + derived_peak_velocity_times[trial_index],
                 derived_movement_amplitude=derived_movement_amplitudes[trial_index],
                 derived_end_position=derived_end_positions[trial_index],
+                # HED annotations
+                center_hold_HED=get_center_hold_hed(),
+                movement_cue_HED=get_movement_cue_hed(current_movement_type),
+                movement_execution_HED=get_movement_execution_hed(current_movement_type),
+                perturbation_HED=get_perturbation_hed(current_perturbation_type),
+                reward_HED=get_reward_hed(),
+                trial_context_HED=trial_context_hed,
             )
 
         if self.verbose:

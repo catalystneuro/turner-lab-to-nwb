@@ -4,11 +4,15 @@ NWBFile:
     - "https://doi.org/10.3389/fnsys.2013.00098"
     - "https://doi.org/10.1093/brain/awv312"
   session_description: |
-    Single-unit recordings from primary motor cortex (M1) of MPTP-treated parkinsonian macaque monkeys 
-    performing visuomotor step-tracking flexion/extension elbow movements. Data includes spike times from 
+    Single-unit recordings from primary motor cortex (M1) of MPTP-treated parkinsonian macaque monkeys
+    performing visuomotor step-tracking flexion/extension elbow movements. Data includes spike times from
     pyramidal tract neurons (PTNs) and corticostriatal neurons (CSNs) identified through antidromic stimulation.
-    Task involves center hold, target presentation, movement execution, and reward phases with optional 
+    Task involves center hold, target presentation, movement execution, and reward phases with optional
     torque perturbations on random trials.
+
+    HED annotations: Trial table includes HED (Hierarchical Event Descriptors) annotations using schema
+    version 8.4.0 for standardized event descriptions. HED columns annotate center hold phase, movement cues,
+    movement execution, proprioceptive perturbations, rewards, and trial context (MPTP state, neuron types).
   institution: Emory University
   lab: Turner Lab
   experimenter:
@@ -26,6 +30,7 @@ NWBFile:
     - pyramidal tract neurons
     - corticostriatal neurons
     - visuomotor task
+    - HED annotations
   surgery: |
     Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
     chamber implanted with stereotaxic guidance over left primary motor cortex (M1) and posterior
