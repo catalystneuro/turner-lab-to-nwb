@@ -5,7 +5,6 @@ from pydantic import FilePath
 from pynwb import NWBFile
 
 from neuroconv.basedatainterface import BaseDataInterface
-from neuroconv.utils import DeepDict
 
 
 class M1MPTPElectrodesInterface(BaseDataInterface):
@@ -48,17 +47,6 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 "M_L": first_unit["M_L"],
                 "Depth": first_unit["Depth"],
             }
-
-    def get_metadata(self) -> DeepDict:
-        """Get metadata for the NWB file."""
-        metadata = super().get_metadata()
-
-        metadata["NWBFile"][
-            "session_description"
-        ] = f"Turner Lab MPTP electrode configuration from {self.base_file_path.stem}"
-        metadata["NWBFile"]["session_id"] = self.base_file_path.stem
-
-        return metadata
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """

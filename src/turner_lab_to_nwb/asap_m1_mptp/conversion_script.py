@@ -24,6 +24,7 @@ def convert_session_to_nwbfile(
     matlab_file_path: str,
     nwbfile_path: str,
     session_info_dict: dict,
+    session_id: str,
     inter_trial_time_interval: float = 3.0,
     verbose: bool = False,
 ):
@@ -41,6 +42,8 @@ def convert_session_to_nwbfile(
         - 'session_info': Dict with session-level data (Animal, MPTP, DateCollected,
           stereotactic coordinates A_P/M_L, Depth, etc.)
         - 'units': List of unit-specific metadata dicts (UnitNum1, Antidrom, etc.)
+    session_id : str
+        Unique identifier for this session
     inter_trial_time_interval : float, optional
         Time interval between trials in seconds, by default 3.0
     verbose : bool, optional
@@ -100,6 +103,7 @@ def convert_session_to_nwbfile(
 
     # Update metadata with session-specific information
     cell_types = [unit["Antidrom"] for unit in session_info_dict["units"]]
+    general_metadata["NWBFile"]["session_id"] = session_id
     general_metadata["NWBFile"][
         "session_description"
     ] += f" MPTP condition: {session_info['MPTP']}. Cell types: {', '.join(cell_types)}."
@@ -107,6 +111,17 @@ def convert_session_to_nwbfile(
     general_metadata["Subject"][
         "description"
     ] = f"MPTP-treated parkinsonian macaque monkey. Recording date: {session_info['DateCollected']}. Stereotactic coordinates: A/P={session_info['A_P']}mm, M/L={session_info['M_L']}mm, Depth={session_info['Depth']}mm."
+
+    # Add session-specific MPTP status to pharmacology field
+    mptp_condition = session_info["MPTP"]
+    if mptp_condition == "Pre":
+        general_metadata["NWBFile"]["pharmacology"] += (
+            "\n\nSession-specific information: This recording was obtained BEFORE MPTP administration (baseline control condition)."
+        )
+    elif mptp_condition == "Post":
+        general_metadata["NWBFile"]["pharmacology"] += (
+            "\n\nSession-specific information: This recording was obtained AFTER MPTP administration (parkinsonian condition)."
+        )
 
     data_interfaces = {
         "electrodes": electrodes_interface,
@@ -120,8 +135,10 @@ def convert_session_to_nwbfile(
     converter = ConverterPipe(data_interfaces=data_interfaces)
 
     # Get base metadata from interface and merge with YAML
+    # Note: dict_deep_update(a, b) updates a with b, so put converter_metadata first
+    # so that general_metadata (with our session-specific values) takes precedence
     converter_metadata = converter.get_metadata()
-    metadata = dict_deep_update(general_metadata, converter_metadata)
+    metadata = dict_deep_update(converter_metadata, general_metadata)
 
     # Set session_start_time using actual recording date at midnight with Pittsburgh timezone
     pittsburgh_tz = ZoneInfo("America/New_York")  # Turner Lab - University of Pittsburgh
@@ -249,7 +266,7 @@ if __name__ == "__main__":
 
         # Convert session
         convert_session_to_nwbfile(
-            matlab_file_path, nwbfile_path, session_info_dict, inter_trial_time_interval, verbose=verbose
+            matlab_file_path, nwbfile_path, session_info_dict, session_id, inter_trial_time_interval, verbose=verbose
         )
 
     if verbose:
