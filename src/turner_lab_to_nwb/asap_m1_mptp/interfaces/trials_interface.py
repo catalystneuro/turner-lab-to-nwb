@@ -159,7 +159,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             name="derived_movement_amplitude",
             description="amplitude of target capture movement derived from kinematic analysis",
             col_cls=HedValueVector,
-            hed="Agent-action, Move, Elbow, Data-maximum/#"
+            hed="Agent-action, Move, Elbow, (Speed, Data-maximum/#)"
             )
         nwbfile.add_trial_column(
             name="derived_end_position",
