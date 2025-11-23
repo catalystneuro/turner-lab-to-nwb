@@ -84,9 +84,14 @@ def convert_session_to_nwbfile(
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
+    # Extract neuron types for HED annotations
+    neuron_types = [unit["Antidrom"] for unit in session_info_dict["units"]]
+
     trials_interface = M1MPTPTrialsInterface(
         file_path=matlab_file_path,
         inter_trial_time_interval=inter_trial_time_interval,
+        mptp_condition=session_info["MPTP"],
+        neuron_types=neuron_types,
         verbose=verbose,
     )
     antidromic_interface = M1MPTPAntidromicStimulationInterface(
