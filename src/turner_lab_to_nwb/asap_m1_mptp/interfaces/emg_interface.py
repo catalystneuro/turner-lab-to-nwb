@@ -7,7 +7,6 @@ from pynwb import NWBFile, TimeSeries
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
-from neuroconv.utils import DeepDict
 
 
 class M1MPTPEMGInterface(BaseDataInterface):
@@ -33,15 +32,6 @@ class M1MPTPEMGInterface(BaseDataInterface):
         super().__init__(verbose=verbose)
         self.file_path = Path(file_path)
         self.inter_trial_time_interval = inter_trial_time_interval
-
-    def get_metadata(self) -> DeepDict:
-        """Get metadata for the NWB file."""
-        metadata = super().get_metadata()
-
-        metadata["NWBFile"]["session_description"] = f"Turner Lab MPTP EMG data from {self.file_path.stem}"
-        metadata["NWBFile"]["session_id"] = self.file_path.stem
-
-        return metadata
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """

@@ -26,6 +26,20 @@ NWBFile:
     - pyramidal tract neurons
     - corticostriatal neurons
     - visuomotor task
+  surgery: |
+    Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
+    chamber implanted with stereotaxic guidance over left primary motor cortex (M1) and posterior
+    putamen, oriented 35° to the coronal plane. Custom floating stimulating electrodes (Teflon-coated
+    PtIr microwires, 50-μm diameter) implanted in posterior putamen (3 electrodes) and prepontine
+    cerebral peduncle (1 electrode) for antidromic identification of corticostriatal neurons and
+    pyramidal tract neurons. Prophylactic antibiotics and analgesics administered perioperatively.
+  pharmacology: |
+    MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine) administered at 0.5 mg/kg via unilateral
+    left internal carotid artery under general anesthesia to induce hemiparkinsonian syndrome.
+    Post-MPTP recordings obtained >30 days following MPTP administration (range: 36-117 days).
+    Stereological analysis confirmed 67% loss of tyrosine hydroxylase-positive neurons in substantia
+    nigra pars compacta of MPTP-treated hemisphere, with contralateral hemisphere showing normal
+    dopaminergic neuron counts.
 Subject:
   species: Macaca mulatta  # Macaque monkey
   age: P2555D  # Approximately 7 years (typical adult research macaque)
