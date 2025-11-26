@@ -38,7 +38,10 @@ class M1MPTPTrialsInterface(BaseDataInterface):
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None):
         # Add HED schema metadata if not already present
         if "hed_schema" not in nwbfile.lab_meta_data:
-            hed_metadata = HedLabMetaData(hed_schema_version="8.4.0")
+            hed_metadata = HedLabMetaData(
+                hed_schema_version="8.4.0",
+                definitions=("Definition/Reach, (Agent-action, ((Animal-agent, Experiment-participant), (Move, Elbow)))",),
+            )
             nwbfile.add_lab_meta_data(hed_metadata)
 
         mat_data = read_mat(str(self.file_path))
@@ -57,25 +60,25 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             name="center_target_appearance_time",
             description="Time when center target appeared for monkey to align cursor and initiate trial (seconds)",
             col_cls=HedValueVector,
-            hed="Sensory-event, Visual-presentation, (Intended-effect, Go-signal), Onset, Time-value/#"
+            hed="Sensory-event, Visual-presentation, (Intended-effect, Go-signal), Time-value/#"
         )
         nwbfile.add_trial_column(
             name="lateral_target_appearance_time",
             description="Time when lateral target appeared signaling monkey to move from center to flexion/extension position (seconds)",
             col_cls=HedValueVector,
-            hed="Sensory-event, Visual-presentation, Onset, (Intended-effect, Cue), Time-value/#"
+            hed="Sensory-event, Visual-presentation, (Intended-effect, Cue), Time-value/#"
         )
         nwbfile.add_trial_column(
             name="cursor_departure_time",
             description="Time when cursor exited from start position after lateral target appearance. Detected by cursor position leaving start zone boundary (seconds)",
             col_cls=HedValueVector,
-            hed="Agent-action, (Move, Onset), Time-value/#"
+            hed="Def/Reach, (Onset, Time-value/#)"
         )
         nwbfile.add_trial_column(
             name="reward_time",
             description="Reward delivery. The animal received a drop of juice or food for successful completion of the task (seconds)",
             col_cls=HedValueVector,
-            hed="Sensory-event, (Reward, Onset), Time-value/#"
+            hed="Sensory-event, Reward, Time-value/#"
         )
 
         # STEP 3: Process transformed Events variables to a tidy format
@@ -108,7 +111,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             name="movement_type",
             description="flexion or extension",
             col_cls=HedValueVector,
-            hed="Agent-action, Move, Elbow, #"
+            hed="Def/Reach (Move, Elbow)"
         )
         nwbfile.add_trial_column(
             name="torque_perturbation_type",
@@ -120,7 +123,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             name="torque_perturbation_onset_time", 
             description="onset time of unpredictable torque impulse (0.1 Nm, 50ms) applied to manipulandum 1-2s after center target capture (seconds)",
             col_cls=HedValueVector,
-            hed="Sensory-event, (Tactile-presentation, Onset), Time-value/#",
+            hed="Sensory-event, Tactile-presentation, Time-value/#",
         )
         # STEP 4: Extract movement Mvt data
         movement_data = mat_data["Mvt"]
@@ -137,7 +140,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             name="derived_movement_onset_time",
             description="onset time of target capture movement derived from kinematic analysis (seconds)",
             col_cls=HedValueVector,
-            hed="Agent-action, Move, Elbow, Onset, Time-value/#"
+            hed="Def/Reach, (Onset, Time-value/#)"
         )
         nwbfile.add_trial_column(
             name="derived_movement_end_time",
@@ -147,25 +150,25 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             name="derived_peak_velocity",
             description="peak velocity during target capture movement derived from kinematic analysis",
             col_cls=HedValueVector,
-            hed="Agent-action, Move, Elbow, Speed/#"
+            hed="Def/Reach, Speed/#"
         )
         nwbfile.add_trial_column(
             name="derived_peak_velocity_time",
             description="time of peak velocity during target capture movement derived from kinematic analysis (seconds)",
             col_cls=HedValueVector,
-            hed="Agent-action, Move, Elbow, (Speed, Data-maximum), Time-value/#"
+            hed="Def/Reach, (Speed, Data-maximum, Time-value/#)"
         )
         nwbfile.add_trial_column(
             name="derived_movement_amplitude",
             description="amplitude of target capture movement derived from kinematic analysis",
             col_cls=HedValueVector,
-            hed="Agent-action, Move, Elbow, (Speed, Data-maximum/#)"
+            hed="Def/Reach, (Speed, Data-maximum/#)"
             )
         nwbfile.add_trial_column(
             name="derived_end_position",
             description="angular joint position at end of target capture movement (degrees)",
             col_cls=HedValueVector,
-            hed="Agent-action, Move, Elbow, Angle/#"
+            hed="Def/Reach, Angle/#"
         )
 
         # STEP 6: Extract analog data for trial timing
