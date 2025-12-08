@@ -158,6 +158,13 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "(format: {Animal}{FName}++{MPTP}++Depth{depth}um++{date}) of the continuation session if it exists. "
                 "This links neurons that were recorded across multiple sessions at the same electrode location.",
             )
+            nwbfile.add_unit_column(
+                "pharmacology",
+                "MPTP treatment status at time of recording: "
+                "'pre_mptp' indicates baseline recording before MPTP administration, "
+                "'post_mptp' indicates recording obtained >30 days after MPTP administration "
+                "(0.5 mg/kg via unilateral left internal carotid artery) when parkinsonian symptoms were established.",
+            )
 
         # Process each unit
         for unit_file_path, unit_meta in zip(unit_files, unit_metadata_list):
@@ -321,6 +328,15 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 # No cross-reference for this unit
                 related_session_id = "none"
 
+            # Determine pharmacology status from MPTP condition
+            mptp_status = unit_meta.get("MPTP", "")
+            if mptp_status == "Pre":
+                pharmacology = "pre_mptp"
+            elif mptp_status == "Post":
+                pharmacology = "post_mptp"
+            else:
+                pharmacology = "unknown"
+
             # Add unit to NWB file - link to electrode index 0
             nwbfile.add_unit(
                 spike_times=all_spike_times,
@@ -335,6 +351,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 sensory_detail=sensory_detail,
                 unit_name=unit_num,
                 related_session_id=related_session_id,
+                pharmacology=pharmacology,
             )
 
             if self.verbose:

@@ -5,6 +5,7 @@ import numpy as np
 from pydantic import FilePath
 from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import SpatialSeries, CompassDirection
+from pynwb.device import Device
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
@@ -50,6 +51,23 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         analog_data = mat_data["Analog"]
         file_info = mat_data["file_info"]
         analog_sampling_rate = file_info["analog_fs"]
+
+        # Add torque motor device if not already present
+        if "TorqueMotor" not in nwbfile.devices:
+            nwbfile.add_device(
+                Device(
+                    name="TorqueMotor",
+                    description=(
+                        "TQ40W torque motor (Aerotech Inc.) used in the manipulandum system for two purposes: "
+                        "(1) providing resistance and position control during the visuomotor step-tracking task, and "
+                        "(2) delivering brief, temporally-unpredictable torque perturbations (0.1 Nm, 50ms impulse) "
+                        "to the elbow joint on randomly-selected trials to evoke proprioceptive stretch reflexes. "
+                        "The monkey's arm was held in a padded manipulandum with the elbow joint aligned with the "
+                        "torque motor axis of rotation."
+                    ),
+                    manufacturer="Aerotech Inc.",
+                )
+            )
 
         # Expected manipulandum signals
         manipulandum_signals = ["x", "vel", "torq"]
