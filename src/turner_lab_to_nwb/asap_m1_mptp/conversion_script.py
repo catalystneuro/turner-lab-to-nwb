@@ -26,6 +26,7 @@ def convert_session_to_nwbfile(
     session_info_dict: dict,
     session_id: str,
     inter_trial_time_interval: float = 3.0,
+    muscle_names: list = None,
     verbose: bool = False,
 ):
     """
@@ -46,6 +47,8 @@ def convert_session_to_nwbfile(
         Unique identifier for this session
     inter_trial_time_interval : float, optional
         Time interval between trials in seconds, by default 3.0
+    muscle_names : list, optional
+        List of muscle names for EMG channels, by default None
     verbose : bool, optional
         Whether to print verbose output, by default False
     """
@@ -82,6 +85,7 @@ def convert_session_to_nwbfile(
     emg_interface = M1MPTPEMGInterface(
         file_path=matlab_file_path,
         inter_trial_time_interval=inter_trial_time_interval,
+        muscle_names=muscle_names,
         verbose=verbose,
     )
     trials_interface = M1MPTPTrialsInterface(
@@ -183,7 +187,7 @@ def convert_session_to_nwbfile(
 
 if __name__ == "__main__":
     # Configuration
-    base_data_path = Path("/home/heberto/data/turner/Ven_All/")
+    base_data_path = Path("/home/heberto/data/turner/new_turner/")
     root_folder_path = Path(__file__).parent.parent.parent.parent
     output_folder = root_folder_path / "nwbfiles"
     inter_trial_time_interval = 3.0  # seconds
@@ -195,6 +199,9 @@ if __name__ == "__main__":
     assets_folder_path = conversion_folder_path / "assets"
     metadata_table_path = assets_folder_path / "metadata_table" / "ven_table.csv"
     metadata_df = pd.read_csv(metadata_table_path)
+
+    # EMG muscle column names for extracting channel mapping
+    emg_muscle_columns = ["emg_muscle_1", "emg_muscle_2", "emg_muscle_3", "emg_muscle_4", "emg_muscle_5", "emg_muscle_6"]
 
     # Create output directory if needed
     output_folder.mkdir(parents=True, exist_ok=True)
@@ -264,9 +271,24 @@ if __name__ == "__main__":
         # Construct output path
         nwbfile_path = output_folder / f"{session_id}.nwb"
 
+        # Extract EMG muscle names from metadata (filter out NaN values)
+        muscle_names = [
+            primary_unit[col] if pd.notna(primary_unit.get(col)) else None
+            for col in emg_muscle_columns
+        ]
+        # Remove trailing None values
+        while muscle_names and muscle_names[-1] is None:
+            muscle_names.pop()
+
         # Convert session
         convert_session_to_nwbfile(
-            matlab_file_path, nwbfile_path, session_info_dict, session_id, inter_trial_time_interval, verbose=verbose
+            matlab_file_path,
+            nwbfile_path,
+            session_info_dict,
+            session_id,
+            inter_trial_time_interval,
+            muscle_names=muscle_names if muscle_names else None,
+            verbose=verbose,
         )
 
     if verbose:
