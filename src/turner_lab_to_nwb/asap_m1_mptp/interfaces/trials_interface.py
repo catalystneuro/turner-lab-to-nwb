@@ -77,7 +77,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             name="reward_time",
             description="Reward delivery. The animal received a drop of juice or food for successful completion of the task (seconds)",
             col_cls=HedValueVector,
-            hed="Sensory-event, Experiment-control, Feedback, Reward, Time-value/# s"
+            hed="Sensory-event, Experimental-stimulus, Gustatory-presentation, Feedback, Reward, Time-value/# s"
         )
 
         # STEP 3: Process transformed Events variables to a tidy format
