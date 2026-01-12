@@ -1,0 +1,50 @@
+{
+  "_metadata": {
+    "hed_schema_version": "8.4.0",
+    "description": "HED sidecar for Turner Lab M1 MPTP trials table columns"
+  },
+  "center_target_appearance_time": {
+    "Description": "Time when center target appeared for monkey to align cursor and initiate trial (seconds)",
+    "HED": "Sensory-event, Experimental-stimulus, Visual-presentation, Go-signal, Time-value/# s"
+  },
+  "lateral_target_appearance_time": {
+    "Description": "Time when lateral target appeared signaling monkey to move from center to flexion/extension position (seconds)",
+    "HED": "Sensory-event, Experimental-stimulus, Visual-presentation, Cue, Time-value/# s"
+  },
+  "cursor_departure_time": {
+    "Description": "Time when cursor exited from start position after lateral target appearance. Detected by cursor position leaving start zone boundary (seconds)",
+    "HED": "Agent-action, (Animal-agent, Experiment-participant), Participant-response, (Move, Elbow), Time-value/# s"
+  },
+  "reward_time": {
+    "Description": "Reward delivery. The animal received a drop of juice or food for successful completion of the task (seconds)",
+    "HED": "Sensory-event, Experimental-stimulus, Gustatory-presentation, Feedback, Reward, Time-value/# s"
+  },
+  "torque_perturbation_onset_time": {
+    "Description": "Onset time of unpredictable torque impulse (0.1 Nm, 50ms) applied to manipulandum 1-2s after center target capture (seconds)",
+    "HED": "Sensory-event, Experimental-stimulus, Tactile-presentation, Time-value/# s"
+  },
+  "derived_movement_onset_time": {
+    "Description": "Onset time of target capture movement derived from kinematic analysis (seconds)",
+    "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Time-value/# s"
+  },
+  "derived_movement_end_time": {
+    "Description": "End time of target capture movement derived from kinematic analysis (seconds)",
+    "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Time-value/# s"
+  },
+  "derived_peak_velocity": {
+    "Description": "Peak velocity during target capture movement derived from kinematic analysis (deg/s)",
+    "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Parameter-value/#"
+  },
+  "derived_peak_velocity_time": {
+    "Description": "Time of peak velocity during target capture movement derived from kinematic analysis (seconds)",
+    "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Data-maximum, Time-value/# s"
+  },
+  "derived_movement_amplitude": {
+    "Description": "Amplitude of target capture movement derived from kinematic analysis (degrees)",
+    "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Angle/# degree"
+  },
+  "derived_end_position": {
+    "Description": "Angular joint position at end of target capture movement (degrees)",
+    "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Angle/# degree"
+  }
+}
