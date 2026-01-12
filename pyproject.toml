@@ -28,6 +28,7 @@ dependencies = [
     "pymatreader>=1.1.0",
     "numpy<2.3",
     "ndx-hed",
+    "ndx-events",
 ]
 
 [project.urls]

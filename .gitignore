@@ -163,13 +163,10 @@ CLAUDE.md
 # Protocol diagrams (D2 generated files)
 src/turner_lab_to_nwb/asap_m1_mptp/assets/protocol_diagrams/
 
-# HED documentation
-src/turner_lab_to_nwb/asap_m1_mptp/assets/data_exploration/hed_documentation/
+# HED documentation (working notes)
+src/turner_lab_to_nwb/asap_m1_mptp/assets/hed_documentation/
 
 # NWB output files
 nwbfiles/
 reproduction_scripts/
 email_communication.md
-
-# HED documentation (working notes)
-src/turner_lab_to_nwb/asap_m1_mptp/assets/data_exploration/hed_documentation/
