@@ -119,7 +119,21 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             hed=columns["reward_time"]["HED"]
         )
 
-        # STEP 3: Process transformed Events variables to a tidy format
+        # STEP 3: Extract in-trial stimulation data for isolation monitoring
+        # Some sessions delivered single antidromic stimulation pulses early in trials
+        # to activate otherwise silent neurons and verify recording isolation
+        isolation_stim_times_raw = np.array(events.get("stim", [np.nan] * n_trials))
+        isolation_stim_times = isolation_stim_times_raw / 1000.0  # Convert ms to seconds
+
+        # Add column for isolation monitoring stimulation
+        nwbfile.add_trial_column(
+            name="isolation_monitoring_stim_time",
+            description=columns["isolation_monitoring_stim_time"]["Description"],
+            col_cls=HedValueVector,
+            hed=columns["isolation_monitoring_stim_time"]["HED"],
+        )
+
+        # STEP 4: Process transformed Events variables to a tidy format
         flexion_perturbations = np.array(events.get("tq_flex", [np.nan] * n_trials))
         extension_perturbations = np.array(events.get("tq_ext", [np.nan] * n_trials))
 
@@ -160,7 +174,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             hed=columns["torque_perturbation_onset_time"]["HED"],
         )
 
-        # STEP 4: Extract movement Mvt data
+        # STEP 5: Extract movement Mvt data
         movement_data = mat_data["Mvt"]
         derived_movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
         derived_movement_end_times = np.array(movement_data["end_t"]) / 1000.0
@@ -169,7 +183,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         derived_end_positions = np.array(movement_data["end_posn"])
         derived_movement_amplitudes = np.array(movement_data["mvt_amp"])
 
-        # STEP 5: Add trial columns for movement data (derived from kinematic analysis)
+        # STEP 6: Add trial columns for movement data (derived from kinematic analysis)
         nwbfile.add_trial_column(
             name="derived_movement_onset_time",
             description=columns["derived_movement_onset_time"]["Description"],
@@ -207,7 +221,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             hed=columns["derived_end_position"]["HED"]
         )
 
-        # STEP 6: Extract analog data for trial timing
+        # STEP 7: Extract analog data for trial timing
         analog_data = mat_data["Analog"]
         trial_durations = []
         for trial_index in range(n_trials):
@@ -238,6 +252,11 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         for trial_index in range(n_trials):
             trial_start = trial_start_times[trial_index]
 
+            # Calculate isolation monitoring stim time (offset by trial start, NaN if no stim)
+            isolation_stim_time = isolation_stim_times[trial_index]
+            if not np.isnan(isolation_stim_time):
+                isolation_stim_time = trial_start + isolation_stim_time
+
             nwbfile.add_trial(
                 start_time=trial_start,
                 stop_time=trial_stop_times[trial_index],
@@ -254,12 +273,15 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 derived_peak_velocity_time=trial_start + derived_peak_velocity_times[trial_index],
                 derived_movement_amplitude=derived_movement_amplitudes[trial_index],
                 derived_end_position=derived_end_positions[trial_index],
+                isolation_monitoring_stim_time=isolation_stim_time,
             )
 
         if self.verbose:
             print(f"Added {n_trials} trials to NWB file")
             print(f"Flexion trials: {sum(target_directions == 1)}")
             print(f"Extension trials: {sum(target_directions == 2)}")
+            n_stim_trials = np.sum(~np.isnan(isolation_stim_times))
+            print(f"Trials with isolation monitoring stimulation: {n_stim_trials}")
 
         # Validate HED annotations in the trials table using HedNWBValidator
         # Import here to avoid requiring ndx-events as a top-level dependency

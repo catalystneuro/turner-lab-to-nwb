@@ -46,5 +46,9 @@
   "derived_end_position": {
     "Description": "Angular joint position at end of target capture movement (degrees)",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Angle/# degree"
+  },
+  "isolation_monitoring_stim_time": {
+    "Description": "Time of antidromic stimulation pulse delivered during trial to monitor unit isolation. Single pulses were delivered early in some trials (~245ms after trial start) to activate otherwise silent neurons and verify recording isolation. NaN indicates no stimulation was delivered in that trial (seconds)",
+    "HED": "Experiment-procedure, Somatic-presentation, Time-value/# s"
   }
 }
