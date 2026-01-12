@@ -1,360 +1,359 @@
-Animal,MPTP,FName1,FName2,DateCollected,Depth,A_P,M_L,UnitNum1,UnitNum2,Antidrom,Latency,Threshold,LAT2,Thresh2,SENSORY,SENS_DETAIL,ntrials1_1,ntrials1_2,emg_collected,lfp_collected,ntrials2_1,ntrials2_2,StimData
-V,Pre,v0502,,06-Apr-1999,22.13,4,-4,1,,PED,1.4,53,NaN,NaN,wrist / hand,"ext / thumb abd",10,10,1,0,0,0,Ped
-V,Pre,v0601,,07-Apr-1999,19.5,2,-6,1,,STRI,3.15,830,NaN,NaN,hand,"active grip",10,10,1,0,0,0,Str
-V,Pre,v1001,,09-Apr-1999,17,4,-6,1,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,1,0,0,0,
-V,Pre,v1001,,09-Apr-1999,17,4,-6,2,,STRI,4.45,600,NaN,NaN,NR,"NR",10,10,1,0,0,0,Str
-V,Pre,v1002,,09-Apr-1999,17.8,4,-6,1,,PED,1.4,610,NaN,NaN,hand,"palm probe",10,10,1,0,0,0,Ped
-V,Pre,v1003,,09-Apr-1999,18,4,-6,1,,STRI,4.85,660,NaN,NaN,NR,"NR",10,10,1,0,0,0,Str
-V,Pre,v1004,,09-Apr-1999,18.47,4,-6,1,,STRI,4,NaN,NaN,NaN,NR,"NR",8,9,1,0,0,0,Str
-V,Pre,v1005,,12-Apr-1999,15.88,4,-6,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb ext",10,10,1,0,0,0,
-V,Pre,v1006,,12-Apr-1999,16.77,4,-6,1,,PED,2.1,350,NaN,NaN,wrist,"radial deviation",10,10,1,0,0,0,Ped
-V,Pre,v1101,,13-Apr-1999,17.9,6,-4,1,,PED,4.1,300,NaN,NaN,NT,"NT",6,6,1,0,0,0,Ped
-V,Pre,v1102,,13-Apr-1999,17.41,6,-4,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",6,5,1,0,0,0,
-V,Pre,v1102,,13-Apr-1999,17.41,6,-4,2,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",6,5,1,0,0,0,
-V,Pre,v1103,,13-Apr-1999,18,6,-4,1,,NR,NaN,NaN,NaN,NaN,NR,"",9,9,1,0,0,0,
-V,Pre,v1301,,15-Apr-1999,18.2,4,-5,1,,STRI,3.9,NaN,NaN,NaN,NR,"NR",6,6,1,0,0,0,Str
-V,Pre,v1302,,15-Apr-1999,18.77,4,-5,1,,PED,1.75,80,NaN,NaN,NR,"NR",10,10,1,0,0,0,Ped
-V,Pre,v1303,,15-Apr-1999,18.25,4,-5,1,,PED,1.4,NaN,NaN,NaN,hand,"finger pad sensitive",10,10,1,0,0,0,Ped
-V,Pre,v1303,,15-Apr-1999,18.25,4,-5,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,1,0,0,0,
-V,Pre,v1304,,15-Apr-1999,19.35,4,-5,1,,PED,2.75,1000,NaN,NaN,hand,"finger ext",9,9,1,0,0,0,Ped
-V,Pre,v1305,,15-Apr-1999,18.43,4,-5,1,,PED,1.35,400,NaN,NaN,NR,"NR",7,8,1,0,0,0,Ped
-V,Pre,v1401,,11-May-1999,22.99,2,-6,1,,STRI,8.4,NaN,NaN,NaN,hand,"active grip",10,10,1,0,0,0,Str
-V,Pre,v1402,,11-May-1999,23.7,2,-6,1,,STRI,3.3,590,NaN,NaN,hand,"palm squeeze at base of little finger",10,10,1,0,0,0,Str
-V,Pre,v1403,,12-May-1999,23.27,2,-6,1,,PED,1.9,75,NaN,NaN,NT,"NT",8,8,1,0,0,0,Ped
-V,Pre,v1501,v1501b,13-May-1999,19.7,4,-4,1,1,STRI,6.35,960,NaN,NaN,NR,"NR",10,10,1,0,10,10,Str
-V,Pre,v1601,v1601b,17-May-1999,17.8,6,-4,1,1,PED,2.85,NaN,NaN,NaN,NR,"NR",10,10,1,0,10,10,Ped
-V,Pre,v1602,v1602b,17-May-1999,18,6,-4,1,1,PED,3.15,320,NaN,NaN,NT,"NT",10,10,1,0,5,5,Ped
-V,Pre,v1701,v1701b,18-May-1999,17.4,2,-4,1,1,PED,3.7,NaN,NaN,NaN,hand,"active",NaN,NaN,0,0,2,2,Ped
-V,Pre,v1702,v1702b,18-May-1999,17.5,2,-4,1,1,PED,3,NaN,NaN,NaN,hand,"palm surf, last 3 fingers",10,10,1,0,10,10,Ped
-V,Pre,v1703,v1703b,18-May-1999,18.2,2,-4,1,1,STRI,4.8,750,NaN,NaN,hand,"selective finger flex",10,10,1,0,10,10,Str
-V,Pre,v1801,,20-May-1999,17.9,0,-4,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",6,6,1,0,0,0,
-V,Pre,v1802,,20-May-1999,18.19,0,-4,1,,NR,NaN,NaN,NaN,NaN,hand,"finger tap",10,10,1,0,0,0,
-V,Pre,v1802,,20-May-1999,18.19,0,-4,2,,PED,2.35,650,NaN,NaN,hand,"finger flex",10,10,1,0,0,0,Ped
-V,Pre,v1901,,20-May-1999,18.57,-2,-4,1,,PED,1.65,370,NaN,NaN,hand,"thumb ext & abd",10,10,1,0,0,0,Ped
-V,Pre,v1902,v1902b,20-May-1999,18.5,-2,-4,1,1,PED,1.45,420,NaN,NaN,hand,"finger tap & flex",10,10,1,0,10,10,Ped
-V,Pre,v2001,,24-May-1999,22.52,2,-2,1,,PED,NaN,300,NaN,NaN,hand,"thumb ext",6,6,1,0,0,0,
-V,Pre,v2001,,24-May-1999,22.52,2,-2,2,,PED,NaN,80,NaN,NaN,hand,"thumb ext",6,6,1,0,0,0,
-V,Pre,v2301,,26-May-1999,16.78,1,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"light touch",10,10,1,0,0,0,
-V,Pre,v2302,,26-May-1999,16.9,1,2,1,,PED,1.3,425,NaN,NaN,hand,"finger ext - not cut",10,10,1,0,0,0,Ped
-V,Pre,v2401,,26-May-1999,22.4,3,-3,1,,NR,NaN,NaN,NaN,NaN,forearm,"deep probing",10,10,1,0,0,0,
-V,Pre,v2501,v2501b,27-May-1999,20.67,-5,-2,1,1,STRI,2.35,320,NaN,NaN,hand,"active",10,10,1,0,NaN,NaN,Str
-V,Pre,v2502,,27-May-1999,20.1,-5,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb light touch",17,16,1,0,0,0,
-V,Pre,v2601,,01-Jun-1999,18.56,-6,-2,1,,PED,1.9,950,NaN,NaN,hand,"thumb ext",10,10,1,0,0,0,Ped
-V,Pre,v2602,,01-Jun-1999,18.72,-6,-2,1,,PED,1.05,290,NaN,NaN,elbow,"ext",5,5,1,0,0,0,Ped
-V,Pre,v2701,v2702,07-Jun-1999,19.65,-5,-2,1,2,STRI,5.5,280,NaN,NaN,NR,"NR",9,9,1,0,10,10,Str
-V,Pre,v2702,,07-Jun-1999,19.65,-5,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb",10,10,1,0,0,0,
-V,Pre,v2703,,07-Jun-1999,19.88,-5,-2,1,,STRI,5.2,300,NaN,NaN,NR,"NR",10,10,1,0,0,0,Str
-V,Pre,v2704,,08-Jun-1999,19.4,-5,-2,1,,PED,1.45,800,NaN,NaN,hand,"index finger / thumb",10,10,1,0,0,0,Ped
-V,Pre,v2705,,08-Jun-1999,19.72,-5,-2,1,,PED,2.15,77,NaN,NaN,hand,"thumb light touch",10,10,1,0,0,0,Ped
-V,Pre,v2705,,08-Jun-1999,19.72,-5,-2,2,,PED,1.35,95,NaN,NaN,hand,"thumb light touch",10,10,1,0,0,0,
-V,Pre,v2706,,08-Jun-1999,19.98,-5,-2,1,,PED,1.8,80,NaN,NaN,hand / arm,"thumb / proximal arm",7,7,1,0,0,0,Ped
-V,Pre,v2706,,08-Jun-1999,19.98,-5,-2,2,,NR,NaN,NaN,NaN,NaN,hand / arm,"thumb / proximal arm",7,7,1,0,0,0,
-V,Pre,v2707,,09-Jun-1999,20.94,-5,-2,1,,NR,NaN,NaN,NaN,NaN,shoulder,"adduction",5,6,1,0,0,0,
-V,Pre,v2801,,10-Jun-1999,16.75,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",5,5,1,0,0,0,
-V,Pre,v2801,,10-Jun-1999,16.6,-7,-2,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",5,5,1,0,0,0,
-V,Pre,v2802,,10-Jun-1999,17.6,-7,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",10,10,1,0,0,0,
-V,Pre,v2803,,10-Jun-1999,17.9,-7,-2,1,,PED,3.2,75,NaN,NaN,NT,"NT",3,3,1,0,0,0,Ped
-V,Pre,v2804,,11-Jun-1999,17.3,-7,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"ext",10,10,1,0,0,0,
-V,Pre,v2805,,11-Jun-1999,17.94,-7,-2,1,,PED,0.9,410,NaN,NaN,elbow,"ext",10,10,1,0,0,0,Ped
-V,Pre,v2806,,11-Jun-1999,17.8,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,1,0,0,0,
-V,Pre,v2806,,11-Jun-1999,17.8,-7,-2,2,,NR,NaN,NaN,NaN,NaN,elbow,"ext",10,10,1,0,0,0,
-V,Pre,v2807,,16-Jun-1999,16.53,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,1,0,0,0,
-V,Pre,v2808,,16-Jun-1999,16.8,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",8,8,1,0,0,0,
-V,Pre,v2809,,16-Jun-1999,17.1,-7,-2,1,,PED,3.55,625,NaN,NaN,NR,"NR",10,10,1,0,0,0,Ped
-V,Pre,v2810,,17-Jun-1999,16.9,-7,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",10,10,1,0,0,0,
-V,Pre,v2810,,17-Jun-1999,16.9,-7,-2,2,,STRI,5.6,860,NaN,NaN,NR,"NR",10,10,1,0,0,0,Str
-V,Pre,v2811,,17-Jun-1999,17,-7,-2,1,,PED,2.3,700,NaN,NaN,NR,"NR",10,10,1,0,0,0,Ped
-V,Pre,v2901,,18-Jun-1999,20.55,-4,-2,1,,NR,NaN,NaN,NaN,NaN,wrist / elbow,"ext",10,10,1,0,0,0,
-V,Pre,v2902,,18-Jun-1999,21,-4,-2,1,,STRI,6.1,950,NaN,NaN,elbow,"flex",10,10,1,0,0,0,Str
-V,Pre,v2903,,18-Jun-1999,21.9,-4,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",10,10,1,0,0,0,
-V,Pre,v2904,,21-Jun-1999,22.11,-4,-2,1,,STRI,3.7,780,NaN,NaN,forearm,"sup.",10,10,1,0,0,0,Str
-V,Pre,v2905,,21-Jun-1999,22.13,-4,-2,1,,NR,NaN,NaN,NaN,NaN,wrist,"radial deviation",5,5,1,0,0,0,
-V,Pre,v2906,,21-Jun-1999,22.9,-4,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,1,0,0,0,
-V,Pre,v2907,,21-Jun-1999,22.4,-4,-2,1,,PED/STRI,1.3,300,1.5,250,hand,"finger ext",10,10,1,0,0,0,Ped/Str
-V,Pre,v3001,,23-Jun-1999,17.5,-6,-2,1,,STRI,5.9,600,NaN,NaN,NR,"NR",8,8,1,0,0,0,Str
-V,Pre,v3002,,23-Jun-1999,17.8,-6,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,1,0,0,0,
-V,Pre,v3002,,23-Jun-1999,17.8,-6,-2,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,1,0,0,0,
-V,Pre,v3003,,23-Jun-1999,18.23,-6,-2,1,,PED,1.9,540,NaN,NaN,NR,"NR",6,6,1,0,0,0,Ped
-V,Pre,v3004,,23-Jun-1999,17.6,-6,-2,1,,STRI,3.9,316,NaN,NaN,NR,"NR",10,10,1,0,0,0,Str
-V,Pre,v3005,,23-Jun-1999,17.7,-6,-2,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",5,5,1,0,0,0,
-V,Pre,v3006,,23-Jun-1999,18.2,-6,-2,1,,PED,2.5,1000,NaN,NaN,shoulder,"elevation",10,10,1,0,0,0,Ped
-V,Pre,v3007,,23-Jun-1999,18.4,-6,-2,1,,PED,1.25,200,NaN,NaN,shoulder,"clavicle probe",10,10,1,0,0,0,Ped
-V,Pre,v3007,,23-Jun-1999,18.4,-6,-2,2,,PED,3.45,120,NaN,NaN,NR,"NR",10,10,1,0,0,0,
-V,Pre,v3101,,25-Jun-1999,17.45,-5,-4,1,,PED,2.9,340,NaN,NaN,wrist,"flex",10,10,1,0,0,0,Ped
-V,Pre,v3102,,25-Jun-1999,17.6,-5,-4,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",6,7,1,0,0,0,
-V,Pre,v3103,,25-Jun-1999,17.8,-5,-4,1,,PED,3.2,560,NaN,NaN,finger,"ext",10,10,1,0,0,0,Ped
-V,Pre,v3103,,25-Jun-1999,17.8,-5,-4,2,,PED,2,340,NaN,NaN,finger,"ext",10,10,1,0,0,0,
-V,Pre,v3104,,25-Jun-1999,18.16,-5,-4,1,,NR,NaN,NaN,NaN,NaN,hand,"active / pinch",10,10,1,0,0,0,
-V,Pre,v3104,,25-Jun-1999,18.16,-5,-4,2,,PED,1.7,710,NaN,NaN,wrist,"flex",10,10,1,0,0,0,Ped
-V,Pre,v3105,,28-Jun-1999,16.7,-5,-4,1,,PED,0.85,20,NaN,NaN,hand,"finger glabrous",10,10,1,0,0,0,Ped
-V,Pre,v3106,,28-Jun-1999,17,-5,-4,1,,STRI,3.85,250,NaN,NaN,NR,"NR",10,10,1,0,0,0,Str
-V,Pre,v3106,,28-Jun-1999,17,-5,-4,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,1,0,0,0,
-V,Pre,v3107,,29-Jun-1999,16.6,-5,-4,1,,PED,2.1,295,NaN,NaN,wrist,"flex",10,10,1,0,0,0,Ped
-V,Pre,v3108,,29-Jun-1999,16.8,-5,-4,1,,PED,1.35,625,NaN,NaN,NR,"NR",10,10,1,0,0,0,Ped
-V,Pre,v3108,,29-Jun-1999,16.8,-5,-4,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,1,0,0,0,
-V,Pre,v3109,,29-Jun-1999,16.87,-5,-4,1,,PED,2.1,830,NaN,NaN,wrist,"ext",10,10,1,0,0,0,Ped
-V,Pre,v3109,,29-Jun-1999,16.87,-5,-4,2,,NR,NaN,NaN,NaN,NaN,wrist,"ext",10,10,1,0,0,0,
-V,Pre,v3201,,29-Jun-1999,18.02,-3,-5,1,,STRI,2.65,NaN,NaN,NaN,NT,"NT",8,8,1,0,0,0,Str
-V,Pre,v3201,,29-Jun-1999,18.02,-3,-5,2,,NT,NaN,NaN,NaN,NaN,NT,"NT",8,8,1,0,0,0,
-V,Pre,v3202,v3202b,30-Jun-1999,19.1,-3,-5,1,1,STRI,3.5,120,NaN,NaN,NT,"NT",10,10,1,0,10,10,Str
-V,Pre,v3203,,30-Jun-1999,19.3,-3,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",10,10,1,0,0,0,
-V,Pre,v3203,,30-Jun-1999,19.3,-3,-5,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,1,0,0,0,
-V,Pre,v3204,v3205,30-Jun-1999,19.5,-3,-5,1,1,PED,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,1,0,10,10,
-V,Pre,v3205,,30-Jun-1999,19.4,-3,-5,2,,STRI,3.7,440,NaN,NaN,wrist / hand,"selective finger flex",10,10,1,0,0,0,Str
-V,Pre,v3206,,01-Jul-1999,18.97,-3,-5,1,,PED,0.8,230,NaN,NaN,hand,"finger ext",10,10,1,1,0,0,Ped
-V,Pre,v3207,,01-Jul-1999,19.36,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,1,1,0,0,
-V,Pre,v3208,,01-Jul-1999,19.68,-3,-5,1,,PED,2,600,NaN,NaN,NT,"NT",5,4,1,1,0,0,Ped
-V,Pre,v3209,,06-Jul-1999,19.4,-3,-5,1,,PED,0.7,160,NaN,NaN,wrist / hand,"finger ext",10,10,1,1,0,0,Ped
-V,Pre,v3209,,06-Jul-1999,19.4,-3,-5,2,,PED,1.95,40,NaN,NaN,finger,"flex",10,10,1,1,0,0,
-V,Pre,v3210,,06-Jul-1999,19.9,-3,-5,1,,PED,0.75,1000,NaN,NaN,finger,"flex",10,10,1,1,0,0,Ped
-V,Pre,v3211,,06-Jul-1999,20.4,-3,-5,1,,STRI,3.05,380,NaN,NaN,NT,"NT",6,7,1,1,0,0,Str
-V,Pre,v3212,,07-Jul-1999,18.4,-3,-5,1,,PED,0.95,21,NaN,NaN,wrist / forearm,"ext",10,10,1,1,0,0,Ped
-V,Pre,v3213,,07-Jul-1999,18.4,-3,-5,1,,NT,NaN,NaN,NaN,NaN,NT,"NT",2,3,1,1,0,0,
-V,Pre,v3214,,07-Jul-1999,20.37,-3,-5,1,,STRI,9.35,480,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v3215,,08-Jul-1999,19.3,-3,-5,1,,STRI,5.05,530,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v3216,,08-Jul-1999,20.5,-3,-5,1,,PED/STRI,2.3,45,1.5,320,wrist,"ext",10,10,1,1,0,0,Ped/Str
-V,Pre,v3217,,08-Jul-1999,20.7,-3,-5,1,,STRI,3.1,350,NaN,NaN,NR,"selective finger release",10,10,1,1,0,0,Str
-V,Pre,v3218,,08-Jul-1999,20.76,-3,-5,1,,STRI,4.25,400,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v3219,,08-Jul-1999,20.85,-3,-5,1,,STRI,3.9,420,NaN,NaN,hand,"finger ext",10,10,1,1,0,0,Str
-V,Pre,v3220,,09-Jul-1999,20.5,-3,-5,1,,PED,2.65,26,NaN,NaN,hand,"finger manip",10,10,1,1,0,0,Ped
-V,Pre,v3220,,09-Jul-1999,20.5,-3,-5,2,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,1,1,0,0,
-V,Pre,v3221,,09-Jul-1999,20.57,-3,-5,1,,STRI,3.8,800,NaN,NaN,NR,"selective - palmar contact w/ objects, esp unexpected objects or new objects",10,10,1,1,0,0,Str
-V,Pre,v3222,,09-Jul-1999,20.9,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",7,7,1,1,0,0,
-V,Pre,v3222,,09-Jul-1999,20.9,-3,-5,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",7,7,1,1,0,0,
-V,Pre,v3223,,09-Jul-1999,21.15,-3,-5,1,,STRI,2.65,140,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v3224,,12-Jul-1999,20.3,-3,-5,1,,STRI,4.3,400,NaN,NaN,NT,"NT",8,8,1,1,0,0,Str
-V,Pre,v3225,,12-Jul-1999,22,-3,-5,1,,STRI,2.1,330,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v3226,,12-Jul-1999,22.3,-3,-5,1,,STRI,5,610,NaN,NaN,NR,"NR",9,9,1,1,0,0,Str
-V,Pre,v3227,,13-Jul-1999,21.57,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,1,1,0,0,
-V,Pre,v3228,,13-Jul-1999,22.26,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,1,1,0,0,Ped
-V,Pre,v3229,,13-Jul-1999,22.3,-3,-5,1,,PED,1.3,328,NaN,NaN,hand,"finger flex",10,10,1,1,0,0,Ped
-V,Pre,v3230,,13-Jul-1999,22.37,-3,-5,1,,STRI,2.85,800,NaN,NaN,NT,"NT",10,10,1,1,0,0,Str
-V,Pre,v3230,,13-Jul-1999,22.37,-3,-5,2,,STRI,2.95,540,NaN,NaN,NT,"NT",10,10,1,1,0,0,
-V,Pre,v3301,,14-Jul-1999,17.25,-1,-5,1,1,STRI,4.55,390,NaN,NaN,hand,"selective response - pauses w/ touch, bursts w/ release",5,6,1,1,0,0,Str
-V,Pre,v3302,,14-Jul-1999,17.36,-1,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,1,1,0,0,
-V,Pre,v3302,,14-Jul-1999,17.36,-1,-5,2,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,1,1,0,0,
-V,Pre,v3303,,14-Jul-1999,17.6,-1,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"hair on skin of fingers",5,5,1,1,0,0,
-V,Pre,v3401,,15-Jul-1999,16.75,-5,-5,1,,NR,NaN,NaN,NaN,NaN,wrist,"flex",10,10,1,1,0,0,
-V,Pre,v3402,,15-Jul-1999,17.28,-5,-5,1,,PED,1.7,780,NaN,NaN,wrist,"flex",10,10,1,1,0,0,Ped
-V,Pre,v3403,,15-Jul-1999,17.4,-5,-5,1,,PED,1.5,75,NaN,NaN,NR,"active",10,10,1,1,0,0,
-V,Pre,v3403,,15-Jul-1999,NaN,NaN,NaN,2,,NR,NaN,NaN,NaN,NaN,wrist / forearm,"flex",10,10,1,1,0,0,
-V,Pre,v3404,,16-Jul-1999,17.71,-5,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"active",10,10,1,1,0,0,
-V,Pre,v3405,,16-Jul-1999,17.78,-5,-5,1,,PED,2.7,585,NaN,NaN,NR,"NR",10,10,1,1,0,0,Ped
-V,Pre,v3501,,16-Jul-1999,20.46,-2,-5,1,,STRI,7.55,860,NaN,NaN,hand,"active",10,10,1,1,0,0,Str
-V,Pre,v3502,,19-Jul-1999,23.33,-2,-5,1,,PED,1.25,160,NaN,NaN,hand,"finger ext",10,10,1,1,0,0,Ped
-V,Pre,v3503,,19-Jul-1999,23.23,-2,-5,1,,PED,0.85,200,NaN,NaN,hand,"finger ext",10,10,1,1,0,0,Ped
-V,Pre,v3504,,19-Jul-1999,23.42,-2,-5,1,,STRI,7.4,670,NaN,NaN,NR,"NR",10,9,1,1,0,0,Str
-V,Pre,v3505,,19-Jul-1999,23.07,-2,-5,1,,STRI,3.15,100,NaN,NaN,hand,"active",10,10,1,1,0,0,Str
-V,Pre,v3506,,19-Jul-1999,23.46,-2,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",5,6,1,1,0,0,Str
-V,Pre,v3601,,28-Jul-1999,18.3,-4,-5,1,,STRI,4.2,80,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v3601,,28-Jul-1999,18.3,-4,-5,2,,PED,2.85,480,NaN,NaN,hand,"thumb cut",10,10,1,1,0,0,
-V,Pre,v3602,,28-Jul-1999,18.6,-4,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",10,10,1,1,0,0,
-V,Pre,v3602,,28-Jul-1999,18.6,-4,-5,2,,PED,3.15,680,NaN,NaN,NR,"NR",10,10,1,1,0,0,Ped
-V,Pre,v3603,,29-Jul-1999,17.87,-4,-5,1,,STRI,4.25,372,NaN,NaN,hand,"finger flex",10,10,1,1,0,0,Str
-V,Pre,v3603,,29-Jul-1999,17.87,-4,-5,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,1,1,0,0,
-V,Pre,v3604,,29-Jul-1999,17.96,-4,-5,1,,PED,1.7,600,NaN,NaN,hand,"finger ext",10,10,1,1,0,0,Ped
-V,Pre,v3604,,29-Jul-1999,17.96,-4,-5,2,,PED,NaN,100,NaN,NaN,hand,"finger flex",10,10,1,1,0,0,
-V,Pre,v3605,,29-Jul-1999,18.65,-4,-5,1,,PED,3.5,390,NaN,NaN,NT,"NT",4,3,1,1,0,0,
-V,Pre,v3606,,29-Jul-1999,19.42,-4,-5,1,,NR,NaN,NaN,NaN,NaN,NR,"active hand",10,10,1,1,0,0,
-V,Pre,v3607,v3607b,29-Jul-1999,19.65,-4,-5,1,1,PED,0.8,100,NaN,NaN,wrist,"ext",10,10,1,1,10,10,Ped
-V,Pre,v3607b,,29-Jul-1999,19.65,-4,-5,2,,STRI,8.1,170,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v3608,,29-Jul-1999,19.32,-4,-5,1,,STRI,3.6,770,NaN,NaN,NR,"NR",10,10,1,0,0,0,Str
-V,Pre,v3609,,29-Jul-1999,19.86,-4,-5,1,,PED,2.6,170,NaN,NaN,NR,"NR",10,10,1,0,0,0,Ped
-V,Pre,v3701,,03-Aug-1999,19.34,-5,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb abd",7,7,1,0,0,0,
-V,Pre,v3702,,03-Aug-1999,20.33,-5,-3,1,,PED,NaN,370,NaN,NaN,hand,"thumb abd",10,10,1,1,0,0,Ped
-V,Pre,v3702,,03-Aug-1999,20.33,-5,-3,2,,NR,NaN,NaN,NaN,NaN,hand,"thumb abd",10,10,1,1,0,0,
-V,Pre,v3703,,03-Aug-1999,21.2,-5,-3,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",6,6,1,1,0,0,
-V,Pre,v3704,,03-Aug-1999,18.4,-5,-3,1,,PED,1,175,NaN,NaN,wrist,"ext",10,10,1,0,0,0,Ped
-V,Pre,v3704,,03-Aug-1999,18.4,-5,-3,2,,PED,1.35,30,NaN,NaN,wrist,"ext",10,10,1,0,0,0,
-V,Pre,v3705,,NaT,19.66,-5,-3,1,,STRI,3.7,390,NaN,NaN,NR,"",5,6,1,0,0,0,Str
-V,Pre,v3801,,05-Aug-1999,19.9,-3,-3,1,,STRI,NaN,550,NaN,NaN,NT,"NT",5,5,1,0,0,0,Str
-V,Pre,v3802,,05-Aug-1999,20.4,-3,-3,1,,STRI,4.35,290,NaN,NaN,NR,"active hand",8,9,1,0,0,0,Str
-V,Pre,v3802,,05-Aug-1999,20.4,-3,-3,2,,NT,NaN,NaN,NaN,NaN,NT,"NT",8,9,1,0,0,0,
-V,Pre,v3803,,05-Aug-1999,21.4,-3,-3,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",7,7,1,1,0,0,
-V,Pre,v3901,,06-Aug-1999,18.3,-6,-3,1,,STRI,6.3,760,NaN,NaN,elbow,"flex",10,10,1,1,0,0,Str
-V,Pre,v3902,,06-Aug-1999,17.78,-6,-3,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",8,8,1,1,0,0,
-V,Pre,v3902,,06-Aug-1999,17.78,-6,-3,2,,NR,NaN,NaN,NaN,NaN,elbow,"flex",8,8,1,1,0,0,
-V,Pre,v3903,,06-Aug-1999,18.5,-6,-3,1,,PED,2.95,250,NaN,NaN,elbow,"flex",10,10,1,1,0,0,Ped
-V,Pre,v3903,,06-Aug-1999,18.5,-6,-3,2,,PED,1.95,510,NaN,NaN,elbow / shoulder,"abd / ext",10,10,1,1,0,0,
-V,Pre,v3904,,07-Aug-1999,18.1,-6,-3,1,,STRI,3.45,425,NaN,NaN,NR,"NR",4,4,1,1,0,0,Str
-V,Pre,v4001,,10-Aug-1999,21.3,-4,-3,1,,PED,1.65,215,NaN,NaN,NR,"active hand",10,10,1,1,0,0,Ped
-V,Pre,v4001,,10-Aug-1999,21.3,-4,-3,2,,PED,2,155,NaN,NaN,forearm,"sup",10,10,1,1,0,0,
-V,Pre,v4002,,11-Aug-1999,19.4,-4,-3,1,,STRI,8.3,300,NaN,NaN,NR,"NR",5,6,1,1,0,0,Str
-V,Pre,v4003,,11-Aug-1999,19.88,-4,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"palm light touch",10,10,1,1,0,0,
-V,Pre,v4003,,11-Aug-1999,19.88,-4,-3,2,,STRI,6.4,810,NaN,NaN,NR,"NR",10,10,1,1,0,0,Str
-V,Pre,v4004,,11-Aug-1999,20.24,-4,-3,1,,PED,1.15,780,NaN,NaN,forearm,"pron",10,10,1,1,0,0,Ped
-V,Pre,v4004,,11-Aug-1999,20.24,-4,-3,2,,PED,3.25,100,NaN,NaN,wrist,"ext",10,10,1,1,0,0,
-V,Pre,v4005,,11-Aug-1999,20.58,-4,-3,1,,PED,1.2,28,NaN,NaN,forearm,"pron",10,10,1,1,0,0,Ped
-V,Pre,v4006,,12-Aug-1999,20.5,-4,-3,1,,PED,0.65,25,NaN,NaN,forearm,"pron",10,10,1,1,0,0,Ped
-V,Pre,v4101,,13-Aug-1999,23.04,-2,-3,1,,PED,2.1,250,NaN,NaN,hand,"finger flex",10,10,1,1,0,0,Ped
-V,Pre,v4201,,13-Aug-1999,17.6,-1,-3,1,,STRI,3.65,500,NaN,NaN,NT,"",5,5,1,1,0,0,Str
-V,Pre,v4202,,13-Aug-1999,19.5,-1,-3,1,,PED,5.5,NaN,NaN,NaN,NT,"",5,5,1,1,0,0,Ped
-V,Pre,v4203,,13-Aug-1999,19.4,-1,-3,1,,STRI,5.75,420,NaN,NaN,hand,"selective finger ext",10,10,1,1,0,0,Str
-V,Pre,v4204,,13-Aug-1999,21.93,-1,-3,1,,PED,1.9,600,NaN,NaN,NR,"pauses w/hand manip",10,10,1,1,0,0,Ped
-V,Pre,v4205,,16-Aug-1999,20.11,-1,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"finger tip",8,8,1,1,0,0,
-V,Pre,v4206,,16-Aug-1999,20.4,-1,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"palm / finger - light touch",10,10,1,1,0,0,
-V,Pre,v4207,,16-Aug-1999,21.5,-1,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",10,10,1,1,0,0,
-V,Post,v4301,,13-Jan-2000,16.7,4,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"cut index finger",10,10,1,0,0,0,
-V,Post,v4301,,13-Jan-2000,16.7,4,-2,2,,NR,NaN,NaN,NaN,NaN,hand,"cut index finger",10,10,1,0,0,0,
-V,Post,v4302,,13-Jan-2000,16.4,4,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"",4,19,1,0,0,0,
-V,Post,v4401,v4401b,15-Jan-2000,16.6,4,-3.5,1,1,PED,0.8,400,NaN,NaN,elbow / wrist / hand,"elbow ext, wrist / finger ext",15,15,1,0,10,10,Ped
-V,Post,v4401,v4401b,15-Jan-2000,16.6,4,-3.5,2,2,PED,3.9,500,NaN,NaN,wrist,"wk. resp. to wrist flex",15,15,1,0,10,10,
-V,Post,v4402,v4402b,15-Jan-2000,16.8,4,-3.5,1,1,STRI,5.5,300,NaN,NaN,NR,"",20,20,1,0,10,10,Str
-V,Post,v4403,,15-Jan-2000,15.5,4,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",9,10,1,0,0,0,
-V,Post,v4405,,15-Jan-2000,15.9,4,-3.5,1,,STRI,11.2,830,NaN,NaN,NR,"",3,4,1,0,0,0,Str
-V,Post,v4406,,15-Jan-2000,15.8,4,-3.5,1,,PED,1.55,400,NaN,NaN,hand,"ext of index,mid & third finger",20,20,1,0,0,0,Ped
-V,Post,v4407,,15-Jan-2000,15.6,4,-3.5,1,,PED,2.5,700,NaN,NaN,wrist / hand,"wrist & finger flex",20,20,1,0,0,0,Ped
-V,Post,v4408,,17-Jan-2000,15.46,4,-3.5,1,,STRI,3.55,550,NaN,NaN,NR,"",11,12,1,0,0,0,
-V,Post,v4409,,17-Jan-2000,15.9,4,-3.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",7,6,1,0,0,0,
-V,Post,v4410,,17-Jan-2000,16.3,4,-3.5,1,,PED,0.95,400,NaN,NaN,forearm / elbow,"forearm sup & elbow ext",20,20,1,0,0,0,Ped
-V,Post,v4411,,18-Jan-2000,15.5,4,-3.5,1,,PED,0.75,1,NaN,NaN,finger / wrist / elbow / shoulder,"ext of finger,wrist,elbow,shoulder",20,20,1,0,0,0,Ped
-V,Post,v4412,,18-Jan-2000,16.6,4,-3.5,1,,STRI,NaN,380,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v4501,,19-Jan-2000,17.63,2,-3.5,1,,STRI,5.5,950,NaN,NaN,NR,"",15,16,1,0,0,0,Str
-V,Post,v4502,,19-Jan-2000,18.38,2,-3.5,1,,STRI,3.4,400,NaN,NaN,forearm,"forearm pron - v. clear",19,19,1,0,0,0,Str
-V,Post,v4503,,20-Jan-2000,18.5,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger tap cut",20,20,1,0,0,0,
-V,Post,v4504,,20-Jan-2000,18.75,2,-3.5,1,,STRI,5.3,260,NaN,NaN,hand,"last 2 fingers flex / ext & cut",20,20,1,1,0,0,
-V,Post,v4505,,20-Jan-2000,18.9,2,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",9,10,1,0,0,0,
-V,Post,v4506,,20-Jan-2000,19.3,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,wrist,"wrist ext",20,20,1,1,0,0,
-V,Post,v4507,,21-Jan-2000,19.18,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",12,12,1,1,0,0,
-V,Post,v4508,,21-Jan-2000,19.2,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",20,20,1,1,0,0,
-V,Post,v4508,,21-Jan-2000,19.2,2,-3.5,2,,NR,NaN,NaN,NaN,NaN,shoulder / elbow,"int shoulder rot & elbow ext",20,20,1,1,0,0,
-V,Post,v4509,,21-Jan-2000,20,2,-3.5,1,,NT,NaN,NaN,NaN,NaN,NT,"",9,8,1,1,0,0,
-V,Post,v4509,,21-Jan-2000,20,2,-3.5,2,,NT,NaN,NaN,NaN,NaN,NT,"",9,8,1,1,0,0,
-V,Post,v4510,,21-Jan-2000,19.95,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,wrist,"ext",20,20,1,1,0,0,
-V,Post,v4511,,21-Jan-2000,18.45,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,elbow,"ext",20,20,1,1,0,0,
-V,Post,v4511,,21-Jan-2000,18.45,2,-3.5,2,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,1,1,0,0,
-V,Post,v4512,,21-Jan-2000,19.36,2,-3.5,1,,STRI,NaN,375,NaN,NaN,NR,"",20,20,1,1,0,0,Str
-V,Post,v4513,,21-Jan-2000,19.48,2,-3.5,1,,STRI,6.9,1,NaN,NaN,NR,"",20,20,1,1,0,0,Str
-V,Post,v4513,,21-Jan-2000,19.48,2,-3.5,2,,STRI,7.8,500,NaN,NaN,NR,"",20,20,1,1,0,0,
-V,Post,v4514,,24-Jan-2000,19.13,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,finger / wrist / elbow,"ext",20,20,1,0,0,0,
-V,Post,v4515,,24-Jan-2000,19.5,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"cut stim of glabrous fingers",18,18,1,0,0,0,
-V,Post,v4516,,24-Jan-2000,19.5,2,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",11,12,1,0,0,0,Str
-V,Post,v4517,,24-Jan-2000,19.86,2,-3.5,1,,PED,2.75,300,NaN,NaN,NT,"",20,20,1,0,0,0,Ped
-V,Post,v4518,,24-Jan-2000,19.9,2,-3.5,1,,STRI,6.75,400,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v4519,,25-Jan-2000,19.11,2,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",12,12,1,0,0,0,
-V,Post,v4520,,25-Jan-2000,19.87,2,-3.5,1,,PED,1.85,NaN,NaN,NaN,NT,"",20,20,1,1,0,0,Ped
-V,Post,v4521,,25-Jan-2000,20.17,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext, flex, & cut",20,20,1,1,0,0,
-V,Post,v4522,,25-Jan-2000,22.2,2,-3.5,1,,STRI,5.05,800,NaN,NaN,NR,"nearby fire w/ finger ext",13,12,1,1,0,0,Str
-V,Post,v4523,v4523b,25-Jan-2000,22.42,2,-3.5,1,1,NR,NaN,NaN,NaN,NaN,wrist / hand,"wrist & finger ext",25,25,1,0,11,11,
-V,Post,v4524,v4524b,26-Jan-2000,19.9,2,-3.5,1,1,STRI,3.95,600,NaN,NaN,NR,"nearby fire w/ finger ext",40,40,1,1,20,20,Str
-V,Post,v4525,,26-Jan-2000,20.43,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,finger / wrist / elbow,"finger / wrist / elbow ext",20,20,1,0,0,0,
-V,Post,v4526,v4526b,26-Jan-2000,21.11,2,-3.5,1,1,STRI,2.7,NaN,NaN,NaN,hand,"wk resp to finger ext",30,30,1,0,20,20,Str
-V,Post,v4527,v4527b,26-Jan-2000,21.6,2,-3.5,1,1,PED,2.1,NaN,NaN,NaN,hand,"finger flex",23,24,1,0,13,14,Ped
-V,Post,v4527,,26-Jan-2000,21.6,2,-3.5,2,,NT,NaN,NaN,NaN,NaN,NT,"",23,24,1,0,0,0,
-V,Post,v4527b,,26-Jan-2000,21.6,2,-3.5,2,,PED,1.4,NaN,NaN,NaN,hand,"finger ext",13,14,1,0,0,0,
-V,Post,v4528,v4528b,27-Jan-2000,20.2,2,-3.5,1,1,STRI,6.3,400,NaN,NaN,NR,"nearby fire w/ finger ext",35,34,1,1,20,20,Str
-V,Post,v4529,v4529b,27-Jan-2000,20.6,2,-3.5,1,1,STRI,5.3,NaN,NaN,NaN,NT,"",26,26,1,1,11,12,Str
-V,Post,v4530,,27-Jan-2000,21.58,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",14,14,1,0,0,0,
-V,Post,v4531,,27-Jan-2000,21.76,2,-3.5,1,,PED,2,140,NaN,NaN,hand,"finger flex.",20,20,1,0,0,0,Ped
-V,Post,v4532,,28-Jan-2000,21.25,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",15,16,1,0,0,0,
-V,Post,v4533,,28-Jan-2000,21.66,2,-3.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",17,17,1,0,0,0,
-V,Post,v4534,,28-Jan-2000,21.56,2,-3.5,1,,THAL,2,1,NaN,NaN,hand,"high tonic-palm not touching",20,20,1,1,0,0,
-V,Post,v4535,,28-Jan-2000,21.77,2,-3.5,1,,STRI,3.15,300,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v4536,,28-Jan-2000,22.55,2,-3.5,1,,THAL,1.45,NaN,NaN,NaN,hand / wrist,"finger / wrist ext",13,14,1,0,0,0,
-V,Post,v4537,,28-Jan-2000,21.52,2,-3.5,1,,PED,2.95,200,NaN,NaN,hand,"ext of digits #4&5",20,20,1,0,0,0,Ped
-V,Post,v4601,,31-Jan-2000,16,5,-3.5,1,,STRI,7.1,NaN,NaN,NaN,hand,"active hand",17,17,1,0,0,0,Str
-V,Post,v4602,v4602b,31-Jan-2000,16.63,5,-3.5,1,1,NR,NaN,NaN,NaN,NaN,NR,"",27,28,1,0,20,20,
-V,Post,v4602,v4602b,31-Jan-2000,16.63,5,-3.5,2,2,NR,NaN,NaN,NaN,NaN,NR,"",27,28,1,0,20,20,
-V,Post,v4603,v4603b,31-Jan-2000,16.88,5,-3.5,1,1,PED,1.8,1,NaN,NaN,hand,"finger ext",20,20,1,0,20,20,Ped
-V,Post,v4604,,31-Jan-2000,16.4,5,-3.5,1,,PED,1.55,210,NaN,NaN,hand / wrist / elbow,"finger / wrist ext & elbow flex",20,20,1,1,0,0,Ped
-V,Post,v4604,,01-Feb-2000,16.4,5,-3.5,2,,PED,1.1,700,NaN,NaN,hand / wrist / shoulder,"finger / wrist ext & shoulder flex",20,20,1,1,0,0,
-V,Post,v4605,,01-Feb-2000,16.65,5,-3.5,1,,PED,1.25,440,NaN,NaN,hand / wrist,"finger / wrist ext",20,20,1,0,0,0,Ped
-V,Post,v4605,,01-Feb-2000,16.65,5,-3.5,2,,NT,NaN,NaN,NaN,NaN,hand,"finger ext",20,20,1,0,0,0,
-V,Post,v4606,,01-Feb-2000,17,5,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",18,18,1,1,0,0,Str
-V,Post,v4606,v4607,01-Feb-2000,17,5,-3.5,2,1,PED,3.2,280,NaN,NaN,NR,"",18,18,1,1,38,38,
-V,Post,v4701,,02-Feb-2000,21.1,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",11,11,1,1,0,0,
-V,Post,v4702,,02-Feb-2000,22.9,1,-3.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",15,15,1,1,0,0,Ped
-V,Post,v4702,,02-Feb-2000,22.9,1,-3.5,2,,NR,NaN,NaN,NaN,NaN,NT,"",15,15,1,1,0,0,
-V,Post,v4703,,02-Feb-2000,22.8,1,-3.5,1,,PED,2.2,550,NaN,NaN,wrist / hand,"wrist / finger flex",20,20,1,1,0,0,Ped
-V,Post,v4704,,02-Feb-2000,23,1,-3.5,1,,STRI,6.85,230,NaN,NaN,wrist,"wrist flex",17,16,1,1,0,0,Str
-V,Post,v4801,v4801b,03-Feb-2000,17.18,1,-3.5,1,1,STRI,7.4,950,NaN,NaN,NR,"active grip of new surf",40,40,1,1,20,20,Str
-V,Post,v4802,,03-Feb-2000,17.7,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand / wrist,"finger / wrist flex & cut & light touch of finger",20,20,1,0,0,0,
-V,Post,v4803,,03-Feb-2000,18,1,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",13,14,1,0,0,0,Str
-V,Post,v4804,,03-Feb-2000,18.2,1,-3.5,1,,STRI,6.25,590,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v4805,,03-Feb-2000,18.62,1,-3.5,1,,STRI,NaN,370,NaN,NaN,NR,"",10,10,1,0,0,0,Str
-V,Post,v4806,v4806b,04-Feb-2000,17.7,1,-3.5,1,1,STRI,6.4,690,NaN,NaN,hand,"finger ext",35,34,1,1,15,14,Str
-V,Post,v4807,v4807b,04-Feb-2000,18.36,1,-3.5,1,2,NR,NaN,NaN,NaN,NaN,hand / wrist,"finger / wrist flex - shuts off w/palm contact",20,19,1,1,9,9,
-V,Post,v4808,,04-Feb-2000,18.6,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand / wrist,"finger / wrist flex",20,20,1,0,0,0,
-V,Post,v4809,,04-Feb-2000,18.74,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,elbow / hand,"elbow ext / finger flex",20,20,1,0,0,0,
-V,Post,v4809,,04-Feb-2000,18.74,1,-3.5,2,,PED,2.25,600,NaN,NaN,NT,"",20,20,1,0,0,0,Ped
-V,Post,v4810,v4810b,04-Feb-2000,18.9,1,-3.5,1,1,PED,1.25,180,NaN,NaN,NT,"nearby fire w/wrist flex",40,40,1,0,20,20,Ped
-V,Post,v4810b,,04-Feb-2000,18.9,1,-3.5,2,,NR,NaN,NaN,NaN,NaN,NT,"nearby fire w/wrist flex",20,20,1,0,0,0,
-V,Post,v4811,,04-Feb-2000,18.57,1,-3.5,1,,PED,1.1,NaN,NaN,NaN,NT,"",7,7,1,0,0,0,Ped
-V,Post,v4812,,04-Feb-2000,18.9,1,-3.5,1,,PED,2.65,NaN,NaN,NaN,NR,"",20,20,1,0,0,0,Ped
-V,Post,v4813,,07-Feb-2000,18.2,1,-3.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",13,13,1,1,0,0,
-V,Post,v4813,,07-Feb-2000,18.2,1,-3.5,2,,PED,NaN,NaN,NaN,NaN,NT,"",13,13,1,1,0,0,
-V,Post,v4814,v4814b,07-Feb-2000,18.2,1,-3.5,1,1,PED,2.6,575,NaN,NaN,hand,"finger ext",40,40,1,1,20,20,Ped
-V,Post,v4815,v4815b,07-Feb-2000,18.8,1,-3.5,1,1,PED,0.7,470,NaN,NaN,hand,"finger ext",40,40,1,1,20,20,Ped
-V,Post,v4901,,07-Feb-2000,17.4,0,-3.5,1,,PED,3.1,NaN,NaN,NaN,NR,"",20,20,1,1,0,0,Ped
-V,Post,v4902,v4902b,07-Feb-2000,17.4,0,-3.5,1,1,STRI,3.4,560,NaN,NaN,hand / wrist,"finger / wrist ext",40,40,1,1,20,20,Str
-V,Post,v4903,,07-Feb-2000,21.93,0,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",8,8,1,1,0,0,
-V,Post,v5001,,11-Feb-2000,17.56,3,-4.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",20,20,1,0,0,0,
-V,Post,v5002,,11-Feb-2000,18.5,3,-4.5,1,,PED,1.4,NaN,NaN,NaN,wrist / hand / elbow,"wrist / finger / elbow flex",20,20,1,0,0,0,Ped
-V,Post,v5003,,11-Feb-2000,18.8,3,-4.5,1,,PED,0.65,70,NaN,NaN,elbow / forearm / wrist / hand,"elbow flex / forearm sup / wrist & finger ext",20,20,1,0,0,0,Ped
-V,Post,v5004,,11-Feb-2000,19,3,-4.5,1,,PED,2.15,600,NaN,NaN,NT,"",16,16,1,0,0,0,Ped
-V,Post,v5005,,11-Feb-2000,19.15,3,-4.5,1,,PED,0.85,220,NaN,NaN,wrist,"wrist flex",20,20,1,0,0,0,Ped
-V,Post,v5006,,11-Feb-2000,19.4,3,-4.5,1,,STRI,6.95,530,NaN,NaN,NT,"",20,20,1,0,0,0,Str
-V,Post,v5101,v5101b,15-Feb-2000,17.6,2,-4.5,1,1,STRI,13.2,370,NaN,NaN,NR,"",25,24,1,0,13,12,Str
-V,Post,v5102,v5102b,15-Feb-2000,19.24,2,-4.5,1,1,PED,NaN,NaN,NaN,NaN,wrist / hand,"wrist / finger flex",20,20,1,0,20,20,Ped
-V,Post,v5103,,16-Feb-2000,18.2,2,-4.5,1,,STRI,14.15,1,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v5104,,16-Feb-2000,19.14,2,-4.5,1,,PED,1.45,270,NaN,NaN,NR,"",20,20,1,0,0,0,Ped
-V,Post,v5105,,16-Feb-2000,19.75,2,-4.5,1,,PED,1.2,120,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",20,20,1,0,0,0,Ped
-V,Post,v5106,v5106b,16-Feb-2000,19.9,2,-4.5,1,1,PED,1.2,470,NaN,NaN,wrist / elbow / hand,"wrist, elbow & finger ext",30,30,1,1,20,20,Ped
-V,Post,v5107,v5107b,17-Feb-2000,20.04,2,-4.5,1,1,STRI,2.6,500,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",36,36,1,0,20,20,Str
-V,Post,v5108,,17-Feb-2000,19.8,2,-4.5,1,,PED/STRI,3.95,360,2.5,330,NT,"",20,20,1,0,0,0,
-V,Post,v5109,,17-Feb-2000,20.6,2,-4.5,1,,PED/THAL,4.15,NaN,3,110,forearm,"forearm pron",20,20,1,0,0,0,Ped
-V,Post,v5110,,17-Feb-2000,21,2,-4.5,1,,PED,0.85,NaN,NaN,NaN,wrist,"wrist flex",20,20,1,0,0,0,Ped
-V,Post,v5111,,17-Feb-2000,20.86,2,-4.5,1,,PED,1.9,170,NaN,NaN,wrist / elbow,"wrist / elbow flex",20,20,1,0,0,0,Ped
-V,Post,v5111,,17-Feb-2000,20.86,2,-4.5,2,,PED,1.3,70,NaN,NaN,wrist,"wrist flex",20,20,1,0,0,0,
-V,Post,v5112,,18-Feb-2000,19.2,2,-4.5,1,,PED,1.6,900,NaN,NaN,elbow / wrist,"elbow / wrist flex",15,15,1,0,0,0,Ped
-V,Post,v5113,,18-Feb-2000,19.3,2,-4.5,1,,PED,2.35,NaN,NaN,NaN,elbow / forearm / wrist / hand,"elbow ext / forearm pron / wrist & finger flex",20,20,1,1,0,0,Ped
-V,Post,v5114,,18-Feb-2000,19.88,2,-4.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",20,20,1,0,0,0,Ped
-V,Post,v5115,,18-Feb-2000,20,2,-4.5,1,,PED,1.15,50,NaN,NaN,shoulder / elbow / wrist,"shoulder dep / elbow ext / wrist flex",20,20,1,0,0,0,Ped
-V,Post,v5115,,18-Feb-2000,20,2,-4.5,2,,PED,2.55,360,NaN,NaN,wrist,"wrist ext only",20,20,1,0,0,0,
-V,Post,v5116,,18-Feb-2000,20.5,2,-4.5,1,,PED,2.95,NaN,NaN,NaN,NR,"",20,20,1,0,0,0,Ped
-V,Post,v5201,,18-Feb-2000,17.7,1,-4.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",9,10,1,0,0,0,
-V,Post,v5202,,21-Feb-2000,17.9,1,-4.5,1,,NR,NaN,NaN,NaN,NaN,hand,"v.sensitive to touch on hand",20,20,1,0,0,0,
-V,Post,v5203,v5203b,21-Feb-2000,19.6,1,-4.5,1,1,STRI,20.5,600,NaN,NaN,forearm,"sup selective",27,28,1,1,20,20,Str
-V,Post,v5301,,21-Feb-2000,17.8,4,-4.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",20,20,1,0,0,0,
-V,Post,v5301,,21-Feb-2000,17.8,4,-4.5,2,,STRI,9.25,900,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v5302,,21-Feb-2000,17.6,4,-4.5,1,,PED,3,NaN,NaN,NaN,NT,"",12,12,1,0,0,0,Ped
-V,Post,v5303,,21-Feb-2000,17,4,-4.5,1,,STRI,3.45,250,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v5304,,21-Feb-2000,17.2,4,-4.5,1,,STRI,9.2,600,NaN,NaN,hand,"finger ext - work relation",20,20,1,0,0,0,Str
-V,Post,v5305,,21-Feb-2000,19.5,4,-4.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,1,0,0,0,
-V,Post,v5401,,23-Feb-2000,17.2,5,-4.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",13,12,1,0,0,0,
-V,Post,v5402,,23-Feb-2000,17.7,5,-4.5,1,,PED,2,NaN,NaN,NaN,finger / elbow / hand,"finger / elbow ext & contact w/palm",20,20,1,0,0,0,Ped
-V,Post,v5403,,23-Feb-2000,17.8,5,-4.5,1,,STRI,5.25,560,NaN,NaN,NT,"",20,20,1,0,0,0,Str
-V,Post,v5404,,23-Feb-2000,17.9,5,-4.5,1,,STRI,3.2,330,NaN,NaN,NR,"",20,20,1,0,0,0,Str
-V,Post,v5501,,25-Feb-2000,18.98,3,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",20,20,1,0,0,0,
-V,Post,v5502,,25-Feb-2000,20.4,3,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand / elbow,"finger ext & elbow ext",20,20,1,0,0,0,
-V,Post,v5503,,25-Feb-2000,21.96,3,-2.5,1,,STRI,6.7,660,NaN,NaN,forearm,"forearm sup only",20,20,1,0,0,0,Str
-V,Post,v5601,,29-Feb-2000,17.27,5,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",11,11,1,0,0,0,
-V,Post,v5602,,29-Feb-2000,17.27,5,-2.5,1,,STRI,8.65,925,NaN,NaN,NR,"",20,20,1,1,0,0,Str
-V,Post,v5603,,29-Feb-2000,18.04,5,-2.5,1,,PED,1.1,43,NaN,NaN,hand / wrist,"finger / wrist ext",20,20,1,0,0,0,Ped
-V,Post,v5604,v5604b,29-Feb-2000,17.96,5,-2.5,1,1,PED,2.05,NaN,NaN,NaN,NR,"",40,40,1,0,20,20,Ped
-V,Post,v5604b,,29-Feb-2000,17.96,5,-2.5,2,,STRI,NaN,380,NaN,NaN,NR,"",20,20,1,1,0,0,
-V,Post,v5605,,14-Mar-2000,17,5,-2.5,1,,STRI,4.05,670,NaN,NaN,NR,"",12,12,1,1,0,0,Str
-V,Post,v5606,v5606b,14-Mar-2000,18.5,5,-2.5,1,1,PED,2.05,NaN,NaN,NaN,elbow / shoulder,"elbow flex / shoulder",31,30,1,0,11,10,Ped
-V,Post,v5607,v5607b,14-Mar-2000,18.11,5,-2.5,1,1,STRI,10.55,560,NaN,NaN,NR,"active grip of manip",40,40,1,0,20,20,Str
-V,Post,v5608,,14-Mar-2000,18.57,5,-2.5,1,,PED,3.55,140,NaN,NaN,NR,"",20,20,1,1,0,0,Ped
-V,Post,v5801,,29-Mar-2000,17.77,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,forearm / elbow,"nearby units fire w/ forearm pron / elbow ext",11,11,1,1,0,0,
-V,Post,v5801,,29-Mar-2000,17.77,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,forearm / elbow,"nearby units fire w/ forearm pron / elbow ext",11,11,1,1,0,0,
-V,Post,v5802,,29-Mar-2000,17.6,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",10,10,1,1,0,0,
-V,Post,v5802,,29-Mar-2000,17.6,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,forearm / elbow,"forearm sup / elbow flex",10,10,1,1,0,0,
-V,Post,v5803,,30-Mar-2000,17.6,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,1,0,0,0,
-V,Post,v5804,,30-Mar-2000,17.5,6,-2.5,1,,STRI,6.6,560,NaN,NaN,elbow,"elbow ext",20,20,1,0,0,0,Str
-V,Post,v5805,,30-Mar-2000,17.7,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,1,0,0,0,
-V,Post,v5805,,30-Mar-2000,17.7,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,forearm,"forearm rot - either direction",20,20,1,0,0,0,
-V,Post,v5806,v5806b,30-Mar-2000,27.65,6,-2.5,1,1,STRI,10.05,950,NaN,NaN,elbow,"elbow flex",27,26,1,0,15,14,Str
-V,Post,v5806,v5806b,30-Mar-2000,27.65,6,-2.5,2,2,NR,NaN,NaN,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",27,26,1,0,15,14,
-V,Post,v5807,,30-Mar-2000,18,6,-2.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",13,13,1,0,0,0,Str
-V,Post,v5807,,30-Mar-2000,18,6,-2.5,2,,PED,1.15,130,NaN,NaN,shoulder / elbow,"shoulder int rot / elbow ext",13,13,1,0,0,0,
-V,Post,v5808,,31-Mar-2000,17.7,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand / elbow / forearm,"cut finger / elbow flex / forearm sup",20,20,1,1,0,0,
-V,Post,v5809,,31-Mar-2000,17.86,6,-2.5,1,,STRI,3.8,950,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",20,20,1,1,0,0,Str
-V,Post,v5810,,31-Mar-2000,18.1,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,elbow / forearm / shoulder / hand,"elbow flex / forearm sup / shoulder ext rot / finger manip",20,20,1,1,0,0,
-V,Post,v5811,v5812,31-Mar-2000,18.3,6,-2.5,1,1,PED,1.8,550,NaN,NaN,NR,"",40,40,1,1,20,20,Ped
-V,Post,v5811,,31-Mar-2000,18.3,6,-2.5,2,,PED,1.85,360,NaN,NaN,NR,"",40,40,1,1,0,0,
-V,Post,v5812,,31-Mar-2000,18.3,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,elbow / forearm / shoulder,"elbow ext / forearm pron / shoulder int rot",20,20,1,1,0,0,
-V,Post,v5813,,31-Mar-2000,18.5,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",10,10,1,1,0,0,
-V,Post,v5814,v5814b,31-Mar-2000,18.45,6,-2.5,1,1,STRI,13.5,1,NaN,NaN,NR,"",20,20,1,1,9,10,Str
-V,Post,v5815,,03-Apr-2000,8.4,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand,"wk. related to finger ext",11,10,1,1,0,0,
+Animal,MPTP,FName1,FName2,DateCollected,Depth,A_P,M_L,UnitNum1,UnitNum2,Antidrom,Latency,Threshold,LAT2,Thresh2,SENSORY,SENS_DETAIL,ntrials1_1,ntrials1_2,emg_collected,lfp_collected,ntrials2_1,ntrials2_2,StimData,emg_muscle_1,emg_muscle_2,emg_muscle_3,emg_muscle_4,emg_muscle_5,emg_muscle_6
+V,Pre,v0502,,06-Apr-1999,22.13,4,-4,1,,PED,1.4,53,NaN,NaN,wrist / hand,"ext / thumb abd",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v0601,,07-Apr-1999,19.5,2,-6,1,,STRI,3.15,830,NaN,NaN,hand,"active grip",10,10,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1001,,09-Apr-1999,17,4,-6,1,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1001,,09-Apr-1999,17,4,-6,2,,STRI,4.45,600,NaN,NaN,NR,"NR",10,10,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1002,,09-Apr-1999,17.8,4,-6,1,,PED,1.4,610,NaN,NaN,hand,"palm probe",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1003,,09-Apr-1999,18,4,-6,1,,STRI,4.85,660,NaN,NaN,NR,"NR",10,10,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1004,,09-Apr-1999,18.47,4,-6,1,,STRI,4,NaN,NaN,NaN,NR,"NR",8,9,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1005,,12-Apr-1999,15.88,4,-6,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb ext",10,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1006,,12-Apr-1999,16.77,4,-6,1,,PED,2.1,350,NaN,NaN,wrist,"radial deviation",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1101,,13-Apr-1999,17.9,6,-4,1,,PED,4.1,300,NaN,NaN,NT,"NT",6,6,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1102,,13-Apr-1999,17.41,6,-4,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",6,5,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1102,,13-Apr-1999,17.41,6,-4,2,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",6,5,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1103,,13-Apr-1999,18,6,-4,1,,NR,NaN,NaN,NaN,NaN,NR,"",9,9,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1301,,15-Apr-1999,18.2,4,-5,1,,STRI,3.9,NaN,NaN,NaN,NR,"NR",6,6,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1302,,15-Apr-1999,18.77,4,-5,1,,PED,1.75,80,NaN,NaN,NR,"NR",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1303,,15-Apr-1999,18.25,4,-5,1,,PED,1.4,NaN,NaN,NaN,hand,"finger pad sensitive",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1303,,15-Apr-1999,18.25,4,-5,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1304,,15-Apr-1999,19.35,4,-5,1,,PED,2.75,1000,NaN,NaN,hand,"finger ext",9,9,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1305,,15-Apr-1999,18.43,4,-5,1,,PED,1.35,400,NaN,NaN,NR,"NR",7,8,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1401,,11-May-1999,22.99,2,-6,1,,STRI,8.4,NaN,NaN,NaN,hand,"active grip",10,10,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1402,,11-May-1999,23.7,2,-6,1,,STRI,3.3,590,NaN,NaN,hand,"palm squeeze at base of little finger",10,10,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1403,,12-May-1999,23.27,2,-6,1,,PED,1.9,75,NaN,NaN,NT,"NT",8,8,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1501,v1501b,13-May-1999,19.7,4,-4,1,1,STRI,6.35,960,NaN,NaN,NR,"NR",10,10,6,0,10,10,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1601,v1601b,17-May-1999,17.8,6,-4,1,1,PED,2.85,NaN,NaN,NaN,NR,"NR",10,10,6,0,10,10,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1602,v1602b,17-May-1999,18,6,-4,1,1,PED,3.15,320,NaN,NaN,NT,"NT",10,10,6,0,5,5,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1702,v1702b,18-May-1999,17.5,2,-4,1,1,PED,3,NaN,NaN,NaN,hand,"palm surf, last 3 fingers",10,10,6,0,10,10,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1703,v1703b,18-May-1999,18.2,2,-4,1,1,STRI,4.8,750,NaN,NaN,hand,"selective finger flex",10,10,6,0,10,10,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1801,,20-May-1999,17.9,0,-4,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",6,6,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1802,,20-May-1999,18.19,0,-4,1,,NR,NaN,NaN,NaN,NaN,hand,"finger tap",10,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1802,,20-May-1999,18.19,0,-4,2,,PED,2.35,650,NaN,NaN,hand,"finger flex",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1901,,20-May-1999,18.57,-2,-4,1,,PED,1.65,370,NaN,NaN,hand,"thumb ext & abd",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v1902,v1902b,20-May-1999,18.5,-2,-4,1,1,PED,1.45,420,NaN,NaN,hand,"finger tap & flex",10,10,6,0,10,10,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2001,,24-May-1999,22.52,2,-2,1,,PED,NaN,300,NaN,NaN,hand,"thumb ext",6,6,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2001,,24-May-1999,22.52,2,-2,2,,PED,NaN,80,NaN,NaN,hand,"thumb ext",6,6,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2301,,26-May-1999,16.78,1,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"light touch",10,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2302,,26-May-1999,16.9,1,2,1,,PED,1.3,425,NaN,NaN,hand,"finger ext - not cut",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2401,,26-May-1999,22.4,3,-3,1,,NR,NaN,NaN,NaN,NaN,forearm,"deep probing",10,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2501,,27-May-1999,20.67,-5,-2,1,,STRI,2.35,320,NaN,NaN,hand,"active",10,10,6,0,NaN,NaN,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2502,,27-May-1999,20.1,-5,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb light touch",17,16,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2601,,01-Jun-1999,18.56,-6,-2,1,,PED,1.9,950,NaN,NaN,hand,"thumb ext",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2602,,01-Jun-1999,18.72,-6,-2,1,,PED,1.05,290,NaN,NaN,elbow,"ext",5,5,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v2701,v2702,07-Jun-1999,19.65,-5,-2,1,2,STRI,5.5,280,NaN,NaN,NR,"NR",9,9,5,0,10,10,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2702,,07-Jun-1999,19.65,-5,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2703,,07-Jun-1999,19.88,-5,-2,1,,STRI,5.2,300,NaN,NaN,NR,"NR",10,10,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2704,,08-Jun-1999,19.4,-5,-2,1,,PED,1.45,800,NaN,NaN,hand,"index finger / thumb",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2705,,08-Jun-1999,19.72,-5,-2,1,,PED,2.15,77,NaN,NaN,hand,"thumb light touch",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2705,,08-Jun-1999,19.72,-5,-2,2,,PED,1.35,95,NaN,NaN,hand,"thumb light touch",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2706,,08-Jun-1999,19.98,-5,-2,1,,PED,1.8,80,NaN,NaN,hand / arm,"thumb / proximal arm",7,7,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2706,,08-Jun-1999,19.98,-5,-2,2,,NR,NaN,NaN,NaN,NaN,hand / arm,"thumb / proximal arm",7,7,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2707,,09-Jun-1999,20.94,-5,-2,1,,NR,NaN,NaN,NaN,NaN,shoulder,"adduction",5,6,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2801,,10-Jun-1999,16.75,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",5,5,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2801,,10-Jun-1999,16.6,-7,-2,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",5,5,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2802,,10-Jun-1999,17.6,-7,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2803,,10-Jun-1999,17.9,-7,-2,1,,PED,3.2,75,NaN,NaN,NT,"NT",3,3,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2804,,11-Jun-1999,17.3,-7,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"ext",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2805,,11-Jun-1999,17.94,-7,-2,1,,PED,0.9,410,NaN,NaN,elbow,"ext",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2806,,11-Jun-1999,17.8,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2806,,11-Jun-1999,17.8,-7,-2,2,,NR,NaN,NaN,NaN,NaN,elbow,"ext",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2807,,16-Jun-1999,16.53,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2808,,16-Jun-1999,16.8,-7,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",8,8,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2809,,16-Jun-1999,17.1,-7,-2,1,,PED,3.55,625,NaN,NaN,NR,"NR",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2810,,17-Jun-1999,16.9,-7,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2810,,17-Jun-1999,16.9,-7,-2,2,,STRI,5.6,860,NaN,NaN,NR,"NR",10,10,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2811,,17-Jun-1999,17,-7,-2,1,,PED,2.3,700,NaN,NaN,NR,"NR",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2901,,18-Jun-1999,20.55,-4,-2,1,,NR,NaN,NaN,NaN,NaN,wrist / elbow,"ext",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2902,,18-Jun-1999,21,-4,-2,1,,STRI,6.1,950,NaN,NaN,elbow,"flex",10,10,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2903,,18-Jun-1999,21.9,-4,-2,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2904,,21-Jun-1999,22.11,-4,-2,1,,STRI,3.7,780,NaN,NaN,forearm,"sup.",10,10,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2905,,21-Jun-1999,22.13,-4,-2,1,,NR,NaN,NaN,NaN,NaN,wrist,"radial deviation",5,5,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2906,,21-Jun-1999,22.9,-4,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v2907,,21-Jun-1999,22.4,-4,-2,1,,PED/STRI,1.3,300,1.5,250,hand,"finger ext",10,10,5,0,0,0,Ped/Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3001,,23-Jun-1999,17.5,-6,-2,1,,STRI,5.9,600,NaN,NaN,NR,"NR",8,8,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3002,,23-Jun-1999,17.8,-6,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3002,,23-Jun-1999,17.8,-6,-2,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3003,,23-Jun-1999,18.23,-6,-2,1,,PED,1.9,540,NaN,NaN,NR,"NR",6,6,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3004,,23-Jun-1999,17.6,-6,-2,1,,STRI,3.9,316,NaN,NaN,NR,"NR",10,10,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3005,,23-Jun-1999,17.7,-6,-2,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",5,5,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3006,,23-Jun-1999,18.2,-6,-2,1,,PED,2.5,1000,NaN,NaN,shoulder,"elevation",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3007,,23-Jun-1999,18.4,-6,-2,1,,PED,1.25,200,NaN,NaN,shoulder,"clavicle probe",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3007,,23-Jun-1999,18.4,-6,-2,2,,PED,3.45,120,NaN,NaN,NR,"NR",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3101,,25-Jun-1999,17.45,-5,-4,1,,PED,2.9,340,NaN,NaN,wrist,"flex",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3102,,25-Jun-1999,17.6,-5,-4,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",6,7,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3103,,25-Jun-1999,17.8,-5,-4,1,,PED,3.2,560,NaN,NaN,finger,"ext",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3103,,25-Jun-1999,17.8,-5,-4,2,,PED,2,340,NaN,NaN,finger,"ext",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3104,,25-Jun-1999,18.16,-5,-4,1,,NR,NaN,NaN,NaN,NaN,hand,"active / pinch",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3104,,25-Jun-1999,18.16,-5,-4,2,,PED,1.7,710,NaN,NaN,wrist,"flex",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3105,,28-Jun-1999,16.7,-5,-4,1,,PED,0.85,20,NaN,NaN,hand,"finger glabrous",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3106,,28-Jun-1999,17,-5,-4,1,,STRI,3.85,250,NaN,NaN,NR,"NR",10,10,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3106,,28-Jun-1999,17,-5,-4,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3107,,29-Jun-1999,16.6,-5,-4,1,,PED,2.1,295,NaN,NaN,wrist,"flex",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3108,,29-Jun-1999,16.8,-5,-4,1,,PED,1.35,625,NaN,NaN,NR,"NR",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3108,,29-Jun-1999,16.8,-5,-4,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3109,,29-Jun-1999,16.87,-5,-4,1,,PED,2.1,830,NaN,NaN,wrist,"ext",10,10,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3109,,29-Jun-1999,16.87,-5,-4,2,,NR,NaN,NaN,NaN,NaN,wrist,"ext",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3201,,29-Jun-1999,18.02,-3,-5,1,,STRI,2.65,NaN,NaN,NaN,NT,"NT",8,8,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3201,,29-Jun-1999,18.02,-3,-5,2,,NT,NaN,NaN,NaN,NaN,NT,"NT",8,8,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3202,v3202b,30-Jun-1999,19.1,-3,-5,1,1,STRI,3.5,120,NaN,NaN,NT,"NT",10,10,5,0,10,10,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3203,,30-Jun-1999,19.3,-3,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3203,,30-Jun-1999,19.3,-3,-5,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3204,v3205,30-Jun-1999,19.5,-3,-5,1,1,PED,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,5,0,10,10,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3205,,30-Jun-1999,19.4,-3,-5,2,,STRI,3.7,440,NaN,NaN,wrist / hand,"selective finger flex",10,10,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3206,,01-Jul-1999,18.97,-3,-5,1,,PED,0.8,230,NaN,NaN,hand,"finger ext",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3207,,01-Jul-1999,19.36,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3208,,01-Jul-1999,19.68,-3,-5,1,,PED,2,600,NaN,NaN,NT,"NT",5,4,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3209,,06-Jul-1999,19.4,-3,-5,1,,PED,0.7,160,NaN,NaN,wrist / hand,"finger ext",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3209,,06-Jul-1999,19.4,-3,-5,2,,PED,1.95,40,NaN,NaN,finger,"flex",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3210,,06-Jul-1999,19.9,-3,-5,1,,PED,0.75,1000,NaN,NaN,finger,"flex",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3211,,06-Jul-1999,20.4,-3,-5,1,,STRI,3.05,380,NaN,NaN,NT,"NT",6,7,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3212,,07-Jul-1999,18.4,-3,-5,1,,PED,0.95,21,NaN,NaN,wrist / forearm,"ext",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3213,,07-Jul-1999,18.4,-3,-5,1,,NT,NaN,NaN,NaN,NaN,NT,"NT",2,3,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3214,,07-Jul-1999,20.37,-3,-5,1,,STRI,9.35,480,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3215,,08-Jul-1999,19.3,-3,-5,1,,STRI,5.05,530,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3216,,08-Jul-1999,20.5,-3,-5,1,,PED/STRI,2.3,45,1.5,320,wrist,"ext",10,10,5,1,0,0,Ped/Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3217,,08-Jul-1999,20.7,-3,-5,1,,STRI,3.1,350,NaN,NaN,NR,"selective finger release",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3218,,08-Jul-1999,20.76,-3,-5,1,,STRI,4.25,400,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3219,,08-Jul-1999,20.85,-3,-5,1,,STRI,3.9,420,NaN,NaN,hand,"finger ext",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3220,,09-Jul-1999,20.5,-3,-5,1,,PED,2.65,26,NaN,NaN,hand,"finger manip",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3220,,09-Jul-1999,20.5,-3,-5,2,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3221,,09-Jul-1999,20.57,-3,-5,1,,STRI,3.8,800,NaN,NaN,NR,"selective - palmar contact w/ objects, esp unexpected objects or new objects",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3222,,09-Jul-1999,20.9,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",7,7,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3222,,09-Jul-1999,20.9,-3,-5,2,,NR,NaN,NaN,NaN,NaN,NT,"NT",7,7,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3223,,09-Jul-1999,21.15,-3,-5,1,,STRI,2.65,140,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3224,,12-Jul-1999,20.3,-3,-5,1,,STRI,4.3,400,NaN,NaN,NT,"NT",8,8,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3225,,12-Jul-1999,22,-3,-5,1,,STRI,2.1,330,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3226,,12-Jul-1999,22.3,-3,-5,1,,STRI,5,610,NaN,NaN,NR,"NR",9,9,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3227,,13-Jul-1999,21.57,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3228,,13-Jul-1999,22.26,-3,-5,1,,NR,NaN,NaN,NaN,NaN,NT,"NT",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3229,,13-Jul-1999,22.3,-3,-5,1,,PED,1.3,328,NaN,NaN,hand,"finger flex",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3230,,13-Jul-1999,22.37,-3,-5,1,,STRI,2.85,800,NaN,NaN,NT,"NT",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3230,,13-Jul-1999,22.37,-3,-5,2,,STRI,2.95,540,NaN,NaN,NT,"NT",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3301,,14-Jul-1999,17.25,-1,-5,1,1,STRI,4.55,390,NaN,NaN,hand,"selective response - pauses w/ touch, bursts w/ release",5,6,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3302,,14-Jul-1999,17.36,-1,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3302,,14-Jul-1999,17.36,-1,-5,2,,NR,NaN,NaN,NaN,NaN,hand,"finger flex",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3303,,14-Jul-1999,17.6,-1,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"hair on skin of fingers",5,5,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3401,,15-Jul-1999,16.75,-5,-5,1,,NR,NaN,NaN,NaN,NaN,wrist,"flex",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3402,,15-Jul-1999,17.28,-5,-5,1,,PED,1.7,780,NaN,NaN,wrist,"flex",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3403,,15-Jul-1999,17.4,-5,-5,1,,PED,1.5,75,NaN,NaN,NR,"active",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3403,,15-Jul-1999,NaN,NaN,NaN,2,,NR,NaN,NaN,NaN,NaN,wrist / forearm,"flex",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3404,,16-Jul-1999,17.71,-5,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"active",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3405,,16-Jul-1999,17.78,-5,-5,1,,PED,2.7,585,NaN,NaN,NR,"NR",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3501,,16-Jul-1999,20.46,-2,-5,1,,STRI,7.55,860,NaN,NaN,hand,"active",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3502,,19-Jul-1999,23.33,-2,-5,1,,PED,1.25,160,NaN,NaN,hand,"finger ext",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3503,,19-Jul-1999,23.23,-2,-5,1,,PED,0.85,200,NaN,NaN,hand,"finger ext",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3504,,19-Jul-1999,23.42,-2,-5,1,,STRI,7.4,670,NaN,NaN,NR,"NR",10,9,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3505,,19-Jul-1999,23.07,-2,-5,1,,STRI,3.15,100,NaN,NaN,hand,"active",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3506,,19-Jul-1999,23.46,-2,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",5,6,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3601,,28-Jul-1999,18.3,-4,-5,1,,STRI,4.2,80,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3601,,28-Jul-1999,18.3,-4,-5,2,,PED,2.85,480,NaN,NaN,hand,"thumb cut",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3602,,28-Jul-1999,18.6,-4,-5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3602,,28-Jul-1999,18.6,-4,-5,2,,PED,3.15,680,NaN,NaN,NR,"NR",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3603,,29-Jul-1999,17.87,-4,-5,1,,STRI,4.25,372,NaN,NaN,hand,"finger flex",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3603,,29-Jul-1999,17.87,-4,-5,2,,NR,NaN,NaN,NaN,NaN,NR,"NR",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3604,,29-Jul-1999,17.96,-4,-5,1,,PED,1.7,600,NaN,NaN,hand,"finger ext",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3604,,29-Jul-1999,17.96,-4,-5,2,,PED,NaN,100,NaN,NaN,hand,"finger flex",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3605,,29-Jul-1999,18.65,-4,-5,1,,PED,3.5,390,NaN,NaN,NT,"NT",4,3,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3606,,29-Jul-1999,19.42,-4,-5,1,,NR,NaN,NaN,NaN,NaN,NR,"active hand",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3607,v3607b,29-Jul-1999,19.65,-4,-5,1,1,PED,0.8,100,NaN,NaN,wrist,"ext",10,10,5,1,10,10,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3607b,,29-Jul-1999,19.65,-4,-5,2,,STRI,8.1,170,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3608,,29-Jul-1999,19.32,-4,-5,1,,STRI,3.6,770,NaN,NaN,NR,"NR",10,10,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3609,,29-Jul-1999,19.86,-4,-5,1,,PED,2.6,170,NaN,NaN,NR,"NR",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3701,,03-Aug-1999,19.34,-5,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"thumb abd",7,7,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3702,,03-Aug-1999,20.33,-5,-3,1,,PED,NaN,370,NaN,NaN,hand,"thumb abd",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3702,,03-Aug-1999,20.33,-5,-3,2,,NR,NaN,NaN,NaN,NaN,hand,"thumb abd",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3703,,03-Aug-1999,21.2,-5,-3,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",6,6,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3704,,03-Aug-1999,18.4,-5,-3,1,,PED,1,175,NaN,NaN,wrist,"ext",10,10,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3704,,03-Aug-1999,18.4,-5,-3,2,,PED,1.35,30,NaN,NaN,wrist,"ext",10,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3705,,03-Aug-1999,19.66,-5,-3,1,,STRI,3.7,390,NaN,NaN,NR,"",5,6,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3801,,05-Aug-1999,19.9,-3,-3,1,,STRI,NaN,550,NaN,NaN,NT,"NT",5,5,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3802,,05-Aug-1999,20.4,-3,-3,1,,STRI,4.35,290,NaN,NaN,NR,"active hand",8,9,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3802,,05-Aug-1999,20.4,-3,-3,2,,NT,NaN,NaN,NaN,NaN,NT,"NT",8,9,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Pre,v3803,,05-Aug-1999,21.4,-3,-3,1,,NR,NaN,NaN,NaN,NaN,NR,"NR",7,7,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3901,,06-Aug-1999,18.3,-6,-3,1,,STRI,6.3,760,NaN,NaN,elbow,"flex",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3902,,06-Aug-1999,17.78,-6,-3,1,,NR,NaN,NaN,NaN,NaN,elbow,"flex",8,8,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3902,,06-Aug-1999,17.78,-6,-3,2,,NR,NaN,NaN,NaN,NaN,elbow,"flex",8,8,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3903,,06-Aug-1999,18.5,-6,-3,1,,PED,2.95,250,NaN,NaN,elbow,"flex",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3903,,06-Aug-1999,18.5,-6,-3,2,,PED,1.95,510,NaN,NaN,elbow / shoulder,"abd / ext",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v3904,,07-Aug-1999,18.1,-6,-3,1,,STRI,3.45,425,NaN,NaN,NR,"NR",4,4,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4001,,10-Aug-1999,21.3,-4,-3,1,,PED,1.65,215,NaN,NaN,NR,"active hand",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4001,,10-Aug-1999,21.3,-4,-3,2,,PED,2,155,NaN,NaN,forearm,"sup",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4002,,11-Aug-1999,19.4,-4,-3,1,,STRI,8.3,300,NaN,NaN,NR,"NR",5,6,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4003,,11-Aug-1999,19.88,-4,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"palm light touch",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4003,,11-Aug-1999,19.88,-4,-3,2,,STRI,6.4,810,NaN,NaN,NR,"NR",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4004,,11-Aug-1999,20.24,-4,-3,1,,PED,1.15,780,NaN,NaN,forearm,"pron",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4004,,11-Aug-1999,20.24,-4,-3,2,,PED,3.25,100,NaN,NaN,wrist,"ext",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4005,,11-Aug-1999,20.58,-4,-3,1,,PED,1.2,28,NaN,NaN,forearm,"pron",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4006,,12-Aug-1999,20.5,-4,-3,1,,PED,0.65,25,NaN,NaN,forearm,"pron",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4101,,13-Aug-1999,23.04,-2,-3,1,,PED,2.1,250,NaN,NaN,hand,"finger flex",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4201,,13-Aug-1999,17.6,-1,-3,1,,STRI,3.65,500,NaN,NaN,NT,"",5,5,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4202,,13-Aug-1999,19.5,-1,-3,1,,PED,5.5,NaN,NaN,NaN,NT,"",5,5,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4203,,13-Aug-1999,19.4,-1,-3,1,,STRI,5.75,420,NaN,NaN,hand,"selective finger ext",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4204,,13-Aug-1999,21.93,-1,-3,1,,PED,1.9,600,NaN,NaN,NR,"pauses w/hand manip",10,10,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4205,,16-Aug-1999,20.11,-1,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"finger tip",8,8,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4206,,16-Aug-1999,20.4,-1,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"palm / finger - light touch",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Pre,v4207,,16-Aug-1999,21.5,-1,-3,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",10,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4301,,13-Jan-2000,16.7,4,-2,1,,NR,NaN,NaN,NaN,NaN,hand,"cut index finger",10,10,0,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4301,,13-Jan-2000,16.7,4,-2,2,,NR,NaN,NaN,NaN,NaN,hand,"cut index finger",10,10,0,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4302,,13-Jan-2000,16.4,4,-2,1,,NR,NaN,NaN,NaN,NaN,NT,"",4,19,0,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4401,v4401b,15-Jan-2000,16.6,4,-3.5,1,1,PED,0.8,400,NaN,NaN,elbow / wrist / hand,"elbow ext, wrist / finger ext",15,15,0,0,10,10,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4401,v4401b,15-Jan-2000,16.6,4,-3.5,2,2,PED,3.9,500,NaN,NaN,wrist,"wk. resp. to wrist flex",15,15,0,0,10,10,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4402,v4402b,15-Jan-2000,16.8,4,-3.5,1,1,STRI,5.5,300,NaN,NaN,NR,"",20,20,0,0,10,10,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4403,,15-Jan-2000,15.5,4,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",9,10,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4405,,15-Jan-2000,15.9,4,-3.5,1,,STRI,11.2,830,NaN,NaN,NR,"",3,4,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4406,,15-Jan-2000,15.8,4,-3.5,1,,PED,1.55,400,NaN,NaN,hand,"ext of index,mid & third finger",20,20,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4407,,15-Jan-2000,15.6,4,-3.5,1,,PED,2.5,700,NaN,NaN,wrist / hand,"wrist & finger flex",20,20,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4408,,17-Jan-2000,15.46,4,-3.5,1,,STRI,3.55,550,NaN,NaN,NR,"",11,12,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4409,,17-Jan-2000,15.9,4,-3.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",7,6,6,0,0,0,,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4410,,17-Jan-2000,16.3,4,-3.5,1,,PED,0.95,400,NaN,NaN,forearm / elbow,"forearm sup & elbow ext",20,20,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4411,,18-Jan-2000,15.5,4,-3.5,1,,PED,0.75,1,NaN,NaN,finger / wrist / elbow / shoulder,"ext of finger,wrist,elbow,shoulder",20,20,6,0,0,0,Ped,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4412,,18-Jan-2000,16.6,4,-3.5,1,,STRI,NaN,380,NaN,NaN,NR,"",20,20,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4501,,19-Jan-2000,17.63,2,-3.5,1,,STRI,5.5,950,NaN,NaN,NR,"",15,16,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4502,,19-Jan-2000,18.38,2,-3.5,1,,STRI,3.4,400,NaN,NaN,forearm,"forearm pron - v. clear",19,19,6,0,0,0,Str,triceps lat.,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.
+V,Post,v4503,,20-Jan-2000,18.5,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger tap cut",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4504,,20-Jan-2000,18.75,2,-3.5,1,,STRI,5.3,260,NaN,NaN,hand,"last 2 fingers flex / ext & cut",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4505,,20-Jan-2000,18.9,2,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",9,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4506,,20-Jan-2000,19.3,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,wrist,"wrist ext",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4507,,21-Jan-2000,19.18,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",12,12,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4508,,21-Jan-2000,19.2,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4508,,21-Jan-2000,19.2,2,-3.5,2,,NR,NaN,NaN,NaN,NaN,shoulder / elbow,"int shoulder rot & elbow ext",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4509,,21-Jan-2000,20,2,-3.5,1,,NT,NaN,NaN,NaN,NaN,NT,"",9,8,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4509,,21-Jan-2000,20,2,-3.5,2,,NT,NaN,NaN,NaN,NaN,NT,"",9,8,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4510,,21-Jan-2000,19.95,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,wrist,"ext",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4511,,21-Jan-2000,18.45,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,elbow,"ext",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4511,,21-Jan-2000,18.45,2,-3.5,2,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4512,,21-Jan-2000,19.36,2,-3.5,1,,STRI,NaN,375,NaN,NaN,NR,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4513,,21-Jan-2000,19.48,2,-3.5,1,,STRI,6.9,1,NaN,NaN,NR,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4513,,21-Jan-2000,19.48,2,-3.5,2,,STRI,7.8,500,NaN,NaN,NR,"",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4514,,24-Jan-2000,19.13,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,finger / wrist / elbow,"ext",20,20,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4515,,24-Jan-2000,19.5,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"cut stim of glabrous fingers",18,18,5,0,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4516,,24-Jan-2000,19.5,2,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",11,12,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4517,,24-Jan-2000,19.86,2,-3.5,1,,PED,2.75,300,NaN,NaN,NT,"",20,20,5,0,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4518,,24-Jan-2000,19.9,2,-3.5,1,,STRI,6.75,400,NaN,NaN,NR,"",20,20,5,0,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4519,,25-Jan-2000,19.11,2,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",12,12,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4520,,25-Jan-2000,19.87,2,-3.5,1,,PED,1.85,NaN,NaN,NaN,NT,"",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4521,,25-Jan-2000,20.17,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext, flex, & cut",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4522,,25-Jan-2000,22.2,2,-3.5,1,,STRI,5.05,800,NaN,NaN,NR,"nearby fire w/ finger ext",13,12,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4523,v4523b,25-Jan-2000,22.42,2,-3.5,1,1,NR,NaN,NaN,NaN,NaN,wrist / hand,"wrist & finger ext",25,25,5,1,11,11,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4524,v4524b,26-Jan-2000,19.9,2,-3.5,1,1,STRI,3.95,600,NaN,NaN,NR,"nearby fire w/ finger ext",40,40,5,1,20,20,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4525,,26-Jan-2000,20.43,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,finger / wrist / elbow,"finger / wrist / elbow ext",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4526,v4526b,26-Jan-2000,21.11,2,-3.5,1,1,STRI,2.7,NaN,NaN,NaN,hand,"wk resp to finger ext",30,30,5,1,20,20,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4527,v4527b,26-Jan-2000,21.6,2,-3.5,1,1,PED,2.1,NaN,NaN,NaN,hand,"finger flex",23,24,5,1,13,14,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4527,,26-Jan-2000,21.6,2,-3.5,2,,NT,NaN,NaN,NaN,NaN,NT,"",23,24,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4527b,,26-Jan-2000,21.6,2,-3.5,2,,PED,1.4,NaN,NaN,NaN,hand,"finger ext",13,14,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4528,v4528b,27-Jan-2000,20.2,2,-3.5,1,1,STRI,6.3,400,NaN,NaN,NR,"nearby fire w/ finger ext",35,34,5,1,20,20,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4529,v4529b,27-Jan-2000,20.6,2,-3.5,1,1,STRI,5.3,NaN,NaN,NaN,NT,"",26,26,5,1,11,12,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4530,,27-Jan-2000,21.58,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",14,14,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4531,,27-Jan-2000,21.76,2,-3.5,1,,PED,2,140,NaN,NaN,hand,"finger flex.",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4532,,28-Jan-2000,21.25,2,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",15,16,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4533,,28-Jan-2000,21.66,2,-3.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",17,17,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4534,,28-Jan-2000,21.56,2,-3.5,1,,THAL,2,1,NaN,NaN,hand,"high tonic-palm not touching",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4535,,28-Jan-2000,21.77,2,-3.5,1,,STRI,3.15,300,NaN,NaN,NR,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4536,,28-Jan-2000,22.55,2,-3.5,1,,THAL,1.45,NaN,NaN,NaN,hand / wrist,"finger / wrist ext",13,14,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4537,,28-Jan-2000,21.52,2,-3.5,1,,PED,2.95,200,NaN,NaN,hand,"ext of digits #4&5",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4601,,31-Jan-2000,16,5,-3.5,1,,STRI,7.1,NaN,NaN,NaN,hand,"active hand",17,17,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4602,v4602b,31-Jan-2000,16.63,5,-3.5,1,1,NR,NaN,NaN,NaN,NaN,NR,"",27,28,5,1,20,20,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4602,v4602b,31-Jan-2000,16.63,5,-3.5,2,2,NR,NaN,NaN,NaN,NaN,NR,"",27,28,5,1,20,20,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4603,v4603b,31-Jan-2000,16.88,5,-3.5,1,1,PED,1.8,1,NaN,NaN,hand,"finger ext",20,20,5,1,20,20,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4604,,31-Jan-2000,16.4,5,-3.5,1,,PED,1.55,210,NaN,NaN,hand / wrist / elbow,"finger / wrist ext & elbow flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4604,,01-Feb-2000,16.4,5,-3.5,2,,PED,1.1,700,NaN,NaN,hand / wrist / shoulder,"finger / wrist ext & shoulder flex",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4605,,01-Feb-2000,16.65,5,-3.5,1,,PED,1.25,440,NaN,NaN,hand / wrist,"finger / wrist ext",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4605,,01-Feb-2000,16.65,5,-3.5,2,,NT,NaN,NaN,NaN,NaN,hand,"finger ext",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4606,,01-Feb-2000,17,5,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",18,18,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4606,v4607,01-Feb-2000,17,5,-3.5,2,1,PED,3.2,280,NaN,NaN,NR,"",18,18,5,1,38,38,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4701,,02-Feb-2000,21.1,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",11,11,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4702,,02-Feb-2000,22.9,1,-3.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",15,15,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4702,,02-Feb-2000,22.9,1,-3.5,2,,NR,NaN,NaN,NaN,NaN,NT,"",15,15,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4703,,02-Feb-2000,22.8,1,-3.5,1,,PED,2.2,550,NaN,NaN,wrist / hand,"wrist / finger flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4704,,02-Feb-2000,23,1,-3.5,1,,STRI,6.85,230,NaN,NaN,wrist,"wrist flex",17,16,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4801,v4801b,03-Feb-2000,17.18,1,-3.5,1,1,STRI,7.4,950,NaN,NaN,NR,"active grip of new surf",40,40,5,1,20,20,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4802,,03-Feb-2000,17.7,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand / wrist,"finger / wrist flex & cut & light touch of finger",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4803,,03-Feb-2000,18,1,-3.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",13,14,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4804,,03-Feb-2000,18.2,1,-3.5,1,,STRI,6.25,590,NaN,NaN,NR,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4805,,03-Feb-2000,18.62,1,-3.5,1,,STRI,NaN,370,NaN,NaN,NR,"",10,10,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4806,v4806b,04-Feb-2000,17.7,1,-3.5,1,1,STRI,6.4,690,NaN,NaN,hand,"finger ext",35,34,5,1,15,14,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4807,v4807b,04-Feb-2000,18.36,1,-3.5,1,2,NR,NaN,NaN,NaN,NaN,hand / wrist,"finger / wrist flex - shuts off w/palm contact",20,19,5,1,9,9,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4808,,04-Feb-2000,18.6,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,hand / wrist,"finger / wrist flex",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4809,,04-Feb-2000,18.74,1,-3.5,1,,NR,NaN,NaN,NaN,NaN,elbow / hand,"elbow ext / finger flex",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4809,,04-Feb-2000,18.74,1,-3.5,2,,PED,2.25,600,NaN,NaN,NT,"",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4810,v4810b,04-Feb-2000,18.9,1,-3.5,1,1,PED,1.25,180,NaN,NaN,NT,"nearby fire w/wrist flex",40,40,5,1,20,20,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4810b,,04-Feb-2000,18.9,1,-3.5,2,,NR,NaN,NaN,NaN,NaN,NT,"nearby fire w/wrist flex",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4811,,04-Feb-2000,18.57,1,-3.5,1,,PED,1.1,NaN,NaN,NaN,NT,"",7,7,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4812,,04-Feb-2000,18.9,1,-3.5,1,,PED,2.65,NaN,NaN,NaN,NR,"",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4813,,07-Feb-2000,18.2,1,-3.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",13,13,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4813,,07-Feb-2000,18.2,1,-3.5,2,,PED,NaN,NaN,NaN,NaN,NT,"",13,13,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4814,v4814b,07-Feb-2000,18.2,1,-3.5,1,1,PED,2.6,575,NaN,NaN,hand,"finger ext",40,40,5,1,20,20,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4815,v4815b,07-Feb-2000,18.8,1,-3.5,1,1,PED,0.7,470,NaN,NaN,hand,"finger ext",40,40,5,1,20,20,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4901,,07-Feb-2000,17.4,0,-3.5,1,,PED,3.1,NaN,NaN,NaN,NR,"",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4902,v4902b,07-Feb-2000,17.4,0,-3.5,1,1,STRI,3.4,560,NaN,NaN,hand / wrist,"finger / wrist ext",40,40,5,1,20,20,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v4903,,07-Feb-2000,21.93,0,-3.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",8,8,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5001,,11-Feb-2000,17.56,3,-4.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5002,,11-Feb-2000,18.5,3,-4.5,1,,PED,1.4,NaN,NaN,NaN,wrist / hand / elbow,"wrist / finger / elbow flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5003,,11-Feb-2000,18.8,3,-4.5,1,,PED,0.65,70,NaN,NaN,elbow / forearm / wrist / hand,"elbow flex / forearm sup / wrist & finger ext",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5004,,11-Feb-2000,19,3,-4.5,1,,PED,2.15,600,NaN,NaN,NT,"",16,16,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5005,,11-Feb-2000,19.15,3,-4.5,1,,PED,0.85,220,NaN,NaN,wrist,"wrist flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5006,,11-Feb-2000,19.4,3,-4.5,1,,STRI,6.95,530,NaN,NaN,NT,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5101,v5101b,15-Feb-2000,17.6,2,-4.5,1,1,STRI,13.2,370,NaN,NaN,NR,"",25,24,5,1,13,12,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5102,v5102b,15-Feb-2000,19.24,2,-4.5,1,1,PED,NaN,NaN,NaN,NaN,wrist / hand,"wrist / finger flex",20,20,5,1,20,20,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5103,,16-Feb-2000,18.2,2,-4.5,1,,STRI,14.15,1,NaN,NaN,NR,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5104,,16-Feb-2000,19.14,2,-4.5,1,,PED,1.45,270,NaN,NaN,NR,"",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5105,,16-Feb-2000,19.75,2,-4.5,1,,PED,1.2,120,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5106,v5106b,16-Feb-2000,19.9,2,-4.5,1,1,PED,1.2,470,NaN,NaN,wrist / elbow / hand,"wrist, elbow & finger ext",30,30,5,1,20,20,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5107,v5107b,17-Feb-2000,20.04,2,-4.5,1,1,STRI,2.6,500,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",36,36,5,1,20,20,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5108,,17-Feb-2000,19.8,2,-4.5,1,,PED/STRI,3.95,360,2.5,330,NT,"",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5109,,17-Feb-2000,20.6,2,-4.5,1,,PED/THAL,4.15,NaN,3,110,forearm,"forearm pron",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5110,,17-Feb-2000,21,2,-4.5,1,,PED,0.85,NaN,NaN,NaN,wrist,"wrist flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5111,,17-Feb-2000,20.86,2,-4.5,1,,PED,1.9,170,NaN,NaN,wrist / elbow,"wrist / elbow flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5111,,17-Feb-2000,20.86,2,-4.5,2,,PED,1.3,70,NaN,NaN,wrist,"wrist flex",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5112,,18-Feb-2000,19.2,2,-4.5,1,,PED,1.6,900,NaN,NaN,elbow / wrist,"elbow / wrist flex",15,15,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5113,,18-Feb-2000,19.3,2,-4.5,1,,PED,2.35,NaN,NaN,NaN,elbow / forearm / wrist / hand,"elbow ext / forearm pron / wrist & finger flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5114,,18-Feb-2000,19.88,2,-4.5,1,,PED,NaN,NaN,NaN,NaN,NT,"",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5115,,18-Feb-2000,20,2,-4.5,1,,PED,1.15,50,NaN,NaN,shoulder / elbow / wrist,"shoulder dep / elbow ext / wrist flex",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5115,,18-Feb-2000,20,2,-4.5,2,,PED,2.55,360,NaN,NaN,wrist,"wrist ext only",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5116,,18-Feb-2000,20.5,2,-4.5,1,,PED,2.95,NaN,NaN,NaN,NR,"",20,20,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5201,,18-Feb-2000,17.7,1,-4.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",9,10,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5202,,21-Feb-2000,17.9,1,-4.5,1,,NR,NaN,NaN,NaN,NaN,hand,"v.sensitive to touch on hand",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5203,v5203b,21-Feb-2000,19.6,1,-4.5,1,1,STRI,20.5,600,NaN,NaN,forearm,"sup selective",27,28,5,1,20,20,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5301,,21-Feb-2000,17.8,4,-4.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5301,,21-Feb-2000,17.8,4,-4.5,2,,STRI,9.25,900,NaN,NaN,NR,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5302,,21-Feb-2000,17.6,4,-4.5,1,,PED,3,NaN,NaN,NaN,NT,"",12,12,5,1,0,0,Ped,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5303,,21-Feb-2000,17,4,-4.5,1,,STRI,3.45,250,NaN,NaN,NR,"",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5304,,21-Feb-2000,17.2,4,-4.5,1,,STRI,9.2,600,NaN,NaN,hand,"finger ext - work relation",20,20,5,1,0,0,Str,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5305,,21-Feb-2000,19.5,4,-4.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,5,1,0,0,,brachioradialis,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5401,,23-Feb-2000,17.2,5,-4.5,1,,NR,NaN,NaN,NaN,NaN,NT,"",13,12,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5402,,23-Feb-2000,17.7,5,-4.5,1,,PED,2,NaN,NaN,NaN,finger / elbow / hand,"finger / elbow ext & contact w/palm",20,20,5,1,0,0,Ped,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5403,,23-Feb-2000,17.8,5,-4.5,1,,STRI,5.25,560,NaN,NaN,NT,"",20,20,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5404,,23-Feb-2000,17.9,5,-4.5,1,,STRI,3.2,330,NaN,NaN,NR,"",20,20,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5501,,25-Feb-2000,18.98,3,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand,"finger ext",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5502,,25-Feb-2000,20.4,3,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand / elbow,"finger ext & elbow ext",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5503,,25-Feb-2000,21.96,3,-2.5,1,,STRI,6.7,660,NaN,NaN,forearm,"forearm sup only",20,20,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5601,,29-Feb-2000,17.27,5,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",11,11,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5602,,29-Feb-2000,17.27,5,-2.5,1,,STRI,8.65,925,NaN,NaN,NR,"",20,20,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5603,,29-Feb-2000,18.04,5,-2.5,1,,PED,1.1,43,NaN,NaN,hand / wrist,"finger / wrist ext",20,20,5,1,0,0,Ped,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5604,v5604b,29-Feb-2000,17.96,5,-2.5,1,1,PED,2.05,NaN,NaN,NaN,NR,"",40,40,5,1,20,20,Ped,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5604b,,29-Feb-2000,17.96,5,-2.5,2,,STRI,NaN,380,NaN,NaN,NR,"",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5605,,14-Mar-2000,17,5,-2.5,1,,STRI,4.05,670,NaN,NaN,NR,"",12,12,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5606,v5606b,14-Mar-2000,18.5,5,-2.5,1,1,PED,2.05,NaN,NaN,NaN,elbow / shoulder,"elbow flex / shoulder",31,30,5,1,11,10,Ped,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5607,v5607b,14-Mar-2000,18.11,5,-2.5,1,1,STRI,10.55,560,NaN,NaN,NR,"active grip of manip",40,40,5,1,20,20,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5608,,14-Mar-2000,18.57,5,-2.5,1,,PED,3.55,140,NaN,NaN,NR,"",20,20,5,1,0,0,Ped,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5801,,29-Mar-2000,17.77,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,forearm / elbow,"nearby units fire w/ forearm pron / elbow ext",11,11,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5801,,29-Mar-2000,17.77,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,forearm / elbow,"nearby units fire w/ forearm pron / elbow ext",11,11,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5802,,29-Mar-2000,17.6,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",10,10,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5802,,29-Mar-2000,17.6,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,forearm / elbow,"forearm sup / elbow flex",10,10,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5803,,30-Mar-2000,17.6,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5804,,30-Mar-2000,17.5,6,-2.5,1,,STRI,6.6,560,NaN,NaN,elbow,"elbow ext",20,20,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5805,,30-Mar-2000,17.7,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5805,,30-Mar-2000,17.7,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,forearm,"forearm rot - either direction",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5806,v5806b,30-Mar-2000,27.65,6,-2.5,1,1,STRI,10.05,950,NaN,NaN,elbow,"elbow flex",27,26,5,1,15,14,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5806,v5806b,30-Mar-2000,27.65,6,-2.5,2,2,NR,NaN,NaN,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",27,26,5,1,15,14,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5807,,30-Mar-2000,18,6,-2.5,1,,STRI,NaN,NaN,NaN,NaN,NT,"",13,13,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5807,,30-Mar-2000,18,6,-2.5,2,,PED,1.15,130,NaN,NaN,shoulder / elbow,"shoulder int rot / elbow ext",13,13,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5808,,31-Mar-2000,17.7,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand / elbow / forearm,"cut finger / elbow flex / forearm sup",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5809,,31-Mar-2000,17.86,6,-2.5,1,,STRI,3.8,950,NaN,NaN,elbow / forearm,"elbow flex / forearm sup",20,20,5,1,0,0,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5810,,31-Mar-2000,18.1,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,elbow / forearm / shoulder / hand,"elbow flex / forearm sup / shoulder ext rot / finger manip",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5811,v5812,31-Mar-2000,18.3,6,-2.5,1,1,PED,1.8,550,NaN,NaN,NR,"",40,40,5,1,20,20,Ped,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5811,,31-Mar-2000,18.3,6,-2.5,2,,PED,1.85,360,NaN,NaN,NR,"",40,40,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5812,,31-Mar-2000,18.3,6,-2.5,2,,NR,NaN,NaN,NaN,NaN,elbow / forearm / shoulder,"elbow ext / forearm pron / shoulder int rot",20,20,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5813,,31-Mar-2000,18.5,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,NR,"",10,10,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5814,v5814b,31-Mar-2000,18.45,6,-2.5,1,1,STRI,13.5,1,NaN,NaN,NR,"",20,20,5,1,9,10,Str,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
+V,Post,v5815,,03-Apr-2000,8.4,6,-2.5,1,,NR,NaN,NaN,NaN,NaN,hand,"wk. related to finger ext",11,10,5,1,0,0,,triceps lat.,triceps long.,triceps long.,trapezius,deltoid post.,
