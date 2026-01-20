@@ -1,9 +1,18 @@
 # import argparse
+import warnings
 from pathlib import Path
 import pandas as pd
 from zoneinfo import ZoneInfo
 from datetime import datetime
 from tqdm import tqdm
+
+# Suppress pymatreader warning about MATLAB string variables - we handle this
+# via custom extraction in assets/matlab_utilities/extract_matlab_strings.py
+warnings.filterwarnings(
+    "ignore",
+    message="pymatreader cannot import Matlab string variables",
+    category=UserWarning,
+)
 
 from neuroconv.utils import load_dict_from_file, dict_deep_update
 from neuroconv.tools import configure_and_write_nwbfile
@@ -172,11 +181,10 @@ def convert_session_to_nwbfile(
         "but precise session start times within each day are not available in source data. "
         "session_start_time is set to midnight (Pittsburgh timezone) with 2-hour systematic "
         "offsets for multiple sessions recorded on the same date, ordered by file sequence. "
-        "All relative timing within each session (trials, spikes, stimulation) maintains "
-        "original temporal accuracy. NOTE: Inter-trial intervals are not available in "
-        "source data - trials are separated by fixed 3-second intervals for temporal "
-        "organization purposes only and should not be interpreted as actual behavioral "
-        "inter-trial timing."
+        "Trial durations and within-trial event times are derived from experimental data. "
+        "However, actual inter-trial intervals are not available in source data - trials "
+        "are separated by fixed 3-second gaps for temporal organization. The gaps between "
+        "trials should not be interpreted as actual behavioral inter-trial timing."
     )
 
     configure_and_write_nwbfile(nwbfile=nwbfile, nwbfile_path=nwbfile_path)
