@@ -4,7 +4,7 @@ from typing import Optional
 import numpy as np
 from pydantic import FilePath
 from pynwb import NWBFile, TimeSeries
-from pynwb.behavior import SpatialSeries, CompassDirection
+from pynwb.behavior import SpatialSeries
 from pynwb.device import Device
 from pymatreader import read_mat
 
@@ -110,7 +110,7 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             if signal_name == "x":
                 # Elbow joint angle data - raw manipulandum angle sensor data
                 angle_series = SpatialSeries(
-                    name="SpatialSeriesElbowAngle",
+                    name="ElbowAngle",
                     data=continuous_data.reshape(-1, 1),  # Make 2D
                     timestamps=timestamps,
                     unit="degrees",
@@ -118,14 +118,12 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
                     reference_frame="Anatomical flexion/extension axis, 0 degrees = neutral position, positive = extension",
                 )
 
-                # Wrap in CompassDirection for angular data
-                compass_direction = CompassDirection(name="CompassDirectionElbowAngle", spatial_series=angle_series)
-                nwbfile.add_acquisition(compass_direction)
+                nwbfile.add_acquisition(angle_series)
 
             elif signal_name == "vel":
                 # Velocity data
                 velocity_series = TimeSeries(
-                    name="TimeSeriesElbowVelocity",
+                    name="ElbowVelocity",
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="degrees/s",
@@ -143,7 +141,7 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             elif signal_name == "torq":
                 # Torque data - raw commands sent to torque controller
                 torque_series = TimeSeries(
-                    name="TimeSeriesElbowTorque",
+                    name="ElbowTorque",
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="arbitrary",

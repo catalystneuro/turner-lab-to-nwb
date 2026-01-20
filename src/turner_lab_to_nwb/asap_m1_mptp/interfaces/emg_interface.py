@@ -16,6 +16,15 @@ class M1MPTPEMGInterface(BaseDataInterface):
     associated_suffixes = (".mat",)
     info = "Interface for Turner Lab M1 MPTP EMG recordings from arm muscles"
 
+    # Map abbreviated muscle names from metadata to full anatomical names
+    MUSCLE_NAME_MAP = {
+        "triceps long.": "TricepsLongus",
+        "triceps lat.": "TricepsLateralis",
+        "brachioradialis": "Brachioradialis",
+        "trapezius": "Trapezius",
+        "deltoid post.": "DeltoidPosterior",
+    }
+
     def __init__(
         self,
         file_path: FilePath,
@@ -101,10 +110,12 @@ class M1MPTPEMGInterface(BaseDataInterface):
         base_name_counts = {}
         for channel_index in range(n_channels):
             muscle_name = self.muscle_names[channel_index]
-            camel_case_name = "".join(
-                word.capitalize() for word in muscle_name.replace(".", "").split()
+            # Use mapping for full anatomical name, fall back to camelCase of original
+            full_name = self.MUSCLE_NAME_MAP.get(
+                muscle_name,
+                "".join(word.capitalize() for word in muscle_name.replace(".", "").split())
             )
-            base_name = f"TimeSeriesEMG{camel_case_name}"
+            base_name = f"EMG{full_name}"
             base_name_counts[base_name] = base_name_counts.get(base_name, 0) + 1
 
         # Second pass: assign names with numeric suffixes for duplicates
@@ -112,10 +123,12 @@ class M1MPTPEMGInterface(BaseDataInterface):
         series_names = []
         for channel_index in range(n_channels):
             muscle_name = self.muscle_names[channel_index]
-            camel_case_name = "".join(
-                word.capitalize() for word in muscle_name.replace(".", "").split()
+            # Use mapping for full anatomical name, fall back to camelCase of original
+            full_name = self.MUSCLE_NAME_MAP.get(
+                muscle_name,
+                "".join(word.capitalize() for word in muscle_name.replace(".", "").split())
             )
-            base_name = f"TimeSeriesEMG{camel_case_name}"
+            base_name = f"EMG{full_name}"
 
             if base_name_counts[base_name] > 1:
                 # Multiple channels with same name: use 1, 2, 3...

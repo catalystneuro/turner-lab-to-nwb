@@ -191,9 +191,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         """
         Add antidromic stimulation data to the NWB file.
 
-        Each sweep is stored as a separate ElectricalSeries pair (response + stimulation).
-        Naming convention: ElectricalSeries{TestType}{SweepNumber}{Site}{ResponseOrStimulation}
-        Example: ElectricalSeriesCollision05StriatumResponse
+        Each sweep is stored as a separate series pair (response + stimulation).
+        Naming convention: Antidromic{Response|Stimulation}Unit{N}{Location}{TestType}Sweep{NN}
+        Example: AntidromicResponseUnit1StriatumCollisionSweep05
 
         Parameters
         ----------
@@ -227,9 +227,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
         # Get or create intervals table for antidromic sweeps
         # For multi-unit sessions, multiple units add to the same table
-        if "TimeIntervalsAntidromicProtocol" not in nwbfile.intervals:
+        if "AntidromicSweeps" not in nwbfile.intervals:
             antidromic_sweeps = TimeIntervals(
-                name="TimeIntervalsAntidromicProtocol",
+                name="AntidromicSweeps",
                 description="Intervals table for antidromic stimulation sweeps. Each row represents one sweep "
                 "with links to the corresponding stimulation current and neural response ElectricalSeries. "
                 "Includes metadata about test type, stimulation location, and unit number. "
@@ -281,11 +281,11 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
             nwbfile.add_time_intervals(antidromic_sweeps)
             if self.verbose:
-                print("Created TimeIntervalsAntidromicProtocol intervals table")
+                print("Created AntidromicSweeps intervals table")
         else:
-            antidromic_sweeps = nwbfile.intervals["TimeIntervalsAntidromicProtocol"]
+            antidromic_sweeps = nwbfile.intervals["AntidromicSweeps"]
             if self.verbose:
-                print("Adding to existing TimeIntervalsAntidromicProtocol table (multi-unit session)")
+                print("Adding to existing AntidromicSweeps table (multi-unit session)")
 
         # Calculate start time for antidromic data based on actual trial end times
         # Place antidromic data after all behavioral trials with a buffer
@@ -393,11 +393,11 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     stim_current = current_data[:, sweep_index].reshape(-1, 1)  # (n_samples, 1)
 
                     # Create unique names for this sweep
-                    # Format: ElectricalSeries{Response|Stimulation}Unit{UnitNum}{TestType}{Location}Sweep{SweepIndex:02d}
+                    # Format: Antidromic{Response|Stimulation}Unit{UnitNum}{Location}{TestType}Sweep{SweepIndex:02d}
                     # Location needed because sessions can have multiple stim sites (e.g., both Ped and Str)
                     # Use sweep_index (not trace name number) because trace names can have duplicates
                     # Unit number from filename is critical for multi-unit sessions
-                    series_name_base = f"Unit{unit_num}{test_type}{location}Sweep{sweep_index:02d}"
+                    series_name_base = f"Unit{unit_num}{location}{test_type}Sweep{sweep_index:02d}"
 
                     # Create stimulation current series for this sweep
                     # Use TimeSeries (not ElectricalSeries) because units are amperes, not volts
@@ -415,7 +415,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     #
                     # TODO: Confirm with Turner lab - see email_communication.md Question 5
                     stim_series = TimeSeries(
-                        name=f"TimeSeriesStimulation{series_name_base}",
+                        name=f"AntidromicStimulation{series_name_base}",
                         description=f"{test_type} test sweep (index {sweep_index}): Stimulation current delivered to {location.lower()}. "
                         f"50ms sweep centered on stimulation onset (t=0). "
                         f"Original trace name: '{trace_name}'. "
@@ -444,7 +444,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     #
                     # TODO: Confirm with Turner lab - see email_communication.md Question 5
                     response_series = ElectricalSeries(
-                        name=f"ElectricalSeriesResponse{series_name_base}",
+                        name=f"AntidromicResponse{series_name_base}",
                         description=f"{test_type} test sweep (index {sweep_index}): Neural response from M1 to {location.lower()} stimulation. "
                         f"50ms sweep at 20kHz centered on stimulation (t=0). "
                         f"Collision tests verify antidromic spike collision with spontaneous spikes. "
