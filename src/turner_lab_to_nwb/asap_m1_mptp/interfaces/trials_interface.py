@@ -125,12 +125,35 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         isolation_stim_times_raw = np.array(events.get("stim", [np.nan] * n_trials))
         isolation_stim_times = isolation_stim_times_raw / 1000.0  # Convert ms to seconds
 
-        # Add column for isolation monitoring stimulation
+        # Extract stimulation site from MATLAB string array in __function_workspace__
+        # Only extract if there are any non-NaN stim times (i.e., stimulation was delivered)
+        has_stim_data = np.any(~np.isnan(isolation_stim_times))
+        if has_stim_data:
+            from turner_lab_to_nwb.asap_m1_mptp.assets.matlab_utilities import (
+                extract_stim_site_from_workspace,
+            )
+            isolation_stim_sites, extraction_error = extract_stim_site_from_workspace(
+                self.file_path, n_trials
+            )
+            if extraction_error:
+                # Fall back to empty strings if extraction fails
+                isolation_stim_sites = [""] * n_trials
+                if self.verbose:
+                    print(f"Warning: Could not extract stim_site: {extraction_error}")
+        else:
+            # No stimulation in this session
+            isolation_stim_sites = [""] * n_trials
+
+        # Add columns for isolation monitoring stimulation
         nwbfile.add_trial_column(
             name="isolation_monitoring_stim_time",
             description=columns["isolation_monitoring_stim_time"]["Description"],
             col_cls=HedValueVector,
             hed=columns["isolation_monitoring_stim_time"]["HED"],
+        )
+        nwbfile.add_trial_column(
+            name="isolation_monitoring_stim_site",
+            description=columns["isolation_monitoring_stim_site"]["Description"],
         )
 
         # STEP 4: Process transformed Events variables to a tidy format
@@ -221,22 +244,20 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             hed=columns["derived_end_position"]["HED"]
         )
 
-        # STEP 7: Extract analog data for trial timing
-        analog_data = mat_data["Analog"]
-        trial_durations = []
-        for trial_index in range(n_trials):
-            trial_analog = analog_data["x"][trial_index]
-            duration_s = len(trial_analog) / 1000.0  # Assuming 1kHz sampling, convert to seconds
-            trial_durations.append(duration_s)
+        # STEP 7: Extract trial end times from Events['end'] field
+        # The 'end' field contains experimental trial end timestamps (in ms)
+        # This is more accurate than calculating from analog data length
+        trial_end_times_relative = np.array(events.get("end", [])) / 1000.0  # Convert ms to seconds
 
-        # Calculate trial start and stop times based on actual analog data durations
+        # Calculate trial start and stop times
         trial_start_times = []
         trial_stop_times = []
         current_time = 0.0
 
         for trial_index in range(n_trials):
             trial_start = current_time
-            trial_stop = trial_start + trial_durations[trial_index]
+            trial_duration = trial_end_times_relative[trial_index]
+            trial_stop = trial_start + trial_duration
 
             trial_start_times.append(trial_start)
             trial_stop_times.append(trial_stop)
@@ -274,6 +295,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 derived_movement_amplitude=derived_movement_amplitudes[trial_index],
                 derived_end_position=derived_end_positions[trial_index],
                 isolation_monitoring_stim_time=isolation_stim_time,
+                isolation_monitoring_stim_site=isolation_stim_sites[trial_index],
             )
 
         if self.verbose:
@@ -282,6 +304,9 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             print(f"Extension trials: {sum(target_directions == 2)}")
             n_stim_trials = np.sum(~np.isnan(isolation_stim_times))
             print(f"Trials with isolation monitoring stimulation: {n_stim_trials}")
+            if n_stim_trials > 0:
+                unique_sites = set(s for s in isolation_stim_sites if s)
+                print(f"Stimulation sites: {unique_sites}")
 
         # Validate HED annotations in the trials table using HedNWBValidator
         # Import here to avoid requiring ndx-events as a top-level dependency

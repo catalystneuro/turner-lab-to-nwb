@@ -50,5 +50,8 @@
   "isolation_monitoring_stim_time": {
     "Description": "Time of antidromic stimulation pulse delivered during trial to monitor unit isolation. Single pulses were delivered early in some trials (~245ms after trial start) to activate otherwise silent neurons and verify recording isolation. NaN indicates no stimulation was delivered in that trial (seconds)",
     "HED": "Experiment-procedure, Somatic-presentation, Time-value/# s"
+  },
+  "isolation_monitoring_stim_site": {
+    "Description": "Anatomical target of antidromic stimulation for isolation monitoring. Values: 'Str' (striatum), 'Thal' (thalamus), 'Ped' (cerebral peduncle), or empty string if no stimulation was delivered in that trial"
   }
 }
