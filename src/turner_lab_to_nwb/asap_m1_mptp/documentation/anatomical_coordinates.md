@@ -56,29 +56,6 @@ session_info_dict = {
 }
 ```
 
-### File Naming Convention
-
-The MATLAB filename encodes spatial sampling information:
-
-```
-Format: v[Site][Session].N.mat
-Example: v1401.1.mat
-
-- v     : Monkey identifier (Ven)
-- 14    : Recording site index (penetration location 14)
-- 01    : Session index (first depth at this site)
-- .1    : Unit number within session
-```
-
-The site and session indices are extracted in the conversion code:
-
-```python
-# From electrodes_interface.py (lines 208-219)
-base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811"
-recording_site_index = int(base_name[1:3])    # Characters 2-3 (site index)
-recording_session_index = int(base_name[3:5]) # Characters 4-5 (session index)
-```
-
 ## NWB Storage Format
 
 ### Standard NWB Electrode Coordinates
@@ -101,13 +78,11 @@ nwbfile.add_electrode(
 
 Chamber-relative coordinates are stored in custom electrode table columns:
 
-| Column Name | Description | Recording Electrode | Stimulation Electrode |
-|-------------|-------------|--------------------|-----------------------|
-| `chamber_grid_ap_mm` | A-P position relative to chamber center (mm) | From metadata | NaN |
-| `chamber_grid_ml_mm` | M-L position relative to chamber center (mm) | From metadata | NaN |
-| `chamber_insertion_depth_mm` | Depth from chamber reference (mm) | From metadata | NaN |
-| `recording_site_index` | Chamber penetration site identifier | From filename | -1 |
-| `recording_session_index` | Depth sampling session identifier | From filename | -1 |
+| Column Name | Description | Units |
+|-------------|-------------|-------|
+| `chamber_grid_ap_mm` | A-P position relative to chamber center | mm (positive = anterior) |
+| `chamber_grid_ml_mm` | M-L position relative to chamber center | mm (positive = lateral) |
+| `chamber_insertion_depth_mm` | Depth from chamber reference point | mm (positive = deeper) |
 
 ### Accessing Coordinates in NWB
 
@@ -126,12 +101,7 @@ with pynwb.NWBHDF5IO("session.nwb", "r") as io:
     ml = electrodes["chamber_grid_ml_mm"][0]
     depth = electrodes["chamber_insertion_depth_mm"][0]
 
-    # Get site/session indices
-    site_idx = electrodes["recording_site_index"][0]
-    session_idx = electrodes["recording_session_index"][0]
-
     print(f"Position: A-P={ap}mm, M-L={ml}mm, Depth={depth}mm")
-    print(f"Site {site_idx}, Session {session_idx}")
 ```
 
 ## Scientific Use Cases
@@ -171,11 +141,11 @@ deep = df[df["Depth"] >= 15.0]        # Deeper recordings (likely layer 5)
 
 ### 3. Cortical Mapping
 
-Reconstruct electrode penetration trajectories:
+Reconstruct electrode penetration trajectories by grouping sessions with the same A-P/M-L coordinates:
 
 ```python
-# Group by recording site to get depth profiles
-for site_idx, site_data in df.groupby("recording_site_index"):
+# Group by chamber grid position to get depth profiles
+for (ap, ml), site_data in df.groupby(["A_P", "M_L"]):
     depths = site_data.sort_values("Depth")
     # Analyze properties across cortical layers at this A-P/M-L location
 ```
@@ -201,13 +171,12 @@ For cross-study or cross-animal analysis:
   - Registration to standard template
   - Coordinate transformation matrices
 
-### Stimulation Electrode Coordinates
+### Stimulation Electrodes
 
-Stimulation electrodes (cerebral peduncle, putamen, thalamus) have:
-- `NaN` for all chamber grid coordinates
-- `-1` for site/session indices
-- These electrodes were chronically implanted at fixed locations
+Stimulation electrodes (cerebral peduncle, putamen, thalamus) are represented as NWB devices rather than in the electrodes table:
+- Chronically implanted at fixed locations during surgery
 - Positions verified histologically but not tracked in chamber coordinates
+- See `nwbfile.devices` for stimulation electrode descriptions
 
 ## Standard Macaque Brain Atlases
 

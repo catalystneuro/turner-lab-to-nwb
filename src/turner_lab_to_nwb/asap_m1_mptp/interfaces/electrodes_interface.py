@@ -130,37 +130,7 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 "(mm, positive = deeper, range: 8.4-27.6mm). NaN for stimulation electrodes."
             ),
         )
-        nwbfile.add_electrode_column(
-            name="recording_site_index",
-            description=(
-                "Systematic cortical mapping site identifier: unique index for each chamber "
-                "penetration location sampled during the experimental period. -1 for stimulation electrodes."
-            ),
-        )
-        nwbfile.add_electrode_column(
-            name="recording_session_index",
-            description=(
-                "Depth sampling session identifier: sequential recordings performed at different "
-                "electrode insertion depths within the same cortical penetration site. -1 for stimulation electrodes."
-            ),
-        )
-        
-
-        # Extract recording system metadata from file naming convention
-        base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811" from "v5811.1.mat"
-        
-        # Parse file naming convention: v[Site][Session] where:
-        # Characters 2-3: incremental count of recording chamber penetration sites
-        # Characters 4-5: count of recording sessions at different penetration depths
-        if len(base_name) >= 5 and base_name.startswith("v"):
-            recording_site_index = int(base_name[1:3])  # Characters 2-3 (site index)
-            recording_session_index = int(base_name[3:5])  # Characters 4-5 (session index)
-        else:
-            # Fallback for unexpected naming patterns
-            recording_site_index = -1
-            recording_session_index = -1
-
-        # Add recording electrode with chamber grid coordinates and recording system metadata
+        # Add recording electrode with chamber grid coordinates
         nwbfile.add_electrode(
             x=float("nan"),  # Unknown global coordinates
             y=float("nan"),
@@ -172,10 +142,7 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             chamber_grid_ap_mm=self.session_info["A_P"],
             chamber_grid_ml_mm=self.session_info["M_L"],
             chamber_insertion_depth_mm=self.session_info["Depth"],
-            recording_site_index=recording_site_index,
-            recording_session_index=recording_session_index,
         )
 
         if self.verbose:
             print(f"Added electrode configuration: 1 recording electrode in electrodes table")
-            print(f"Recording site index: {recording_site_index}, session index: {recording_session_index}")

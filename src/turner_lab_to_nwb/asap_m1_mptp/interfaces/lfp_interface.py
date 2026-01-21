@@ -86,7 +86,7 @@ class M1MPTPLFPInterface(BaseDataInterface):
 
         # Create LFP time series
         lfp_series = TimeSeries(
-            name="TimeSeriesLFP",
+            name="LFP",
             data=continuous_data,
             timestamps=timestamps,
             unit="volts",

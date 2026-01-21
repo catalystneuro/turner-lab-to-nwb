@@ -41,7 +41,7 @@ Overview of how the conversion writes the Turner Lab M1 MPTP sessions into an NW
 - EMG (`emg_interface.py`):
   - One acquisition `TimeSeries` per muscle channel, named `EMG{Muscle}` (e.g., `EMGTricepsLongus`, duplicates get numeric suffixes); unit `a.u.`, descriptions include muscle function and preprocessing.
 - LFP (`lfp_interface.py`):
-  - `TimeSeriesLFP` acquisition; volts, bandpass 1–100 Hz, concatenated across trials. See [lfp.md](lfp.md) for details.
+  - `LFP` acquisition; volts, bandpass 1–100 Hz, concatenated across trials. See [lfp.md](lfp.md) for details.
 
 ## Antidromic identification processing
 - Processing module `antidromic_identification` from `antidromic_stimulation_interface.py` stores per-sweep antidromic tests used for neuron classification.

@@ -63,7 +63,7 @@ columns = [
     "neuron_projection_types", "min_antidromic_latency_ms", "max_antidromic_latency_ms",
     "mean_antidromic_latency_ms", "receptive_field_locations", "total_trials", "flexion_trials",
     "extension_trials", "has_perturbation_trials", "perturbation_trial_count", "mean_peak_velocity",
-    "mean_movement_amplitude", "mean_reaction_time", "has_emg", "has_lfp", "dandiset_id", "dandiset_version",
+    "mean_movement_amplitude", "mean_reaction_time", "has_emg", "has_lfp", "has_isolation_monitoring_stim",
 ]
 with open(OUTPUT_PATH, "w") as f:
     f.write(",".join(columns) + "\n")
@@ -193,8 +193,11 @@ for asset in tqdm(nwb_assets, desc="Collecting metadata"):
     # -------------------------------------------------------------------------
     has_emg = any(name.startswith("EMG") for name in nwbfile.acquisition.keys())
     has_lfp = any(
-        name == "TimeSeriesLFP" or "LFP" in name for name in nwbfile.acquisition.keys()
+        name == "LFP" or "LFP" in name for name in nwbfile.acquisition.keys()
     )
+
+    # Isolation monitoring stimulation
+    has_isolation_monitoring_stim = trials_df["isolation_monitoring_stim_time"].notna().any()
 
     # -------------------------------------------------------------------------
     # Build row dictionary
@@ -238,9 +241,7 @@ for asset in tqdm(nwb_assets, desc="Collecting metadata"):
         # Data Availability Flags
         "has_emg": has_emg,
         "has_lfp": has_lfp,
-        # Collection Metadata
-        "dandiset_id": DANDISET_ID,
-        "dandiset_version": DANDISET_VERSION,
+        "has_isolation_monitoring_stim": has_isolation_monitoring_stim,
     }
 
     row_list.append(row_dict)

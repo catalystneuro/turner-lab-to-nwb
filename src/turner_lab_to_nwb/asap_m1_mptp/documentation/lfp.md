@@ -126,7 +126,7 @@ The LFP interface (`lfp_interface.py`) writes LFP data to the NWB file as a `Tim
 
 | Field | Value |
 |-------|-------|
-| NWB container | `nwbfile.acquisition['TimeSeriesLFP']` |
+| NWB container | `nwbfile.acquisition['LFP']` |
 | Class | `pynwb.TimeSeries` |
 | Unit | volts |
 | Description | Local field potential from microelectrode (10k gain, 1-100 Hz bandpass filtered) |
@@ -147,8 +147,8 @@ with NWBHDF5IO("session.nwb", "r") as io:
     nwbfile = io.read()
 
     # Check if LFP exists (not all sessions have it)
-    if "TimeSeriesLFP" in nwbfile.acquisition:
-        lfp = nwbfile.acquisition["TimeSeriesLFP"]
+    if "LFP" in nwbfile.acquisition:
+        lfp = nwbfile.acquisition["LFP"]
         lfp_data = lfp.data[:]
         lfp_timestamps = lfp.timestamps[:]
         print(f"LFP: {len(lfp_data)} samples")
@@ -168,9 +168,9 @@ trial_start = trials.iloc[trial_idx]["start_time"]
 trial_stop = trials.iloc[trial_idx]["stop_time"]
 
 # Find LFP samples within trial
-lfp_timestamps = nwbfile.acquisition["TimeSeriesLFP"].timestamps[:]
+lfp_timestamps = nwbfile.acquisition["LFP"].timestamps[:]
 mask = (lfp_timestamps >= trial_start) & (lfp_timestamps < trial_stop)
-trial_lfp = nwbfile.acquisition["TimeSeriesLFP"].data[mask]
+trial_lfp = nwbfile.acquisition["LFP"].data[mask]
 ```
 
 ## Limitations and Considerations
