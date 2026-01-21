@@ -137,26 +137,35 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "Stimulation threshold for antidromic response at secondary stimulation site (if applicable)",
             )
             nwbfile.add_unit_column(
-                "sensory_region",
-                "General body region where sensory responsiveness was observed: "
-                "hand, wrist, elbow, forearm, shoulder, finger, mixed regions (e.g., hand/wrist), "
-                "no_response, not_tested",
+                "receptive_field_location",
+                "Body region of the neuron's receptive field, determined through qualitative sensorimotor "
+                "examination during recording. The experimenter manually manipulated the monkey's arm while "
+                "listening to neural activity on an audio monitor. Values: 'hand', 'wrist', 'elbow', 'forearm', "
+                "'shoulder', 'finger', or combinations (e.g., 'hand / wrist', 'elbow / forearm'). "
+                "'no_response' indicates testing was performed but no sensory response was detected. "
+                "'not_tested' indicates sensory testing was not performed for this neuron.",
             )
             nwbfile.add_unit_column(
-                "sensory_detail",
-                "Detailed description of the sensory stimulus or manipulation that elicited response: "
-                "proprioceptive manipulations, tactile stimulations, active movements, or descriptive combinations",
+                "receptive_field_stimulus",
+                "Type of sensory stimulus or manipulation that activated this neuron, recorded during "
+                "qualitative receptive field mapping. Categories include: "
+                "proprioceptive (ext, flex, pron, sup for extension/flexion/pronation/supination), "
+                "tactile (light touch, palm probe, finger tap, cut stim for cutaneous), "
+                "active movement (active, active grip, active hand). "
+                "Combinations possible (e.g., 'finger ext & elbow ext'). "
+                "'NR' = no response detected, 'NT' = not tested, empty = no data recorded.",
             )
             nwbfile.add_unit_column(
                 "unit_name",
                 "Unit identifier from source MATLAB filename (1 or 2 for multi-unit sessions)",
             )
             nwbfile.add_unit_column(
-                "related_session_id",
-                "Session ID of related recording session where this same neuron was recorded again. "
-                "Value is 'none' if the unit was not re-recorded in another session, or the full session_id "
-                "(format: {Animal}{FName}++{MPTP}++Depth{depth}um++{date}) of the continuation session if it exists. "
-                "This links neurons that were recorded across multiple sessions at the same electrode location.",
+                "unit_also_in_session_id",
+                "Session ID where this same unit was also recorded, or empty if not applicable. "
+                "When researchers identified the same neuron across separate recording sessions "
+                "(typically during the same electrode penetration), this field links to that session. "
+                "Format matches session_id: {Animal}++{fname}++{Pre|Post}MPTP++Depth{um}um++{YYYYMMDD} "
+                "(e.g., 'V++v1501b++PreMPTP++Depth19700um++19990513').",
             )
             nwbfile.add_unit_column(
                 "pharmacology",
@@ -269,34 +278,34 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             antidromic_latency_2 = unit_meta.get("LAT2", float("nan"))
             antidromic_threshold_2 = unit_meta.get("Thresh2", float("nan"))
             
-            # Get sensory receptive field properties from metadata
-            sensory_region_raw = unit_meta.get("SENSORY", "")
-            sensory_detail_raw = unit_meta.get("SENS_DETAIL", "")
-            
-            # Normalize sensory region values for consistency
-            if sensory_region_raw == "NR":
-                sensory_region = "no_response"
-            elif sensory_region_raw == "NT":
-                sensory_region = "not_tested"
-            elif pd.isna(sensory_region_raw) or sensory_region_raw == "":
-                sensory_region = "not_tested"
-            else:
-                sensory_region = sensory_region_raw.lower()  # Standardize case
-            
-            # Normalize sensory detail values
-            if sensory_detail_raw in ["NR", "NT"] or pd.isna(sensory_detail_raw) or sensory_detail_raw == "":
-                sensory_detail = sensory_detail_raw if sensory_detail_raw in ["NR", "NT"] else ""
-            else:
-                sensory_detail = sensory_detail_raw  # Keep verbatim for richness
+            # Get receptive field properties from metadata
+            rf_location_raw = unit_meta.get("SENSORY", "")
+            rf_stimulus_raw = unit_meta.get("SENS_DETAIL", "")
 
-            # Determine related_session_id for cross-referenced recordings
-            # If FName2 and UnitNum2 are present, this unit continues in another session
+            # Normalize receptive field location values for consistency
+            if rf_location_raw == "NR":
+                receptive_field_location = "no_response"
+            elif rf_location_raw == "NT":
+                receptive_field_location = "not_tested"
+            elif pd.isna(rf_location_raw) or rf_location_raw == "":
+                receptive_field_location = "not_tested"
+            else:
+                receptive_field_location = rf_location_raw.lower()  # Standardize case
+
+            # Normalize receptive field stimulus values
+            if rf_stimulus_raw in ["NR", "NT"] or pd.isna(rf_stimulus_raw) or rf_stimulus_raw == "":
+                receptive_field_stimulus = rf_stimulus_raw if rf_stimulus_raw in ["NR", "NT"] else ""
+            else:
+                receptive_field_stimulus = rf_stimulus_raw  # Keep verbatim for richness
+
+            # Determine unit_also_in_session_id for cross-referenced recordings
+            # If FName2 and UnitNum2 are present, this unit was also recorded in another session
             fname2 = unit_meta.get("FName2", "")
             unitnum2 = unit_meta.get("UnitNum2", float("nan"))
 
             if pd.notna(fname2) and fname2 != "" and pd.notna(unitnum2):
                 # This unit has a cross-reference to another session
-                # Construct the related session_id using the same format as current session
+                # Construct session_id using same format as conversion_script.py
                 from datetime import datetime
 
                 # Get metadata for constructing session_id
@@ -318,15 +327,12 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 # Convert depth to micrometers
                 depth_um = int(depth_mm * 1000) if pd.notna(depth_mm) else 0
 
-                # Extract filename code from FName2 (everything after 'v' prefix)
-                fname2_code = fname2[1:] if fname2.startswith('v') else fname2
-
-                # Construct related session_id
+                # Construct session_id: {Animal}++{fname}++{MPTP}MPTP++Depth{um}um++{YYYYMMDD}
                 mptp_str = f"{mptp_condition}MPTP"
-                related_session_id = f"{animal}{fname2_code}++{mptp_str}++Depth{depth_um}um++{formatted_date}"
+                unit_also_in_session_id = f"{animal}++{fname2}++{mptp_str}++Depth{depth_um}um++{formatted_date}"
             else:
                 # No cross-reference for this unit
-                related_session_id = "none"
+                unit_also_in_session_id = ""
 
             # Determine pharmacology status from MPTP condition
             mptp_status = unit_meta.get("MPTP", "")
@@ -347,10 +353,10 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 antidromic_threshold=antidromic_threshold,
                 antidromic_latency_2_ms=antidromic_latency_2,
                 antidromic_threshold_2=antidromic_threshold_2,
-                sensory_region=sensory_region,
-                sensory_detail=sensory_detail,
+                receptive_field_location=receptive_field_location,
+                receptive_field_stimulus=receptive_field_stimulus,
                 unit_name=unit_num,
-                related_session_id=related_session_id,
+                unit_also_in_session_id=unit_also_in_session_id,
                 pharmacology=pharmacology,
             )
 

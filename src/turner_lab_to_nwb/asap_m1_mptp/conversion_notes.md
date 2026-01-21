@@ -15,6 +15,18 @@
 
 **CSV Metadata Entries:** 361 total entries in `ven_table.csv`
 
+### Neuron Counts Reported in Papers
+
+The published papers report the following neuron sample sizes (subset of the full dataset analyzed for each study):
+
+| Study | Paper | PTNs | CSNs | Total |
+|-------|-------|------|------|-------|
+| Active Movement | Brain 2016 | 153 | 126 | 279 |
+| Pyramidal Tract | Cerebral Cortex 2011 | 123 | 98 | 221 |
+| Muscle Stretch | Frontiers 2013 | 115 | 90 | 205 |
+
+Note: Neuron counts vary across papers because each study applied different inclusion criteria (e.g., minimum trials, task-related activity, quality thresholds).
+
 ### Data Streams to Convert
 
 The conversion pipeline will handle the following data streams:
@@ -42,29 +54,15 @@ The conversion pipeline will handle the following data streams:
 
 ### Electrode Coordinate System
 
-The Turner lab dataset uses **chamber-relative coordinates** rather than absolute stereotactic atlas coordinates:
+The Turner lab dataset uses **chamber-relative coordinates** rather than absolute stereotactic atlas coordinates.
 
-#### **Coordinate Reference Frame**
-- **Origin**: Chamber center/reference point (surgically positioned over left M1)
-- **Chamber specifications**: Cylindrical stainless steel, 35° coronal angle
-- **Coordinate system type**: Subject-specific, chamber-relative coordinates
+**📖 Full documentation**: [Anatomical Coordinates](documentation/anatomical_coordinates.md)
 
-#### **Coordinate Definitions**  
+**Quick reference:**
 - **A_P**: Anterior-Posterior position relative to chamber center (mm, positive = anterior)
-- **M_L**: Medial-Lateral position relative to chamber center (mm, positive = lateral)  
+- **M_L**: Medial-Lateral position relative to chamber center (mm, positive = lateral)
 - **Depth**: Electrode depth below chamber reference point (mm, positive = deeper)
-
-#### **Anatomical Context**
-- **Target region**: Primary motor cortex (M1), arm representation area
-- **Functional verification**: Electrode locations confirmed via microstimulation (≤40μA, 10 pulses at 300Hz)
-- **Anatomical landmark**: Within 3mm of anterior bank of central sulcus
-- **Layer targeting**: Layer 5 pyramidal neurons (PTNs and CSNs)
-
-#### **Clinical/Scientific Context**
-- **Initial targeting**: Chamber surgically positioned using stereotactic atlas coordinates
-- **Daily recordings**: Electrode positions defined relative to chamber for precision and reproducibility
-- **Cross-study comparisons**: Would require individual transformation to atlas coordinates
-- **Coordinate precision**: Sub-millimeter accuracy within chamber reference frame
+- **Target region**: Primary motor cortex (M1), arm representation area, Layer 5
 
 #### **Atlas Relationship**
 These coordinates do NOT directly correspond to standard macaque brain atlas coordinates (Horsley-Clarke, MNI Macaque Atlas, AC/PC-based). They represent positions within a subject-specific coordinate frame defined by the implanted recording chamber. For cross-study analysis, coordinates would need individual transformation based on each animal's anatomy and chamber placement.
@@ -113,16 +111,43 @@ These coordinates do NOT directly correspond to standard macaque brain atlas coo
 #### **Cell Type Identification**
 - **Source**: Metadata table `ven_table.csv`, column `Antidrom`
 - **Classifications**:
-  - `PED` = Pyramidal tract neurons (PTNs) 
+  - `PED` = Pyramidal tract neurons (PTNs)
   - `STRI` = Corticostriatal neurons (CSNs)
   - `NR` = No response, `NT` = Not tested
 
+#### **Receptive Field Testing**
+- **Source**: Metadata table `ven_table.csv`, columns `SENSORY` and `SENS_DETAIL`
+- **Purpose**: Qualitative characterization of each neuron's receptive field through manual sensorimotor examination
+- **receptive_field_location**: Body region(s) comprising the receptive field (hand, wrist, elbow, forearm, shoulder, finger)
+- **receptive_field_stimulus**: Stimulus type that activated the neuron (ext, flex, pron, sup, active, light touch)
+- **Distribution**: 35% hand-related, 10% proximal arm, 14% multiple regions, 28% no response, 19% not tested
+- **📖 Detailed documentation**: [Sensory Receptive Field Testing](documentation/sensory_receptive_field_testing.md)
+
 **📖 Complete reading instructions**: [File Structure Documentation](assets/data_exploration/file_structure.md)
+
+**📖 Additional documentation:**
+- [Trial Structure](documentation/trial_structure.md) - Trial timing and boundary definitions
+- [NWB Conversion Strategy](documentation/nwb_conversion.md) - Data stream mapping to NWB
+- [Stimulation Events](documentation/stimulation_events.md) - In-trial stimulation handling
+- [Electrodes in Experiment](documentation/electrodes_in_experiment.md) - Recording vs stimulation electrodes
 
 ### Data Format Variations
 
 The conversion handles different data formats automatically. Technical details documented separately for data authors.
 
+
+## Animal Subjects
+
+The dataset includes recordings from two rhesus macaque monkeys, the same subjects used across all three published papers.
+
+| Subject | ID | Species | Sex | Weight | Dataset Files |
+|---------|-----|---------|-----|--------|---------------|
+| Monkey V | Ven | *Macaca mulatta* | Female | 4.8 kg | v0502-v5604 |
+| Monkey L | Lau | *Macaca mulatta* | Female | 6.0 kg | Included in dataset |
+
+**Subject-specific EMG implants**:
+- **Monkey L**: flexor carpi ulnaris, flexor carpi radialis, biceps longus, brachioradialis, triceps lateralis
+- **Monkey V**: posterior deltoid, trapezius, triceps longus, triceps lateralis, brachioradialis
 
 ## Keywords
 **MPTP**: 1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine: A neurotoxin used to induce parkinsonism in primates by selectively destroying dopaminergic neurons in the substantia nigra.
@@ -154,6 +179,12 @@ The conversion handles different data formats automatically. Technical details d
 **TH**: Tyrosine Hydroxylase: Enzyme marker for dopaminergic neurons, used in histology to confirm MPTP-induced nigral cell loss.
 
 ## Paper notes and metadata
+
+**📖 Comprehensive paper summaries**: [Paper Summaries and Notes](assets/papers_summary_and_notes/)
+- [Active Movement Summary](assets/papers_summary_and_notes/active_movement_summary.md) - Pasquereau, DeLong & Turner (2016) Brain
+- [Pyramidal Tract Neurons Summary](assets/papers_summary_and_notes/pyramidal_tract_neurons_summary.md) - Pasquereau & Turner (2011) Cerebral Cortex
+- [Muscle Stretch Summary](assets/papers_summary_and_notes/muscle_stretch_summary.md) - Pasquereau & Turner (2013) Frontiers
+- [Experimental Setup Commonalities](assets/papers_summary_and_notes/experimental_setup_commonalities.md) - Cross-study comparison
 
 ### Surgery
 
