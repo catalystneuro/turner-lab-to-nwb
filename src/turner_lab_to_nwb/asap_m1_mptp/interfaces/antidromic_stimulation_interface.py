@@ -225,11 +225,14 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 "unit numbers in the series names to distinguish them.",
             )
 
+        # Add stimulation electrodes table (only when antidromic data exists)
+        self._add_stimulation_electrodes_table(antidromic_module)
+
         # Get or create intervals table for antidromic sweeps
         # For multi-unit sessions, multiple units add to the same table
-        if "AntidromicSweeps" not in nwbfile.intervals:
+        if "AntidromicSweepsIntervals" not in nwbfile.intervals:
             antidromic_sweeps = TimeIntervals(
-                name="AntidromicSweeps",
+                name="AntidromicSweepsIntervals",
                 description="Intervals table for antidromic stimulation sweeps. Each row represents one sweep "
                 "with links to the corresponding stimulation current and neural response ElectricalSeries. "
                 "Includes metadata about test type, stimulation location, and unit number. "
@@ -278,14 +281,18 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 name="stimulation_series_name",
                 description="Name of the TimeSeries containing stimulation current for this sweep",
             )
+            antidromic_sweeps.add_column(
+                name="stimulation_electrode",
+                description="Index into StimulationElectrodesTable indicating which electrode delivered the stimulation",
+            )
 
             nwbfile.add_time_intervals(antidromic_sweeps)
             if self.verbose:
-                print("Created AntidromicSweeps intervals table")
+                print("Created AntidromicSweepsIntervals intervals table")
         else:
-            antidromic_sweeps = nwbfile.intervals["AntidromicSweeps"]
+            antidromic_sweeps = nwbfile.intervals["AntidromicSweepsIntervals"]
             if self.verbose:
-                print("Adding to existing AntidromicSweeps table (multi-unit session)")
+                print("Adding to existing AntidromicSweepsIntervals table (multi-unit session)")
 
         # Calculate start time for antidromic data based on actual trial end times
         # Place antidromic data after all behavioral trials with a buffer
@@ -303,14 +310,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             if self.verbose:
                 print(f"No trials found, using configured offset: {stim_start_time:.1f}s")
 
-        # Define electrode mapping (indices in the electrode table)
-        electrode_map = {
-            "recording": 0,     # M1 recording electrode
-            "PedStim": 1,       # Cerebral peduncle stimulation
-            "StrStim": 2,       # Putamen stimulation (use first of 3)
-            "ThalStim": 5,      # VL thalamus stimulation
-            "STNStim": 1,       # Use peduncle if STN data exists (fallback)
-        }
+        # Define electrode mapping
+        # Recording electrode index in nwbfile.electrodes (only M1 recording electrode is there now)
+        recording_electrode_index = 0  # M1 recording electrode in nwbfile.electrodes
 
         # Location name mapping
         location_map = {
@@ -318,6 +320,15 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             "StrStim": "Striatum",
             "ThalStim": "Thalamus",
             "STNStim": "STN"
+        }
+
+        # Stimulation electrode index mapping (row indices in StimulationElectrodesTable)
+        # Row indices: 0=peduncle, 1-3=putamen (3 electrodes), 4=thalamus
+        stim_electrode_index_map = {
+            "PedStim": 0,   # Peduncle
+            "StrStim": 1,   # Putamen (use first of 3 as representative)
+            "ThalStim": 4,  # Thalamus
+            "STNStim": 0,   # Fallback to peduncle
         }
 
         # Process each unit file that has stimulation data
@@ -346,11 +357,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 # Data dimensions
                 n_samples, n_sweeps = unit_data.shape
 
-                # Get location name for this stimulation type
+                # Get location name and electrode index for this stimulation type
                 location = location_map[stim_type]
-
-                # Get electrode indices
-                recording_electrode_index = electrode_map["recording"]
+                stim_electrode_index = stim_electrode_index_map[stim_type]
 
                 # Create electrode table region for recording (used by ElectricalSeries response)
                 # Note: Stimulation uses TimeSeries (not ElectricalSeries) so doesn't need electrode region
@@ -485,6 +494,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                         stimulation_protocol=test_type,
                         location=location,
                         unit_name=str(unit_num),  # Convert to string for consistency with units table
+                        stimulation_electrode=stim_electrode_index,
                     )
 
                     total_sweeps_added += 1
@@ -503,3 +513,68 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             print(f"\nTotal: {total_sweeps_added} sweeps stored as {total_sweeps_added * 2} ElectricalSeries")
             print(f"Antidromic data placement: {stim_start_time:.1f}s - {stim_start_time + stim_type_offset + sweep_offset + 0.05:.1f}s")
             print(f"Inter-sweep interval: {self.inter_sweep_interval}s")
+
+    def _add_stimulation_electrodes_table(self, antidromic_module) -> None:
+        """
+        Add stimulation electrodes table to the antidromic_identification processing module.
+
+        This table documents the chronically implanted macroelectrodes used for antidromic
+        neuron identification.
+
+        Parameters
+        ----------
+        antidromic_module : ProcessingModule
+            The antidromic_identification processing module
+        """
+        from hdmf.common import DynamicTable, VectorData
+
+        # Only add the table once (check if it already exists)
+        if "StimulationElectrodesTable" in antidromic_module.data_interfaces:
+            return
+
+        # Create stimulation electrodes table
+        stim_electrodes_table = DynamicTable(
+            name="StimulationElectrodesTable",
+            description="Chronically implanted macroelectrodes for antidromic neuron identification. "
+            "These electrodes were surgically implanted and present for all recording sessions, "
+            "though antidromic testing was not performed for every recorded neuron. "
+            "Used to classify M1 neurons as PTNs (peduncle), CSNs (putamen), or thalamocortical neurons (thalamus). "
+            "Row indices: 0=peduncle, 1-3=putamen (3 electrodes), 4=thalamus.",
+            columns=[
+                VectorData(
+                    name="location",
+                    description="Anatomical location of stimulation site",
+                    data=[
+                        "Cerebral peduncle (pre-pontine)",
+                        "Putamen (posterolateral)",
+                        "Putamen (posterolateral)",
+                        "Putamen (posterolateral)",
+                        "Ventrolateral thalamus",
+                    ],
+                ),
+                VectorData(
+                    name="device_name",
+                    description="Name of the device in nwbfile.devices",
+                    data=[
+                        "DeviceMicrowirePeduncleStimulation",
+                        "DeviceMicrowirePutamenStimulation1",
+                        "DeviceMicrowirePutamenStimulation2",
+                        "DeviceMicrowirePutamenStimulation3",
+                        "DeviceMicrowireThalamicStimulation",
+                    ],
+                ),
+                VectorData(
+                    name="notes",
+                    description="Additional electrode-specific notes",
+                    data=[
+                        "Ventral to substantia nigra, arm-responsive pre-pontine region. For PTN identification.",
+                        "Electrode 1 of 3, posterolateral putamen for M1 CSN projections. Used as representative electrode reference for all StrStim data.",
+                        "Electrode 2 of 3, posterolateral putamen for M1 CSN projections. Physical electrode documented but not distinguished in source data.",
+                        "Electrode 3 of 3, posterolateral putamen for M1 CSN projections. Physical electrode documented but not distinguished in source data.",
+                        "VL thalamus for thalamocortical projection identification.",
+                    ],
+                ),
+            ],
+        )
+
+        antidromic_module.add(stim_electrodes_table)

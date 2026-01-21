@@ -264,13 +264,10 @@ if __name__ == "__main__":
         depth_um = int(primary_unit['Depth'] * 1000)  # Convert mm to μm
         depth_str = f"{depth_um}um"
 
-        # Extract filename code from fname, preserving full code including "b" suffix
-        # Example: "v5811" -> "5811", "v0502" -> "0502", "v3607b" -> "3607b"
-        filename_code = fname[1:]  # All characters after 'v' prefix
-        
-        # Create session ID with subject and filename code combined
+        # Create session ID with FName as separate component to avoid collisions
+        # (multiple sessions can have same Animal + MPTP + Depth + Date)
         mptp_condition = f"{primary_unit['MPTP']}MPTP"
-        session_id = f"{primary_unit['Animal']}{filename_code}++{mptp_condition}++Depth{depth_str}++{formatted_date}"
+        session_id = f"{primary_unit['Animal']}++{fname}++{mptp_condition}++Depth{depth_str}++{formatted_date}"
 
         # Use first unit file as base (interface will discover other units automatically)
         first_unit_num = primary_unit["UnitNum1"]

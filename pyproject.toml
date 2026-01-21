@@ -29,6 +29,8 @@ dependencies = [
     "numpy<2.3",
     "ndx-hed",
     "ndx-events",
+    "remfile>=0.1.13",
+    "hdmf",
 ]
 
 [project.urls]
@@ -85,6 +87,7 @@ known_first_party = ["turner_lab_to_nwb"]
 
 [tool.uv.sources]
 neuroconv = { path = "../../work_repos/neuroconv", editable = true }
+hdmf = {path = "../../work_repos/hdmf", editable = true}
 
 [dependency-groups]
 dev = [
@@ -94,3 +97,4 @@ dev = [
     "scikit-learn>=1.7.1",
     "seaborn>=0.13.2",
 ]
+
