@@ -168,11 +168,14 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "(e.g., 'V++v1501b++PreMPTP++Depth19700um++19990513').",
             )
             nwbfile.add_unit_column(
-                "pharmacology",
-                "MPTP treatment status at time of recording: "
-                "'pre_mptp' indicates baseline recording before MPTP administration, "
-                "'post_mptp' indicates recording obtained >30 days after MPTP administration "
-                "(0.5 mg/kg via unilateral left internal carotid artery) when parkinsonian symptoms were established.",
+                "is_post_mptp",
+                "Boolean indicating whether this unit was recorded after MPTP-induced parkinsonism. "
+                "MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine) is a neurotoxin administered once "
+                "(0.5 mg/kg via unilateral left internal carotid artery injection) to induce permanent "
+                "dopaminergic cell death in the substantia nigra, creating a stable parkinsonian state. "
+                "False = baseline recording before MPTP administration (healthy state). "
+                "True = recording obtained >30 days after MPTP when stable parkinsonian symptoms "
+                "(bradykinesia, rigidity, akinesia) were established.",
             )
 
         # Process each unit
@@ -334,14 +337,9 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 # No cross-reference for this unit
                 unit_also_in_session_id = ""
 
-            # Determine pharmacology status from MPTP condition
+            # Determine MPTP treatment status (boolean)
             mptp_status = unit_meta.get("MPTP", "")
-            if mptp_status == "Pre":
-                pharmacology = "pre_mptp"
-            elif mptp_status == "Post":
-                pharmacology = "post_mptp"
-            else:
-                pharmacology = "unknown"
+            is_post_mptp = mptp_status == "Post"
 
             # Add unit to NWB file - link to electrode index 0
             nwbfile.add_unit(
@@ -357,7 +355,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 receptive_field_stimulus=receptive_field_stimulus,
                 unit_name=unit_num,
                 unit_also_in_session_id=unit_also_in_session_id,
-                pharmacology=pharmacology,
+                is_post_mptp=is_post_mptp,
             )
 
             if self.verbose:

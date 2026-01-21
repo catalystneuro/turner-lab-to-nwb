@@ -272,6 +272,7 @@ The study found that PTNs were more severely affected by MPTP than CSNs, reveali
 - Antidromic stimulation traces: `nwbfile.processing['antidromic_identification']`
 - Cell type classification: `nwbfile.units['neuron_projection_type']` (pyramidal_tract_neuron, corticostriatal_neuron, not_tested, no_response)
 - Response properties: `nwbfile.units['antidromic_latency_ms']`, `nwbfile.units['antidromic_threshold']`
+- MPTP treatment status: `nwbfile.units['is_post_mptp']` (boolean: True=parkinsonian, False=baseline)
 
 ### NWB Surgery and Pharmacology Metadata
 

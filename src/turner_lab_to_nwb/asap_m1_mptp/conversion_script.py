@@ -121,9 +121,6 @@ def convert_session_to_nwbfile(
         "session_description"
     ] += f" MPTP condition: {session_info['MPTP']}. Cell types: {', '.join(cell_types)}."
     general_metadata["Subject"]["subject_id"] = session_info["Animal"]
-    general_metadata["Subject"][
-        "description"
-    ] = f"MPTP-treated parkinsonian macaque monkey. Recording date: {session_info['DateCollected']}. Stereotactic coordinates: A/P={session_info['A_P']}mm, M/L={session_info['M_L']}mm, Depth={session_info['Depth']}mm."
 
     # Add session-specific MPTP status to pharmacology field
     mptp_condition = session_info["MPTP"]
