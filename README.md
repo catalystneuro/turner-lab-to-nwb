@@ -1,6 +1,7 @@
 # turner-lab-to-nwb
 NWB conversion scripts for Turner lab data to the [Neurodata Without Borders](https://nwb-overview.readthedocs.io/) data format.
 
+**Requirements:** Python 3.12+
 
 ## Installation
 The package can be installed directly from GitHub, which has the advantage that the source code can be modified if you need to amend some of the code we originally provided to adapt to future experimental differences.
@@ -28,8 +29,16 @@ cd turner-lab-to-nwb
 pip install -e .
 ```
 
+Or using [uv](https://docs.astral.sh/uv/) (recommended for faster dependency resolution):
+
+```
+git clone https://github.com/catalystneuro/turner-lab-to-nwb
+cd turner-lab-to-nwb
+uv sync
+```
+
 Note:
-both of the methods above install the repository in [editable mode](https://pip.pypa.io/en/stable/cli/pip_install/#editable-installs).
+both pip and uv methods install the repository in [editable mode](https://pip.pypa.io/en/stable/cli/pip_install/#editable-installs).
 
 ## Repository structure
 Each conversion is organized in a directory of its own in the `src` directory:
@@ -39,73 +48,77 @@ Each conversion is organized in a directory of its own in the `src` directory:
     ├── make_env.yml
     ├── pyproject.toml
     ├── README.md
-    ├── requirements.txt
-    ├── setup.py
-    └── src
-        ├── turner_lab_to_nwb
-        │   ├── asap_embargo
-        │   └── asap_tdt
-        │       ├── extractors
-        │       │   ├── __init__.py
-        │       │   ├── asap_tdt_filtered_recordingextractor.py
-        │       │   └──  asap_tdt_sortingextractor.py
-        │       ├── interfaces
-        │       │   ├── __init__.py
-        │       │   ├── asap_tdt_eventsinterface.py
-        │       │   ├── asap_tdt_filtered_recordinginterface.py
-        │       │   ├── asap_tdt_recordinginterface.py
-        │       │   └── asap_tdt_sortinginterface.py
-        │       ├── metadata
-        │       │   ├── ecephys_metadata.yaml
-        │       │   ├── embargo_metadata.yaml
-        │       │   ├── public_metadata.yaml
-        │       │   ├── subjects_metadata.yaml
-        │       ├──tutorials
-        │       │   └── asap_tdt_demo.ipynb
-        │       ├── asap_tdt_convert_all_sessions.py
-        │       ├── asap_tdt_convert_session.py
-        │       ├── asap_tdt_notes.md
-        │       ├── asap_tdt_requirements.txt
-        │       ├── asap_tdtnwbconverter.py
-        │       └── __init__.py
-        └── __init__.py
+    ├── notebooks/
+    │   └── turner_m1_usage.ipynb
+    └── src/
+        └── turner_lab_to_nwb/
+            ├── asap_tdt/
+            │   ├── extractors/
+            │   ├── interfaces/
+            │   ├── metadata/
+            │   ├── tutorials/
+            │   ├── asap_tdt_convert_all_sessions.py
+            │   ├── asap_tdt_convert_session.py
+            │   ├── asap_tdt_notes.md
+            │   └── asap_tdtnwbconverter.py
+            └── asap_m1_mptp/
+                ├── assets/
+                ├── documentation/
+                ├── interfaces/
+                ├── conversion_script.py
+                ├── conversion_notes.md
+                └── metadata.yaml
 
-For the conversion `asap_tdt` you can find a directory located in `src/turner-lab-to-nwb/asap_tdt`. Inside the conversion directory you can find the following files:
+### asap_tdt
 
-* `asap_tdt_convert_all_sessions.py`: this script defines the function to convert all sessions of the conversion. (Note: this script requires the expected folder structure)
-* `asap_tdt_convert_sesion.py`: this script defines the function to convert one full session of the conversion.
-* `asap_tdt_notes.md`: notes and comments concerning this specific conversion.
-* `asap_tdt_requirements.txt`: dependencies specific to this conversion.
-* `asap_tdtnwbconverter.py`: the place where the `NWBConverter` class is defined.
-* `extractors`: a directory containing the recording and sorting extractors for this specific conversion.
-* `interfaces`: a directory containing the recording and sorting interfaces for this specific conversion.
-* `metadata`: a directory containing the metadata for this specific conversion.
-* `tutorials`: a directory containing tutorials and examples for this specific conversion.
+For the `asap_tdt` conversion, you can find a directory located in `src/turner_lab_to_nwb/asap_tdt`. This conversion handles TDT (Tucker-Davis Technologies) recording systems. Inside the conversion directory you can find the following files:
 
-### Notes on the conversion
+* `asap_tdt_convert_all_sessions.py`: script to convert all sessions (requires expected folder structure)
+* `asap_tdt_convert_session.py`: script to convert one full session
+* `asap_tdt_notes.md`: notes and comments concerning this specific conversion
+* `asap_tdtnwbconverter.py`: the `NWBConverter` class definition
+* `extractors/`: recording and sorting extractors
+* `interfaces/`: recording and sorting interfaces
+* `metadata/`: metadata YAML files
+* `tutorials/`: tutorials and examples (including `asap_tdt_demo.ipynb`)
 
-The conversion [notes](https://github.com/catalystneuro/turner-lab-to-nwb/blob/7fb10ded4850eeff6ddb688a5f1f8a77b8a98f01/src/turner_lab_to_nwb/asap_tdt/asap_tdt_notes.md)
-contain information about the expected folder structure and the conversion process.
+The conversion [notes](src/turner_lab_to_nwb/asap_tdt/asap_tdt_notes.md) contain information about the expected folder structure and the conversion process.
+
+### asap_m1_mptp
+
+For the `asap_m1_mptp` conversion, you can find a directory located in `src/turner_lab_to_nwb/asap_m1_mptp`. This conversion handles the Turner-Delong MPTP dataset (MATLAB-based single-unit recordings). Inside the conversion directory you can find the following files:
+
+* `conversion_script.py`: main conversion script
+* `conversion_notes.md`: detailed notes about data streams, experimental design, and technical specifications
+* `metadata.yaml`: session-level metadata template
+* `interfaces/`: data stream interfaces (spike times, trials, EMG, LFP, manipulandum, electrodes, antidromic stimulation)
+* `documentation/`: technical documentation (trial structure, anatomical coordinates, electrode configurations, etc.)
+* `assets/`: supporting materials including data exploration scripts, paper summaries, and HED documentation
 
 ### Running a specific conversion
-To run a specific conversion, you might need to install first some conversion specific dependencies that are located in each conversion directory:
+
+You can run a specific conversion with the following commands:
+
+**asap_tdt:**
 ```
-pip install -r src/turner_lab_to_nwb/asap_tdt/asap_tdt_requirements.txt
+python src/turner_lab_to_nwb/asap_tdt/asap_tdt_convert_session.py
 ```
 
-You can run a specific conversion with the following command:
+**asap_m1_mptp:**
 ```
-python src/turner_lab_to_nwb/asap_tdt/asap_tdt_convert_sesion.py
+python src/turner_lab_to_nwb/asap_m1_mptp/conversion_script.py
 ```
 
 ## NWB tutorials
 
-The `tutorials` directory contains Jupyter notebooks that demonstrate how to use the NWB files created by the conversion scripts.
+Jupyter notebooks demonstrate how to use the NWB files created by the conversion scripts:
+
+* **asap_tdt**: `src/turner_lab_to_nwb/asap_tdt/tutorials/asap_tdt_demo.ipynb`
+* **asap_m1_mptp**: `notebooks/turner_m1_usage.ipynb`
 
 You might need to install `jupyter` before running the notebooks:
 
 ```
 pip install jupyter
-cd src/turner_lab_to_nwb/asap_tdt/tutorials
 jupyter lab
 ```
