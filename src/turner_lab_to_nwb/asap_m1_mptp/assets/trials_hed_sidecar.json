@@ -4,51 +4,51 @@
     "description": "HED sidecar for Turner Lab M1 MPTP trials table columns"
   },
   "center_target_appearance_time": {
-    "Description": "Time when center target appeared for monkey to align cursor and initiate trial (seconds)",
+    "Description": "Time (in seconds) when center target appeared on screen, cueing the monkey to align cursor with center position and hold",
     "HED": "Sensory-event, Experimental-stimulus, Visual-presentation, Go-signal, Time-value/# s"
   },
   "lateral_target_appearance_time": {
-    "Description": "Time when lateral target appeared signaling monkey to move from center to flexion/extension position (seconds)",
+    "Description": "Time (in seconds) when peripheral target appeared (go cue), signaling the monkey to initiate movement toward the flexion or extension target",
     "HED": "Sensory-event, Experimental-stimulus, Visual-presentation, Cue, Time-value/# s"
   },
   "cursor_departure_time": {
-    "Description": "Time when cursor exited from start position after lateral target appearance. Detected by cursor position leaving start zone boundary (seconds)",
+    "Description": "Time (in seconds) when cursor exited the center target zone following the go cue",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), Participant-response, (Move, Elbow), Time-value/# s"
   },
   "reward_time": {
-    "Description": "Reward delivery. The animal received a drop of juice or food for successful completion of the task (seconds)",
+    "Description": "Time (in seconds) of liquid reward delivery for successful target acquisition and hold",
     "HED": "Sensory-event, Experimental-stimulus, Gustatory-presentation, Feedback, Reward, Time-value/# s"
   },
   "torque_perturbation_onset_time": {
-    "Description": "Onset time of unpredictable torque impulse (0.1 Nm, 50ms) applied to manipulandum 1-2s after center target capture (seconds)",
+    "Description": "Time (in seconds) of unpredictable torque impulse onset (0.1 Nm, 50 ms) applied to manipulandum 1-2 s after center target capture",
     "HED": "Sensory-event, Experimental-stimulus, Tactile-presentation, Time-value/# s"
   },
   "derived_movement_onset_time": {
-    "Description": "Onset time of target capture movement derived from kinematic analysis (seconds)",
+    "Description": "Time (in seconds) of movement onset from post-hoc kinematic analysis; detection algorithm used position, velocity, and duration criteria (exact parameters not documented)",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Time-value/# s"
   },
   "derived_movement_end_time": {
-    "Description": "End time of target capture movement derived from kinematic analysis (seconds)",
+    "Description": "Time (in seconds) of movement end from post-hoc kinematic analysis; detection algorithm used position, velocity, and duration criteria (exact parameters not documented)",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Time-value/# s"
   },
   "derived_peak_velocity": {
-    "Description": "Peak velocity during target capture movement derived from kinematic analysis (deg/s)",
+    "Description": "Maximum angular velocity (in degrees/second) of elbow joint during the movement, from kinematic analysis",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Parameter-value/#"
   },
   "derived_peak_velocity_time": {
-    "Description": "Time of peak velocity during target capture movement derived from kinematic analysis (seconds)",
+    "Description": "Time (in seconds) at which peak angular velocity occurred during the movement",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Data-maximum, Time-value/# s"
   },
   "derived_movement_amplitude": {
-    "Description": "Amplitude of target capture movement derived from kinematic analysis (degrees)",
+    "Description": "Total angular displacement (in degrees) of elbow joint from movement onset to end position",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Angle/# degree"
   },
   "derived_end_position": {
-    "Description": "Angular joint position at end of target capture movement (degrees)",
+    "Description": "Final elbow joint angle (in degrees) at movement end, relative to center position where 0 is the neutral hold position",
     "HED": "Agent-action, (Animal-agent, Experiment-participant), (Move, Elbow), Angle/# degree"
   },
   "isolation_monitoring_stim_time": {
-    "Description": "Time of antidromic stimulation pulse delivered during trial to monitor unit isolation. Single pulses were delivered early in some trials (~245ms after trial start) to activate otherwise silent neurons and verify recording isolation. NaN indicates no stimulation was delivered in that trial (seconds)",
+    "Description": "Time (in seconds) of antidromic stimulation pulse delivered during trial to monitor unit isolation. Single pulses were delivered early in some trials (~245 ms after trial start) to activate otherwise silent neurons and verify recording isolation. NaN indicates no stimulation was delivered in that trial",
     "HED": "Experiment-procedure, Somatic-presentation, Time-value/# s"
   },
   "isolation_monitoring_stim_site": {

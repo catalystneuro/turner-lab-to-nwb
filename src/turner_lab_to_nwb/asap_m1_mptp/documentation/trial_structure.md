@@ -1,247 +1,396 @@
-# Trial Structure and Timing Analysis
+# Behavioral Task and Trial Structure
 
 ## Overview
 
-This document describes trial structure and timing in the Turner Lab MPTP dataset, including how trial boundaries are defined for NWB conversion. The MATLAB data files contain trial-segmented data where all timing information (events, spikes, analog signals) is relative to individual trial starts.
+The Turner lab MPTP dataset contains recordings from macaque monkeys performing a visuomotor step-tracking task. This center-out reaching paradigm requires rapid, ballistic arm movements and provides a controlled framework for studying how parkinsonism affects cortical motor control. Each trial captures the full sequence of neural and muscular activity from target appearance through movement execution and reward delivery.
 
 **Related documentation:**
-- [File Structure](../assets/data_exploration/file_structure.md) - MATLAB data format specification
-- [Timing Analysis Summary](../assets/data_exploration/timing_analysis_summary.md) - Statistical summary of timing across all files
-- [NWB Conversion Strategy](nwb_conversion.md) - How trial data maps to NWB format
+- [EMG Recordings](emg_recordings.md) - Muscle activity during the task
+- [Anatomical Coordinates](anatomical_coordinates.md) - Recording site locations in motor cortex
+- [Antidromic Stimulation](antidromic_stimulation.md) - Neuron classification methods
+- [Trial Boundary Options](../assets/data_exploration/trial_boundary_options.md) - Technical details on NWB trial boundary definitions
 
-## NWB Trial Boundary Definition
+---
 
-This section analyzes different approaches for defining `start_time` and `stop_time` for trials in NWB format.
+## Part 1: The Visuomotor Step-Tracking Task
 
-## Data Structure Context
+### Scientific Purpose
 
-### Trial-Relative Timing
-All data in the MATLAB files is stored relative to individual trial starts:
-- **Event times**: Stored in milliseconds relative to trial start (e.g., center_target_appearance=2199ms, reward=8177ms)
-- **Spike times**: Stored in milliseconds relative to trial start
-- **Analog data**: Stored as separate arrays per trial (e.g., `Analog.x[trial_idx]`)
-- **Derived movement parameters**: Extracted kinematics from post-processing analysis relative to trial start
+The task was designed to elicit rapid, visually-guided arm movements that engage primary motor cortex (M1). Key features include:
 
-### Typical Trial Timeline
-**UPDATED**: Based on comprehensive analysis of 359 MATLAB files containing 9,949 trials:
+1. **Ballistic movements**: Quick, discrete movements that cannot be corrected mid-flight, reflecting the initial motor command
+2. **Directional selectivity**: Alternating flexion and extension movements allow assessment of directional tuning in M1 neurons
+3. **Consistent kinematics**: Standardized movement amplitude and speed enable comparison across conditions
+4. **Longitudinal design**: Same task performed before and after MPTP treatment allows direct comparison
+
+### The Manipulandum
+
+Monkeys controlled a cursor on a video display by rotating their elbow within a manipulandum, a mechanical device that converts arm movement into electronic signals:
+
+- **Movement axis**: Single degree of freedom (elbow flexion/extension)
+- **Coupling**: Rotating handle connected to a torque motor
+- **Feedback**: Real-time cursor position displayed on screen
+- **Perturbations**: Torque motor could deliver controlled mechanical perturbations (used in the muscle stretch study)
+
+### Why This Task?
+
+The step-tracking paradigm is well-established in motor neuroscience for studying cortical motor control because:
+
+- It isolates movement initiation and execution from complex planning
+- Movement parameters (direction, amplitude, speed) are experimentally controlled
+- Reaction times can be measured precisely
+- The same neural circuits are repeatedly engaged across trials
+- Compatible with simultaneous single-unit recording
+
+---
+
+## Part 2: Trial Structure
+
+Each trial follows a stereotyped sequence of events. The monkey must complete each phase successfully to receive a liquid reward.
+
+### Phase 1: Inter-trial Interval
+
+**Duration**: Variable (typically 2-3 seconds)
+
+Between trials, the monkey rests. No specific cursor position is required. This period allows the animal to consume the previous reward and provides a baseline period for neural activity.
+
+### Phase 2: Center Hold
+
+**Duration**: 1-2 seconds (randomized)
+
+**Events**:
+- Center target appears on screen
+- Monkey moves cursor to center target
+- Monkey must hold cursor within target zone
+
+**Purpose**:
+- Establishes consistent starting position for all movements
+- Randomized hold duration prevents anticipatory movements
+- Allows assessment of preparatory neural activity
+
+**Neural correlates**:
+- Low, sustained firing rates in M1 neurons
+- Some neurons show preparatory activity during the hold period
+- PTNs and CSNs both active during center hold
+
+### Phase 3: Go Cue / Target Appearance
+
+**Event**: Peripheral target appears (flexion or extension direction)
+
+**Timing**: Occurs at end of center hold period
+
+**Parameters**:
+- Target direction pseudorandomized across trials
+- Target amplitude: fixed within session (typically 20-25 degrees)
+- Visual feedback: immediate cursor-target display
+
+**Neural correlates**:
+- Directionally-tuned neurons begin modulating activity
+- Pre-movement activity builds before actual movement onset
+- PTNs show stronger directional tuning than CSNs
+
+### Phase 4: Reaction Time
+
+**Duration**: Typically 200-400 ms
+
+**Definition**: Time from go cue (target appearance) to movement onset
+
+**Significance**:
+- Reflects motor planning and preparation time
+- Prolonged in parkinsonism (part of akinesia/bradykinesia)
+- Neural activity during this period predicts movement parameters
+
+### Phase 5: Movement Execution
+
+**Duration**: Typically 150-300 ms
+
+**Kinematics measured**:
+| Parameter | Description | Typical Values |
+|-----------|-------------|----------------|
+| Peak velocity | Maximum movement speed | 80-120 degrees/second |
+| Movement duration | Onset to target acquisition | 150-300 ms |
+| Peak acceleration | Maximum rate of velocity change | Variable |
+| Movement amplitude | Total angular displacement | 20-25 degrees |
+
+**Neural correlates**:
+- Peak firing rates in movement-related neurons
+- PTNs show strongest modulation during this phase
+- Activity correlates with movement kinematics (velocity, direction)
+
+**Post-MPTP changes**:
+- Reduced peak velocity (bradykinesia)
+- Prolonged movement duration
+- Reduced movement amplitude (hypometria)
+- Reduced and delayed neural activity in PTNs
+
+### Phase 6: Target Hold
+
+**Duration**: Variable (typically 0.5-1 second)
+
+**Requirement**: Cursor must remain within peripheral target zone
+
+**Purpose**:
+- Ensures movement was completed accurately
+- Prevents premature reward delivery
+- Provides post-movement neural activity window
+
+### Phase 7: Reward
+
+**Event**: Liquid reward delivered upon successful target hold
+
+**Significance**:
+- Marks behavioral completion of trial
+- Provides positive reinforcement
+- Reward timing can influence neural activity in some circuits
+
+---
+
+## Part 3: Trial Timeline Visualization
+
 ```
-Trial Start (0ms)
+Trial Start (0 ms)
     |
-    ├── Center Target Appearance (2,453ms ± 756ms)
-    |   • Range: 1,272-11,420ms across dataset
-    |   • Visual cue for monkey to align cursor with center position
-    |   
-    ├── [Hold Period: ~4.1s average]
-    |   • Monkey maintains cursor at center target
-    |   • Torque perturbations applied here when present (1-2s after capture)
-    |     └── Torque Impulse: 0.1 Nm, 50ms, causing ~10° displacement
+    |--- [Pre-task baseline: ~2.5 s average] ---
     |
-    ├── Lateral Target Appearance (6,563ms ± 1,288ms)
-    |   • Range: 4,042-20,586ms across dataset
-    |   • Peripheral target signals movement direction (flexion/extension)
+    +-- Center Target Appearance (~2.5 s)
+    |     Monkey aligns cursor to center
     |
-    ├── [Reaction Time: ~430ms average]
-    |   • Motor planning and decision period
+    |--- [Center Hold: 1-2 s randomized] ---
     |
-    ├── Subject Movement Onset (6,993ms ± 1,291ms)
-    |   • Range: 4,330-21,362ms across dataset
-    |   • Monkey begins movement from center toward lateral target
-    |   │
-    |   ├── Derived Movement Onset (6,898ms ± 1,273ms)
-    |   │   • Algorithmically detected movement start from kinematics
-    |   │   • Range: 4,334-21,103ms
-    |   │
-    |   ├── Peak Velocity Time (7,089ms ± 1,272ms)
-    |   │   • Range: 4,518-21,386ms
-    |   │   • Maximum velocity: 101.9±37.5°/s (range: 20.2-254.8°/s)
-    |   │
-    |   └── Derived Movement End (7,286ms ± 1,276ms)
-    |       • Range: 4,697-21,563ms
-    |       • Movement amplitude: -3.4±19.7° (range: -37.9° to 30.4°)
-    |       • End position: -1.3±19.5° (range: -28.8° to 30.1°)
+    +-- Lateral Target Appearance / Go Cue (~6.5 s)
+    |     Peripheral target signals movement direction
     |
-    ├── Reward Delivery (7,950ms ± 1,319ms)
-    |   • Range: 5,305-22,331ms across dataset
-    |   • Liquid reward for successful target acquisition
+    |--- [Reaction Time: ~300-500 ms] ---
     |
-    └── Recording End (8,748ms ± 1,382ms)
-        • Range: 1,548-23,068ms across dataset
-        • Analog data capture continues ~799ms beyond reward
-        • 1kHz sampling for position, velocity, torque, EMG, LFP
-        • Spike times recorded throughout with millisecond precision
+    +-- Movement Onset (~7.0 s)
+    |     |
+    |     +-- Peak Velocity (~7.1 s)
+    |     |     Maximum movement speed
+    |     |
+    |     +-- Movement End (~7.3 s)
+    |           Target acquired
+    |
+    |--- [Target Hold: 0.5-1 s] ---
+    |
+    +-- Reward Delivery (~8.0 s)
+    |     Liquid reward for successful completion
+    |
+    +-- Recording End (~8.7 s)
+          Data capture continues briefly post-reward
 ```
 
-### Key Timing Statistics (Updated from 9,949 trials)
-- **Center target to lateral target**: ~4,110ms (SD: 1,288ms)
-- **Lateral target to subject movement**: ~430ms (SD: varies)  
-- **Subject movement to reward**: ~957ms (SD: varies)
-- **Analog recording duration**: 1.5-23.1s per trial (mean: 8.7s)
-- **Data beyond reward**: ~799ms average
+### Timing Statistics
 
-## Trial Boundary Options
+Based on analysis of 9,949 trials across 359 recording sessions:
 
-### Option 1: Event-Based Boundaries (0 to reward + 1.0s)
+| Event | Mean Time | Standard Deviation | Range |
+|-------|-----------|-------------------|-------|
+| Center target on | 2,453 ms | 756 ms | 1,272-11,420 ms |
+| Lateral target on | 6,563 ms | 1,288 ms | 4,042-20,586 ms |
+| Movement onset | 6,993 ms | 1,291 ms | 4,330-21,362 ms |
+| Peak velocity | 7,089 ms | 1,272 ms | 4,518-21,386 ms |
+| Movement end | 7,286 ms | 1,276 ms | 4,697-21,563 ms |
+| Reward | 7,950 ms | 1,319 ms | 5,305-22,331 ms |
 
-**Definition**: 
-- `start_time = 0` (relative to trial recording start)
-- `stop_time = reward_time + 1.0s`
+Note: All times are relative to trial start (time 0). The wide ranges reflect variation in center hold duration and occasional atypical trials.
 
-**Rationale**:
-- Reward marks behavioral task completion
-- 1-second buffer captures post-reward neural responses
-- Consistent with typical motor control study conventions
-- Aligns with task structure described in published papers
+### Aborted and Incomplete Trials
 
-**Advantages**:
-- ✅ Contains all behavioral events
-- ✅ Contains all analog data (verified across test files)
-- ✅ Contains all spike data  
-- ✅ Biologically meaningful endpoints
-- ✅ Consistent trial durations (7.3-10.3s)
+Not all trials in the dataset were completed successfully. The NWB files preserve these trials with missing values (NaN) for events that did not occur.
 
-**Disadvantages**:
-- ❌ May truncate very late neural activity
-- ❌ Fixed buffer may not suit all trial types
+**Aborted trials**: Trials where the monkey broke fixation or the trial was manually terminated before the go cue. These trials have:
+- `lateral_target_appearance_time` = NaN (go cue never presented)
+- `cursor_departure_time` = NaN
+- `reward_time` = NaN
+- All derived kinematic columns = NaN
 
-**Implementation**:
+**Trials with missing kinematic data**: Some completed trials (with reward delivery) lack derived movement parameters. This occurs when the kinematic detection algorithm could not reliably identify movement onset/end, typically because:
+- The movement was atypical (very slow, multi-phasic, or corrective)
+- Post-MPTP bradykinesia produced velocity profiles that didn't meet detection criteria
+- The velocity trace was noisy or ambiguous
+
+For these trials:
+- Behavioral events (`lateral_target_appearance_time`, `cursor_departure_time`, `reward_time`) are present
+- Derived columns (`derived_movement_onset_time`, `derived_movement_end_time`, `derived_peak_velocity`, etc.) = NaN
+
+**Handling in analysis**: When analyzing trial data, filter for complete trials:
+
 ```python
-trial_start = cumulative_time
-trial_stop = cumulative_time + reward_time/1000 + 1.0
-cumulative_time = trial_stop + inter_trial_interval
+# Get only complete trials with kinematic data
+complete_trials = trials_df.dropna(subset=['derived_movement_end_time'])
+
+# Get only successful trials (may lack kinematic data)
+successful_trials = trials_df.dropna(subset=['reward_time'])
 ```
 
-### Option 2: Analog-Based Boundaries (0 to analog_end)
+---
 
-**Definition**:
-- `start_time = 0`
-- `stop_time = len(Analog.x[trial]) / 1000.0` (full analog duration)
+## Part 4: Torque Perturbation Trials
 
-**Rationale**:
-- Uses natural recording boundaries
-- Preserves all recorded data
-- No assumptions about relevant time windows
-- Matches actual data collection parameters
+A subset of trials included brief mechanical perturbations delivered during the center hold period. These trials were used in the muscle stretch study to examine proprioceptive responses.
 
-**Advantages**:
-- ✅ Guaranteed to contain ALL recorded data
-- ✅ No data truncation
-- ✅ Preserves late neural responses
-- ✅ True to original recording structure
-- ✅ Variable trial lengths reflect actual experimental conditions
+### Perturbation Parameters
 
-**Disadvantages**:
-- ❌ May include irrelevant post-task activity
-- ❌ Slightly larger file sizes
+| Parameter | Value |
+|-----------|-------|
+| Torque magnitude | 0.1 Nm |
+| Duration | 50 ms |
+| Resulting displacement | ~10 degrees |
+| Direction | Flexion or extension |
+| Timing | 1-2 seconds after center target capture |
 
-**Implementation**:
+### Purpose
+
+Torque perturbations activate muscle spindle afferents, triggering stretch reflex responses. By recording M1 neurons during these perturbations, researchers could:
+
+1. Measure cortical responses to proprioceptive input
+2. Compare transcortical reflex components across conditions
+3. Assess whether parkinsonian rigidity involves cortical hyperexcitability
+
+### Key Finding
+
+Post-MPTP, the long-latency stretch reflex (measured via EMG) was enhanced, but M1 cortical responses were not enhanced. This dissociation suggests the exaggerated stretch reflex in parkinsonism is primarily mediated by spinal mechanisms rather than cortical hyperexcitability.
+
+---
+
+## Part 5: Trial Events in NWB Files
+
+### Trials Table Structure
+
+Each trial is represented as a row in the NWB trials table with the following columns:
+
+| Column | Description | Units |
+|--------|-------------|-------|
+| `start_time` | Trial start relative to session | seconds |
+| `stop_time` | Trial end relative to session | seconds |
+| `go_cue_time` | Target appearance (movement cue) | seconds |
+| `movement_onset_time` | Subject-reported movement start | seconds |
+| `reward_time` | Reward delivery | seconds |
+| `target_direction` | Movement direction | "flexion" or "extension" |
+
+### Derived Kinematic Columns
+
+| Column | Description | Units |
+|--------|-------------|-------|
+| `derived_movement_onset_time` | Algorithmically detected onset | seconds |
+| `derived_movement_end_time` | Algorithmically detected end | seconds |
+| `peak_velocity_time` | Time of maximum velocity | seconds |
+| `peak_velocity` | Maximum velocity magnitude | degrees/second |
+| `movement_amplitude` | Total angular displacement | degrees |
+| `end_position` | Final position | degrees |
+
+### Perturbation Columns (when present)
+
+| Column | Description | Units |
+|--------|-------------|-------|
+| `torque_flexion_time` | Flexion perturbation onset | seconds |
+| `torque_extension_time` | Extension perturbation onset | seconds |
+
+### Example: Accessing Trial Data
+
 ```python
-trial_start = cumulative_time
-trial_stop = cumulative_time + len(analog_data[trial]) / 1000.0
-cumulative_time = trial_stop + inter_trial_interval
+from pynwb import NWBHDF5IO
+
+with NWBHDF5IO('session.nwb', 'r') as io:
+    nwbfile = io.read()
+
+    # Get trials as DataFrame
+    trials = nwbfile.trials.to_dataframe()
+
+    # Find all extension trials
+    extension_trials = trials[trials['target_direction'] == 'extension']
+
+    # Calculate reaction times
+    trials['reaction_time'] = trials['movement_onset_time'] - trials['go_cue_time']
+
+    # Get mean reaction time
+    print(f"Mean reaction time: {trials['reaction_time'].mean():.3f} seconds")
 ```
 
-### Option 3: Center Target to Reward + Buffer
+---
 
-**Definition**:
-- `start_time = center_target_appearance_time` (first behavioral event)
-- `stop_time = reward_time + 0.5s`
+## Part 6: Alignment to Neural and Analog Data
 
-**Rationale**:
-- Trial starts with first task-relevant event (center target appearance)
-- Minimal pre-task baseline included
-- Focuses on behaviorally relevant period
-- Reduces data storage for pre-task periods
+### Temporal Alignment
 
-**Advantages**:
-- ✅ Tightly aligned with task execution
-- ✅ Minimal irrelevant data
-- ✅ Clear behavioral anchoring
-- ✅ Smaller file sizes
+All event times in the trials table are expressed in seconds relative to session start, allowing direct alignment with:
 
-**Disadvantages**:
-- ❌ Loses pre-center-target baseline activity
-- ❌ May miss preparatory neural signals
-- ❌ Incompatible with some baseline correction methods
-- ❌ Doesn't contain full analog recordings
+- **Spike times**: `nwbfile.units['spike_times']` are in the same timebase
+- **Analog signals**: Position, velocity, EMG timestamps align directly
+- **LFP data**: Same session-relative timing
 
-**Implementation**:
+### Extracting Peri-Event Activity
+
 ```python
-trial_start = cumulative_time
-trial_stop = cumulative_time + (reward_time - center_target_appearance_time)/1000 + 0.5
-cumulative_time = trial_stop + inter_trial_interval
+import numpy as np
+
+# Get spike times for a unit
+unit_idx = 0
+spike_times = nwbfile.units['spike_times'][unit_idx]
+
+# Align to movement onset for first trial
+trial = trials.iloc[0]
+movement_onset = trial['movement_onset_time']
+
+# Find spikes within window (-500 ms to +500 ms)
+window = 0.5  # seconds
+mask = (spike_times >= movement_onset - window) & (spike_times <= movement_onset + window)
+aligned_spikes = spike_times[mask] - movement_onset  # Now relative to movement onset
+
+print(f"Found {len(aligned_spikes)} spikes in peri-movement window")
 ```
 
-## Analysis Results
+### Trial-Averaged Analysis
 
-### Data Containment Testing
+The standard approach for analyzing movement-related neural activity:
 
-Testing across three representative files (v0502.1.mat, v3601.1.mat, v0601.1.mat):
+1. Select trials by condition (e.g., extension movements only)
+2. Align all trials to a common event (e.g., movement onset)
+3. Bin spike times to create peri-event time histograms (PETHs)
+4. Average across trials to estimate the neuron's response profile
 
-| Approach | Events | Analog | Spikes | Consistency |
-|----------|--------|--------|--------|-------------|
-| 0 to reward+1.0s | ✅ 100% | ✅ 100% | ✅ 100% | High |
-| 0 to analog_end | ✅ 100% | ✅ 100% | ✅ 100% | High |
-| center_target to reward+0.5s | ✅ 100% | ❌ 60% | ❌ 70% | Medium |
+---
 
-### Trial Duration Distribution
-**UPDATED**: Based on comprehensive analysis of 9,949 trials:
+## Part 7: Key Findings from the Active Movement Study
 
-| Approach | Min | Max | Mean | StdDev |
-|----------|-----|-----|------|--------|
-| Event-based (0 to reward+1s) | 6.3s | 23.3s | 9.0s | 1.3s |
-| Analog-based (actual recordings) | 1.5s | 23.1s | 8.7s | 1.4s |
-| Center target to reward+0.5s | 4.8s | 22.8s | 8.4s | 1.3s |
+### Parkinsonian Motor Deficits
 
-## Inter-Trial Intervals
+Behavioral analysis of task performance revealed characteristic parkinsonian changes post-MPTP:
 
-The `inter_trial_time_interval` parameter (default: 3.0s) represents the gap between trials, not trial duration. This creates a continuous timeline where:
+| Measure | Pre-MPTP | Post-MPTP | Change |
+|---------|----------|-----------|--------|
+| Reaction time | ~300 ms | ~400 ms | +33% |
+| Peak velocity | ~110 deg/s | ~80 deg/s | -27% |
+| Movement duration | ~200 ms | ~300 ms | +50% |
 
-```
-Trial 0: [0, stop_0]
-Gap: [stop_0, stop_0 + 3.0]
-Trial 1: [stop_0 + 3.0, stop_1]
-Gap: [stop_1, stop_1 + 3.0]
-Trial 2: [stop_1 + 3.0, stop_2]
-...
-```
+### Neural Encoding Deficits
 
-## Recommendation for Discussion
+Using generalized linear models (GLMs), the study quantified how well M1 neurons encoded movement kinematics:
 
-**Primary recommendation**: **Option 1 (Event-based: 0 to reward + 1.0s)**
+**Pyramidal Tract Neurons (PTNs)**:
+- 50% reduction in movement-related activity
+- 37% reduction in kinematic encoding strength
+- Degraded directional tuning
 
-This approach balances biological significance with data completeness. It:
-- Aligns with experimental design (reward marks trial completion)
-- Contains all recorded data based on testing
-- Provides consistent, meaningful boundaries
-- Follows conventions in motor neuroscience literature
+**Corticostriatal Neurons (CSNs)**:
+- 21% reduction in movement-related activity
+- 18% reduction in kinematic encoding
+- Relatively preserved directional tuning
 
-**Alternative for consideration**: **Option 2 (Analog-based)**
+### Interpretation
 
-If preserving every millisecond of recorded data is critical, using analog boundaries ensures no data loss while maintaining the natural structure of the recordings. Variable trial lengths are not problematic and actually reflect the true experimental conditions.
+The selective impairment of PTNs (the direct cortical output to spinal cord) while CSNs (cortical input to basal ganglia) are relatively preserved suggests that:
 
-## Questions for Data Authors
+1. Parkinsonian motor deficits reflect impaired cortical motor commands, not just basal ganglia dysfunction
+2. The corticospinal pathway is preferentially affected
+3. Reduced PTN activity directly contributes to bradykinesia through weakened motor commands
 
-1. **Biological significance**: Is there important neural activity beyond reward + 1.0s that should be preserved?
-
-2. **Task design**: Were trials intentionally recorded for specific durations, or did recording stop naturally after task completion?
-
-3. **Inter-trial intervals**: Is the 3.0s default inter-trial interval accurate for the experimental protocol?
-
-4. **Pre-center-target activity**: Is the pre-center-target period (0 to ~2.5s) scientifically important for baseline or preparatory activity analysis?
-
-5. **Data completeness priority**: Should we prioritize preserving all recorded data (Option 2) or focus on behaviorally relevant periods (Option 1)?
-
-## Implementation Notes
-
-The chosen approach will affect:
-- Total NWB file size
-- Memory requirements for analysis
-- Compatibility with analysis pipelines
-- Interpretability of neural dynamics
-
-The conversion pipeline should document which approach was used and provide rationale for future users of the dataset.
+---
 
 ## References
 
-- [Active Movement Paper Summary](../assets/papers_summary_and_notes/active_movement_summary.md) - Task paradigm description
-- [Experimental Setup Commonalities](../assets/papers_summary_and_notes/experimental_setup_commonalities.md) - Cross-study task comparison
+- Pasquereau B, DeLong MR, Turner RS (2016) Primary motor cortex of the parkinsonian monkey: altered encoding of active movement. *Brain* 139:127-143.
+
+- Pasquereau B, Turner RS (2013) Primary motor cortex of the parkinsonian monkey: altered neuronal responses to muscle stretch. *Frontiers in Systems Neuroscience* 7:98.
+
+- Pasquereau B, Turner RS (2011) Primary motor cortex of the parkinsonian monkey: differential effects on the spontaneous activity of pyramidal tract-type neurons. *Cerebral Cortex* 21:1362-1378.
