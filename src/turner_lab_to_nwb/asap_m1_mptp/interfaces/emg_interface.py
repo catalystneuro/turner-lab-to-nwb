@@ -18,11 +18,28 @@ class M1MPTPEMGInterface(BaseDataInterface):
 
     # Map abbreviated muscle names from metadata to full anatomical names
     MUSCLE_NAME_MAP = {
+        # Monkey V (elbow task)
         "triceps long.": "TricepsLongus",
         "triceps lat.": "TricepsLateralis",
         "brachioradialis": "Brachioradialis",
         "trapezius": "Trapezius",
         "deltoid post.": "DeltoidPosterior",
+        # Monkey L (wrist task)
+        "flexor carpi ulnaris": "FlexorCarpiUlnaris",
+        "flexor carpi radialis": "FlexorCarpiRadialis",
+        "biceps longus": "BicepsLongus",
+    }
+
+    # Muscle descriptions including anatomical function
+    MUSCLE_DESCRIPTIONS = {
+        "triceps long.": "Triceps longus (long head) - elbow extensor",
+        "triceps lat.": "Triceps lateralis (lateral head) - elbow extensor",
+        "brachioradialis": "Brachioradialis - elbow flexor and forearm supinator/pronator",
+        "trapezius": "Trapezius - shoulder and scapula stabilizer",
+        "deltoid post.": "Posterior deltoid - shoulder extensor and external rotator",
+        "flexor carpi ulnaris": "Flexor carpi ulnaris - wrist flexor and ulnar deviator",
+        "flexor carpi radialis": "Flexor carpi radialis - wrist flexor and radial deviator",
+        "biceps longus": "Biceps brachii (long head) - elbow flexor and forearm supinator",
     }
 
     def __init__(
@@ -142,10 +159,20 @@ class M1MPTPEMGInterface(BaseDataInterface):
             channel_data = continuous_data[:, channel_index]
             muscle_name = self.muscle_names[channel_index]
             series_name = series_names[channel_index]
+
+            # Get muscle description with anatomical function
+            muscle_description = self.MUSCLE_DESCRIPTIONS.get(muscle_name, muscle_name)
+
             description = (
-                f"EMG signal from {muscle_name}. "
-                "Recorded via chronically-implanted Teflon-insulated multistranded stainless steel wire electrode. "
-                "Data preprocessed (rectified and low-pass filtered). Electrode placement verified post-surgically."
+                f"Preprocessed EMG from {muscle_description}. "
+                "Recording: chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
+                "Signal processing: differentially amplified (gain=10,000), bandpass filtered (20 Hz - 5 kHz), "
+                "full-wave rectified, low-pass filtered (100 Hz), then digitized."
+            )
+
+            comments = (
+                "Data are uncalibrated A/D converter values (centered ~2048, consistent with 12-bit digitization). "
+                "No voltage calibration factor is available. Values represent relative muscle activation magnitude."
             )
 
             # Create EMG time series for this channel
@@ -155,6 +182,7 @@ class M1MPTPEMGInterface(BaseDataInterface):
                 timestamps=timestamps,
                 unit="a.u.",
                 description=description,
+                comments=comments,
             )
 
             nwbfile.add_acquisition(emg_series)

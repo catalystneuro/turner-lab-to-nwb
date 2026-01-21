@@ -264,7 +264,7 @@ In converted NWB files, antidromic data appears in:
 - `antidromic_stimulation_sites`: Sites tested
 
 **Intervals table:**
-- `nwbfile.intervals["TimeIntervalsAntidromicProtocol"]`: Sweep-level data including:
+- `nwbfile.intervals["AntidromicSweepsIntervals"]`: Sweep-level data including:
   - `stimulation_protocol`: `'FrequencyFollowing'` or `'Collision'`
   - `sweep_number`: Sequential sweep identifier
   - `unit_name`: Associated unit
