@@ -1,9 +1,11 @@
 from typing import Optional
 
+import numpy as np
 from pydantic import FilePath
 from pynwb import NWBFile, TimeSeries
-from pynwb.ecephys import ElectricalSeries, DynamicTableRegion
+from pynwb.ecephys import ElectricalSeries
 from pynwb.file import TimeIntervals
+from pynwb.base import TimeSeriesReferenceVectorData, TimeSeriesReference
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
@@ -87,12 +89,12 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
     def _parse_test_types(self, trace_names: list) -> str:
         """
         Parse cryptic test type names into human-readable descriptions.
-        
+
         Parameters
         ----------
         trace_names : list
             List of trace names like ['coll_1', 'ff_2', 'thal']
-            
+
         Returns
         -------
         str
@@ -100,68 +102,28 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         """
         if not trace_names:
             return "Test types: unknown"
-            
+
         collision_tests = [name for name in trace_names if name.startswith('coll_')]
         frequency_tests = [name for name in trace_names if name.startswith('ff_')]
         orthodromic_tests = [name for name in trace_names if name in ['thal', 'orthodromic']]
-        
+
         test_descriptions = []
-        
+
         if collision_tests:
             test_descriptions.append(f"collision tests ({len(collision_tests)} sweeps)")
-            
+
         if frequency_tests:
             test_descriptions.append(f"frequency-following tests ({len(frequency_tests)} sweeps)")
-            
+
         if orthodromic_tests:
             test_descriptions.append(f"orthodromic activation tests ({len(orthodromic_tests)} sweeps)")
-        
+
         if test_descriptions:
             return f"Tests performed: {', '.join(test_descriptions)}. " \
                    f"Collision tests verify antidromic spike collision with spontaneous spikes. " \
                    f"Frequency-following tests verify consistent latency at high stimulation rates."
         else:
             return f"Test types: {set(trace_names)}"
-
-    def _validate_timestamps(self, timestamps_list: list) -> bool:
-        """
-        Validate that timestamps within the interface don't overlap.
-        
-        This method will be removed once we get data for monkey L to confirm
-        the temporal structure is consistent across subjects.
-        
-        Parameters
-        ----------
-        timestamps_list : list
-            List of timestamp arrays for different stimulation types
-            
-        Returns
-        -------
-        bool
-            True if no overlaps detected, False otherwise
-        """
-        if len(timestamps_list) <= 1:
-            return True
-            
-        # Sort all timestamps and check for overlaps
-        all_timestamps = []
-        for i, timestamps in enumerate(timestamps_list):
-            for t in timestamps:
-                all_timestamps.append((t, i))
-        
-        all_timestamps.sort()
-        
-        # Check for overlaps (timestamps from different series within 0.001s)
-        for i in range(len(all_timestamps) - 1):
-            t1, series1 = all_timestamps[i]
-            t2, series2 = all_timestamps[i + 1]
-            
-            if series1 != series2 and abs(t2 - t1) < 0.001:  # 1ms tolerance
-                if self.verbose:
-                    print(f"Warning: Timestamp overlap detected at {t1:.3f}s between series {series1} and {series2}")
-                return False
-                
-        return True
 
     def _parse_test_type_name(self, trace_name: str) -> str:
         """
@@ -191,9 +153,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         """
         Add antidromic stimulation data to the NWB file.
 
-        Each sweep is stored as a separate series pair (response + stimulation).
-        Naming convention: Antidromic{Response|Stimulation}Unit{N}{Location}{TestType}Sweep{NN}
-        Example: AntidromicResponseUnit1StriatumCollisionSweep05
+        Uses consolidated series approach: one response series and one stimulation series
+        per unit/location combination, with TimeSeriesReferenceVectorData in the intervals
+        table to reference specific sweep segments within each series.
 
         Parameters
         ----------
@@ -208,7 +170,6 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             return
 
         # Get or create processing module for antidromic identification
-        # For multi-unit sessions, multiple units may add data to the same module
         if "antidromic_identification" in nwbfile.processing:
             antidromic_module = nwbfile.processing["antidromic_identification"]
             if self.verbose:
@@ -217,31 +178,31 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             antidromic_module = nwbfile.create_processing_module(
                 name="antidromic_identification",
                 description="Antidromic stimulation tests for neuron classification. "
-                "Each sweep is stored as a separate ElectricalSeries pair (response + stimulation). "
-                "Contains electrical stimulation current and neural response recordings (50ms sweeps at 20kHz) "
-                "from chronically implanted electrodes used to identify pyramidal tract neurons (PTNs) "
-                "and corticostriatal neurons (CSNs) via collision tests and frequency-following tests. "
-                "For multi-unit sessions, data from multiple units are stored in the same module with "
-                "unit numbers in the series names to distinguish them.",
+                "Contains consolidated electrical stimulation and neural response recordings "
+                "(50ms sweeps at 20kHz) from chronically implanted electrodes used to identify "
+                "pyramidal tract neurons (PTNs) and corticostriatal neurons (CSNs) via collision "
+                "tests and frequency-following tests. Data is organized as one response series "
+                "and one stimulation series per unit/location combination, with the intervals "
+                "table (AntidromicSweepsIntervals) providing TimeSeriesReference columns to "
+                "access individual sweeps within the consolidated series.",
             )
 
         # Add stimulation electrodes table (only when antidromic data exists)
         self._add_stimulation_electrodes_table(antidromic_module)
 
         # Get or create intervals table for antidromic sweeps
-        # For multi-unit sessions, multiple units add to the same table
         if "AntidromicSweepsIntervals" not in nwbfile.intervals:
             antidromic_sweeps = TimeIntervals(
                 name="AntidromicSweepsIntervals",
                 description="Intervals table for antidromic stimulation sweeps. Each row represents one sweep "
-                "with links to the corresponding stimulation current and neural response ElectricalSeries. "
-                "Includes metadata about test type, stimulation location, and unit number. "
-                "The 50ms sweeps are centered at t=0 (pulse_time), with 25ms pre-stimulation and 25ms post-stimulation windows.",
+                "with TimeSeriesReference columns linking to specific sample ranges within the consolidated "
+                "response and stimulation series. Use the 'response' and 'stimulation' columns to extract "
+                "data for individual sweeps. Filter by 'stimulation_protocol', 'location', or 'unit_name' "
+                "to select specific sweep types. The 50ms sweeps are centered at t=0 (pulse_time), with "
+                "25ms pre-stimulation and 25ms post-stimulation windows.",
             )
 
-            # Add custom columns in order: start_time, stop_time, stimulation_onset_time,
-            # unit_name, location, stimulation_protocol, sweep_number,
-            # response, stimulation, response_series_name, stimulation_series_name
+            # Add custom columns
             antidromic_sweeps.add_column(
                 name="stimulation_onset_time",
                 description="Time of electrical stimulation pulse delivery (t=0 in the original MATLAB sweep). "
@@ -263,23 +224,22 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             )
             antidromic_sweeps.add_column(
                 name="sweep_number",
-                description="Sweep index number from the original MATLAB data array (0-based)",
+                description="Sweep index number within the series for this unit/location combination (0-based)",
             )
+            # TimeSeriesReferenceVectorData columns for response and stimulation
             antidromic_sweeps.add_column(
                 name="response",
-                description="Reference to the ElectricalSeries containing neural voltage response (in volts) for this sweep",
+                description="Reference to neural voltage response segment for this sweep. Contains (idx_start, count, timeseries) "
+                "tuple pointing to the specific sample range within the consolidated response ElectricalSeries. "
+                "Access data with: series.data[idx_start:idx_start+count] * series.conversion",
+                col_cls=TimeSeriesReferenceVectorData,
             )
             antidromic_sweeps.add_column(
                 name="stimulation",
-                description="Reference to the TimeSeries containing stimulation current (in amperes) for this sweep",
-            )
-            antidromic_sweeps.add_column(
-                name="response_series_name",
-                description="Name of the ElectricalSeries containing neural voltage response for this sweep",
-            )
-            antidromic_sweeps.add_column(
-                name="stimulation_series_name",
-                description="Name of the TimeSeries containing stimulation current for this sweep",
+                description="Reference to stimulation current segment for this sweep. Contains (idx_start, count, timeseries) "
+                "tuple pointing to the specific sample range within the consolidated stimulation TimeSeries. "
+                "Access data with: series.data[idx_start:idx_start+count] * series.conversion",
+                col_cls=TimeSeriesReferenceVectorData,
             )
             antidromic_sweeps.add_column(
                 name="stimulation_electrode",
@@ -288,33 +248,27 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
             nwbfile.add_time_intervals(antidromic_sweeps)
             if self.verbose:
-                print("Created AntidromicSweepsIntervals intervals table")
+                print("Created AntidromicSweepsIntervals intervals table with TimeSeriesReferenceVectorData columns")
         else:
             antidromic_sweeps = nwbfile.intervals["AntidromicSweepsIntervals"]
             if self.verbose:
                 print("Adding to existing AntidromicSweepsIntervals table (multi-unit session)")
 
         # Calculate start time for antidromic data based on actual trial end times
-        # Place antidromic data after all behavioral trials with a buffer
         if len(nwbfile.trials) > 0:
-            # Find the maximum stop_time from all trials
             max_trial_stop_time = max(nwbfile.trials['stop_time'][:])
-            # Add a buffer (e.g., 10 seconds) after the last trial
             buffer_after_trials = 10.0  # seconds
-            stim_start_time = max_trial_stop_time + buffer_after_trials
+            base_start_time = max_trial_stop_time + buffer_after_trials
             if self.verbose:
-                print(f"Antidromic data start time: {stim_start_time:.1f}s (last trial ended at {max_trial_stop_time:.1f}s)")
+                print(f"Antidromic data start time: {base_start_time:.1f}s (last trial ended at {max_trial_stop_time:.1f}s)")
         else:
-            # Fallback to configured offset if no trials exist
-            stim_start_time = self.antidromic_exploration_offset
+            base_start_time = self.antidromic_exploration_offset
             if self.verbose:
-                print(f"No trials found, using configured offset: {stim_start_time:.1f}s")
+                print(f"No trials found, using configured offset: {base_start_time:.1f}s")
 
         # Define electrode mapping
-        # Recording electrode index in nwbfile.electrodes (only M1 recording electrode is there now)
         recording_electrode_index = 0  # M1 recording electrode in nwbfile.electrodes
 
-        # Location name mapping
         location_map = {
             "PedStim": "Peduncle",
             "StrStim": "Striatum",
@@ -322,8 +276,6 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             "STNStim": "STN"
         }
 
-        # Stimulation electrode index mapping (row indices in StimulationElectrodesTable)
-        # Row indices: 0=peduncle, 1-3=putamen (3 electrodes), 4=thalamus
         stim_electrode_index_map = {
             "PedStim": 0,   # Peduncle
             "StrStim": 1,   # Putamen (use first of 3 as representative)
@@ -331,22 +283,24 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             "STNStim": 0,   # Fallback to peduncle
         }
 
-        # Process each unit file that has stimulation data
-        all_timestamps = []  # Collect for validation
-        total_sweeps_added = 0
+        # =====================================================================
+        # FIRST PASS: Collect all sweep data per (unit_num, stim_type) combination
+        # =====================================================================
+        # Data structure: {(unit_num, stim_type): {'responses': [], 'stimuli': [], 'metadata': [], 'time_data': array}}
+        collected_data = {}
+        stim_type_index = {}  # Track stim type ordering for time offsets
 
         for unit_num, mat_data, available_stim_types in self.unit_files_data:
-            if self.verbose:
-                print(f"\nProcessing Unit {unit_num} antidromic data...")
+            for stim_idx, stim_type in enumerate(available_stim_types):
+                key = (unit_num, stim_type)
+                stim_type_index[key] = stim_idx
 
-            # Process each available stimulation type for this unit
-            for stim_index, stim_type in enumerate(available_stim_types):
                 stim_data = mat_data[stim_type]
 
                 # Extract data components
                 unit_data = stim_data["Unit"]  # Shape: (n_samples, n_sweeps)
                 if "Time" in stim_data:
-                    time_data = stim_data["Time"]  # Shape: (n_samples,) - shared timebase
+                    time_data = stim_data["Time"]
                 elif "time" in stim_data:
                     time_data = stim_data["time"]
                 else:
@@ -354,165 +308,161 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 current_data = stim_data["Curr"]  # Shape: (n_samples, n_sweeps)
                 trace_names = stim_data["TraceName"]  # List of test type labels
 
-                # Data dimensions
                 n_samples, n_sweeps = unit_data.shape
 
-                # Get location name and electrode index for this stimulation type
-                location = location_map[stim_type]
-                stim_electrode_index = stim_electrode_index_map[stim_type]
+                # Initialize collection for this key
+                collected_data[key] = {
+                    'responses': [],
+                    'stimuli': [],
+                    'metadata': [],
+                    'time_data': time_data,
+                    'n_samples_per_sweep': n_samples,
+                }
 
-                # Create electrode table region for recording (used by ElectricalSeries response)
-                # Note: Stimulation uses TimeSeries (not ElectricalSeries) so doesn't need electrode region
-                recording_electrode_region = DynamicTableRegion(
-                    name="electrodes",
-                    data=[recording_electrode_index],
-                    description="Recording electrode in M1",
-                    table=nwbfile.electrodes
-                )
-
-                # Calculate sampling rate from time data
-                # Time data is in milliseconds, convert to seconds
-                time_seconds = time_data / 1000.0  # Convert ms to seconds
-                n_samples = len(time_seconds)
-                duration_seconds = time_seconds[-1] - time_seconds[0]
-                sampling_rate = (n_samples - 1) / duration_seconds  # Hz
-
-                if self.verbose:
-                    print(f"  Calculated sampling rate: {sampling_rate:.2f} Hz from {n_samples} samples over {duration_seconds*1000:.2f} ms")
-
-                # Process each sweep individually
-                for sweep_index in range(n_sweeps):
-                    # Get test type for this sweep
-                    trace_name = trace_names[sweep_index]
+                # Collect each sweep's data and metadata
+                for sweep_idx in range(n_sweeps):
+                    trace_name = trace_names[sweep_idx]
                     test_type = self._parse_test_type_name(trace_name)
 
-                    # Use sweep index for unique naming (trace names can have duplicates)
-                    # Calculate starting time for this sweep
-                    # Space stim types 1000s apart, sweeps within type by inter_sweep_interval
-                    stim_type_offset = stim_index * 1000.0
-                    sweep_offset = sweep_index * self.inter_sweep_interval
-                    sweep_start_time = stim_start_time + stim_type_offset + sweep_offset
+                    collected_data[key]['responses'].append(unit_data[:, sweep_idx])
+                    collected_data[key]['stimuli'].append(current_data[:, sweep_idx])
+                    collected_data[key]['metadata'].append({
+                        'sweep_index': sweep_idx,
+                        'trace_name': trace_name,
+                        'test_type': test_type,
+                    })
 
-                    # Calculate the actual starting time (accounting for the offset in original time data)
-                    # time_seconds[0] is the offset from sweep_start_time (typically -0.025s)
-                    starting_time = sweep_start_time + time_seconds[0]
+        # =====================================================================
+        # SECOND PASS: Create consolidated series and intervals
+        # =====================================================================
+        total_sweeps_added = 0
+        series_count = 0
 
-                    # Extract data for this specific sweep
-                    response_data = unit_data[:, sweep_index].reshape(-1, 1)  # (n_samples, 1)
-                    stim_current = current_data[:, sweep_index].reshape(-1, 1)  # (n_samples, 1)
+        for (unit_num, stim_type), data in collected_data.items():
+            location = location_map[stim_type]
+            stim_electrode_index = stim_electrode_index_map[stim_type]
+            stim_idx = stim_type_index[(unit_num, stim_type)]
 
-                    # Create unique names for this sweep
-                    # Format: Antidromic{Response|Stimulation}Unit{UnitNum}{Location}{TestType}Sweep{SweepIndex:02d}
-                    # Location needed because sessions can have multiple stim sites (e.g., both Ped and Str)
-                    # Use sweep_index (not trace name number) because trace names can have duplicates
-                    # Unit number from filename is critical for multi-unit sessions
-                    series_name_base = f"Unit{unit_num}{location}{test_type}Sweep{sweep_index:02d}"
+            # Concatenate all sweeps into single arrays
+            # Note: ElectricalSeries needs 2D data (n_samples, n_channels) for neuroconv compatibility
+            all_responses = np.concatenate(data['responses']).reshape(-1, 1)  # Shape: (total_samples, 1)
+            all_stimuli = np.concatenate(data['stimuli'])  # Shape: (total_samples,) - TimeSeries can be 1D
+            n_samples_per_sweep = data['n_samples_per_sweep']
+            n_sweeps = len(data['metadata'])
 
-                    # Create stimulation current series for this sweep
-                    # Use TimeSeries (not ElectricalSeries) because units are amperes, not volts
-                    #
-                    # CALIBRATION NOTE: The conversion factor is estimated based on:
-                    # 1. Metadata "Threshold" values range 1-1000 (likely µA based on typical antidromic stimulation)
-                    # 2. Raw ADC int16 range: -16285 to +16628 counts
-                    # 3. Assuming 16-bit ADC with ±10V range and gain similar to neural recordings
-                    # 4. Estimated conversion: ~6.0e-08 A/count gives 0-1000 µA range (matches metadata)
-                    #
-                    # HOWEVER, the exact calibration is UNKNOWN (file_structure.md notes "Calibration tbd").
-                    # Current conversion (1.526e-08) assumes 10000x gain and ±5V ADC based on:
-                    # - LFP recordings documented as "10k gain" in same dataset
-                    # - Standard neurophysiology recording system specifications
-                    #
-                    # TODO: Confirm with Turner lab - see email_communication.md Question 5
-                    stim_series = TimeSeries(
-                        name=f"AntidromicStimulation{series_name_base}",
-                        description=f"{test_type} test sweep (index {sweep_index}): Stimulation current delivered to {location.lower()}. "
-                        f"50ms sweep centered on stimulation onset (t=0). "
-                        f"Original trace name: '{trace_name}'. "
-                        f"Data in amperes. CALIBRATION UNCERTAIN: conversion factor estimated from typical recording "
-                        f"system specs (10000x gain, ±5V ADC). Awaiting confirmation from data authors. "
-                        f"Time 0 = stimulation pulse delivery.",
-                        data=stim_current,
-                        starting_time=starting_time,
-                        rate=sampling_rate,
-                        unit="amperes",
-                        conversion=1.526e-08,  # Estimated: (5V / 32768) / 10000 gain ≈ 1.526e-08 V/count
-                        comments=f"Stimulation current trace in amperes. Conversion factor estimated pending lab confirmation.",
-                    )
+            # Calculate timing information
+            time_data = data['time_data']
+            time_seconds = time_data / 1000.0  # Convert ms to seconds
+            duration_seconds = time_seconds[-1] - time_seconds[0]
+            sampling_rate = (n_samples_per_sweep - 1) / duration_seconds  # Hz
 
-                    # Create neural response series for this sweep
-                    #
-                    # CALIBRATION NOTE: The conversion factor is estimated based on:
-                    # 1. Typical extracellular spike amplitudes: 50-500 µV for well-isolated units
-                    # 2. Raw ADC int16 range: -17568 to +17264 counts (peak-to-peak ~35k counts)
-                    # 3. LFP recordings in same dataset documented as "10k gain"
-                    # 4. Assuming same 10000x gain for unit recordings with ±5V ADC
-                    # 5. Formula: conversion = (ADC_range / 2^15) / gain = (5V / 32768) / 10000
-                    #
-                    # This gives spike amplitudes of ~50-270 µV (realistic for extracellular recording).
-                    # The exact calibration is UNKNOWN (file_structure.md notes "Calibration tbd").
-                    #
-                    # TODO: Confirm with Turner lab - see email_communication.md Question 5
-                    response_series = ElectricalSeries(
-                        name=f"AntidromicResponse{series_name_base}",
-                        description=f"{test_type} test sweep (index {sweep_index}): Neural response from M1 to {location.lower()} stimulation. "
-                        f"50ms sweep at 20kHz centered on stimulation (t=0). "
-                        f"Collision tests verify antidromic spike collision with spontaneous spikes. "
-                        f"Frequency-following tests verify consistent latency at high stimulation rates. "
-                        f"Original trace name: '{trace_name}'. "
-                        f"Data in volts. CALIBRATION UNCERTAIN: conversion factor estimated from typical recording "
-                        f"system specs (10000x gain, ±5V ADC) and documented 10k gain for LFP. Awaiting confirmation. "
-                        f"Time 0 = stimulation pulse delivery.",
-                        data=response_data,
-                        starting_time=starting_time,
-                        rate=sampling_rate,
-                        electrodes=recording_electrode_region,
-                        conversion=1.526e-08,  # Estimated: (5V / 32768) / 10000 gain ≈ 1.526e-08 V/count
-                        comments=f"Neural voltage trace in volts. Conversion factor estimated pending lab confirmation.",
-                    )
+            # Calculate starting time for this unit/stim_type combination
+            # Space different stim types 1000s apart, sweeps within by inter_sweep_interval
+            stim_type_offset = stim_idx * 1000.0
+            series_start_time = base_start_time + stim_type_offset
 
-                    # Add to processing module
-                    antidromic_module.add(stim_series)
-                    antidromic_module.add(response_series)
+            # The sweep data starts at time_seconds[0] relative to stimulation onset
+            # For rate-based series, we set starting_time to the first sample's absolute time
+            first_sweep_starting_time = series_start_time + time_seconds[0]
 
-                    # Add interval to the antidromic_sweeps table
-                    # start_time and stop_time are calculated from starting_time and duration
-                    start_time = starting_time
-                    duration = (n_samples - 1) / sampling_rate  # Duration in seconds
-                    stop_time = starting_time + duration
-                    # stimulation_onset_time is the center of the sweep (t=0 in original MATLAB data)
-                    stimulation_onset_time = sweep_start_time
+            # Create electrode table region for recording
+            recording_electrode_region = nwbfile.create_electrode_table_region(
+                region=[recording_electrode_index],
+                description="Recording electrode in M1",
+            )
 
-                    antidromic_sweeps.add_interval(
-                        start_time=start_time,
-                        stop_time=stop_time,
-                        sweep_number=sweep_index,
-                        stimulation_onset_time=stimulation_onset_time,
-                        stimulation_series_name=stim_series.name,
-                        response_series_name=response_series.name,
-                        stimulation=stim_series,
-                        response=response_series,
-                        stimulation_protocol=test_type,
-                        location=location,
-                        unit_name=str(unit_num),  # Convert to string for consistency with units table
-                        stimulation_electrode=stim_electrode_index,
-                    )
+            # Create consolidated response series
+            response_series = ElectricalSeries(
+                name=f"AntidromicResponseUnit{unit_num}{location}",
+                description=f"Consolidated neural responses from M1 to {location.lower()} stimulation for Unit {unit_num}. "
+                f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
+                f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
+                f"Data in volts. CALIBRATION UNCERTAIN: conversion factor estimated from typical recording "
+                f"system specs (10000x gain, +/-5V ADC). Awaiting confirmation from data authors.",
+                data=all_responses,
+                starting_time=first_sweep_starting_time,
+                rate=sampling_rate,
+                electrodes=recording_electrode_region,
+                conversion=1.526e-08,  # Estimated: (5V / 32768) / 10000 gain
+                comments=f"Concatenated sweeps for Unit {unit_num}, {location} stimulation. "
+                f"Sweep boundaries every {n_samples_per_sweep} samples.",
+            )
 
-                    total_sweeps_added += 1
+            # Create consolidated stimulation series
+            stim_series = TimeSeries(
+                name=f"AntidromicStimulationUnit{unit_num}{location}",
+                description=f"Consolidated stimulation currents delivered to {location.lower()} for Unit {unit_num}. "
+                f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
+                f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
+                f"Data in amperes. CALIBRATION UNCERTAIN: conversion factor estimated.",
+                data=all_stimuli,
+                starting_time=first_sweep_starting_time,
+                rate=sampling_rate,
+                unit="amperes",
+                conversion=1.526e-08,  # Estimated
+                comments=f"Concatenated sweeps for Unit {unit_num}, {location} stimulation. "
+                f"Sweep boundaries every {n_samples_per_sweep} samples.",
+            )
 
-                if self.verbose:
-                    # Count test types for this stimulation site
-                    test_type_counts = {}
-                    for tn in trace_names:
-                        tt = self._parse_test_type_name(tn)
-                        test_type_counts[tt] = test_type_counts.get(tt, 0) + 1
+            # Add series to processing module
+            antidromic_module.add(response_series)
+            antidromic_module.add(stim_series)
+            series_count += 2
 
-                    test_summary = ", ".join([f"{count} {ttype}" for ttype, count in test_type_counts.items()])
-                    print(f"Added {stim_type} ({location}): {n_sweeps} sweeps ({test_summary}), {n_samples} samples each at 20kHz")
+            # Add intervals for each sweep within this consolidated series
+            for sweep_index, sweep_metadata in enumerate(data['metadata']):
+                # Calculate sample indices within the concatenated array
+                index_start = sweep_index * n_samples_per_sweep
+                count = n_samples_per_sweep
+
+                # Calculate timing for this sweep
+                sweep_offset = sweep_index * self.inter_sweep_interval
+                sweep_start_time = series_start_time + sweep_offset
+                stimulation_onset_time = sweep_start_time  # t=0 for this sweep
+
+                # The actual start_time for the interval (25ms before stim onset)
+                interval_start_time = stimulation_onset_time + time_seconds[0]
+                interval_stop_time = stimulation_onset_time + time_seconds[-1]
+
+                # Create TimeSeriesReference tuples
+                response_ref = TimeSeriesReference(
+                    idx_start=index_start,
+                    count=count,
+                    timeseries=response_series,
+                )
+                stim_ref = TimeSeriesReference(
+                    idx_start=index_start,
+                    count=count,
+                    timeseries=stim_series,
+                )
+
+                antidromic_sweeps.add_interval(
+                    start_time=interval_start_time,
+                    stop_time=interval_stop_time,
+                    stimulation_onset_time=stimulation_onset_time,
+                    unit_name=str(unit_num),
+                    location=location,
+                    stimulation_protocol=sweep_metadata['test_type'],
+                    sweep_number=sweep_index,
+                    response=response_ref,
+                    stimulation=stim_ref,
+                    stimulation_electrode=stim_electrode_index,
+                )
+                total_sweeps_added += 1
+
+            if self.verbose:
+                # Count test types for this unit/location
+                test_type_counts = {}
+                for m in data['metadata']:
+                    tt = m['test_type']
+                    test_type_counts[tt] = test_type_counts.get(tt, 0) + 1
+                test_summary = ", ".join([f"{count} {ttype}" for ttype, count in test_type_counts.items()])
+                print(f"Added Unit{unit_num}{location}: {n_sweeps} sweeps ({test_summary}), "
+                      f"{n_samples_per_sweep} samples each at {sampling_rate:.0f}Hz")
 
         if self.verbose:
-            print(f"\nTotal: {total_sweeps_added} sweeps stored as {total_sweeps_added * 2} ElectricalSeries")
-            print(f"Antidromic data placement: {stim_start_time:.1f}s - {stim_start_time + stim_type_offset + sweep_offset + 0.05:.1f}s")
-            print(f"Inter-sweep interval: {self.inter_sweep_interval}s")
+            print(f"\nTotal: {total_sweeps_added} sweeps indexed in {series_count} consolidated series")
+            print(f"(Previously would have created {total_sweeps_added * 2} separate series)")
 
     def _add_stimulation_electrodes_table(self, antidromic_module) -> None:
         """
