@@ -36,10 +36,10 @@ class M1MPTPLFPInterface(BaseDataInterface):
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """
-        Add LFP data to the NWB file as an ElectricalSeries linked to the M1 recording electrode.
+        Add LFP data to the NWB file as an ElectricalSeries in acquisition.
 
-        The LFP is stored in an ecephys processing module within an LFP container,
-        following NWB best practices for processed electrophysiology data.
+        The LFP is stored directly in the acquisition group as an ElectricalSeries
+        linked to the M1 recording electrode.
 
         Parameters
         ----------
@@ -118,19 +118,10 @@ class M1MPTPLFPInterface(BaseDataInterface):
             "Trials concatenated with inter-trial gaps.",
         )
 
-        # Get or create ecephys processing module
-        if "ecephys" in nwbfile.processing:
-            ecephys_module = nwbfile.processing["ecephys"]
-        else:
-            ecephys_module = nwbfile.create_processing_module(
-                name="ecephys",
-                description="Processed extracellular electrophysiology data"
-            )
-
-        # Add the LFP ElectricalSeries directly to the processing module
-        ecephys_module.add(lfp_series)
+        # Add LFP directly to acquisition
+        nwbfile.add_acquisition(lfp_series)
 
         if self.verbose:
             print(f"Added LFP: {len(continuous_data)} samples across {n_trials} trials")
             print(f"  Linked to electrode: {nwbfile.electrodes[0].location[0]}")
-            print(f"  Stored in: processing/ecephys/LFP")
+            print(f"  Stored in: acquisition/LFP")
