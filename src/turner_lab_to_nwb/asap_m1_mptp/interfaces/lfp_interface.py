@@ -106,16 +106,22 @@ class M1MPTPLFPInterface(BaseDataInterface):
         continuous_data_2d = continuous_data.reshape(-1, 1)
 
         # Create LFP as ElectricalSeries with electrode linkage
+        # Note: Data are uncalibrated A/D converter values (centered ~2048, consistent with
+        # 12-bit digitization). No voltage calibration factor is available from the source data.
         lfp_series = ElectricalSeries(
             name="LFP",
             data=continuous_data_2d,
             timestamps=timestamps,
             electrodes=recording_electrode_region,
+            unit="a.u.",
+            conversion=1.0,
+            offset=0.0,
             description="Local field potential from M1 microelectrode. "
             "Recorded simultaneously with single-unit activity during visuomotor task. "
             "Signal processing: 10k gain, 1-100 Hz bandpass filtered.",
-            comments="LFP from same electrode as spike recordings. "
-            "Trials concatenated with inter-trial gaps.",
+            comments="Data are uncalibrated A/D converter values (centered ~2048, consistent with "
+            "12-bit digitization). No voltage calibration factor is available. "
+            "LFP from same electrode as spike recordings. Trials concatenated with inter-trial gaps.",
         )
 
         # Get or create ecephys processing module

@@ -51,7 +51,7 @@ Analog['lfp'][trial_idx]  # LFP signal for trial trial_idx
 ### Data Format
 
 - **Structure**: List of 1D arrays, one per trial
-- **Units**: Volts (after amplifier gain correction)
+- **Units**: Uncalibrated A/D converter values (centered ~2048, consistent with 12-bit digitization)
 - **Shape**: `(n_samples_per_trial,)` for each trial
 - **Sampling**: 1 kHz (matches position, velocity, torque, EMG)
 
@@ -122,13 +122,13 @@ The LFP data enables:
 
 ### NWB Structure
 
-The LFP interface (`lfp_interface.py`) writes LFP data to the NWB file as a `TimeSeries` in the acquisition group.
+The LFP interface (`lfp_interface.py`) writes LFP data to the NWB file as an `ElectricalSeries` in the ecephys processing module.
 
 | Field | Value |
 |-------|-------|
-| NWB container | `nwbfile.acquisition['LFP']` |
-| Class | `pynwb.TimeSeries` |
-| Unit | volts |
+| NWB container | `nwbfile.processing['ecephys']['LFP']` |
+| Class | `pynwb.ecephys.ElectricalSeries` |
+| Unit | a.u. (arbitrary units - uncalibrated A/D values) |
 | Description | Local field potential from microelectrode (10k gain, 1-100 Hz bandpass filtered) |
 
 ### Trial Concatenation
@@ -147,11 +147,12 @@ with NWBHDF5IO("session.nwb", "r") as io:
     nwbfile = io.read()
 
     # Check if LFP exists (not all sessions have it)
-    if "LFP" in nwbfile.acquisition:
-        lfp = nwbfile.acquisition["LFP"]
+    if "ecephys" in nwbfile.processing and "LFP" in nwbfile.processing["ecephys"].data_interfaces:
+        lfp = nwbfile.processing["ecephys"]["LFP"]
         lfp_data = lfp.data[:]
         lfp_timestamps = lfp.timestamps[:]
         print(f"LFP: {len(lfp_data)} samples")
+        print(f"Units: {lfp.unit}")  # Will show 'a.u.' (arbitrary units)
 ```
 
 ### Extracting Trial-Aligned LFP
@@ -168,9 +169,10 @@ trial_start = trials.iloc[trial_idx]["start_time"]
 trial_stop = trials.iloc[trial_idx]["stop_time"]
 
 # Find LFP samples within trial
-lfp_timestamps = nwbfile.acquisition["LFP"].timestamps[:]
+lfp = nwbfile.processing["ecephys"]["LFP"]
+lfp_timestamps = lfp.timestamps[:]
 mask = (lfp_timestamps >= trial_start) & (lfp_timestamps < trial_stop)
-trial_lfp = nwbfile.acquisition["LFP"].data[mask]
+trial_lfp = lfp.data[mask]
 ```
 
 ## Limitations and Considerations
@@ -178,7 +180,7 @@ trial_lfp = nwbfile.acquisition["LFP"].data[mask]
 1. **Single channel**: LFP is recorded from a single microelectrode (no multi-site array)
 2. **Not all sessions**: Only 64% of sessions include LFP data
 3. **Bandpass filtered**: Raw broadband signal not available (1-100 Hz only)
-4. **Units uncertainty**: While documented as volts, verify calibration if absolute amplitude matters
+4. **Uncalibrated units**: Data are raw 12-bit A/D converter values (centered ~2048), not calibrated voltage. No voltage calibration factor is available from source data. Use for relative comparisons only.
 5. **Simultaneous with spikes**: LFP and spikes come from the same electrode, which may affect spike-field coherence interpretation
 
 ## References
