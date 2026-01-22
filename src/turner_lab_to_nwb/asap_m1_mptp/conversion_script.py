@@ -174,14 +174,21 @@ def convert_session_to_nwbfile(
 
     # Add temporal data limitation documentation
     nwbfile.notes = (
-        "Temporal data limitation: Recording dates are accurate from experimental logs, "
-        "but precise session start times within each day are not available in source data. "
-        "session_start_time is set to midnight (Pittsburgh timezone) with 2-hour systematic "
-        "offsets for multiple sessions recorded on the same date, ordered by file sequence. "
-        "Trial durations and within-trial event times are derived from experimental data. "
-        "However, actual inter-trial intervals are not available in source data - trials "
-        "are separated by fixed 3-second gaps for temporal organization. The gaps between "
-        "trials should not be interpreted as actual behavioral inter-trial timing."
+        "TEMPORAL DATA STRUCTURE: This dataset was converted from trialized MATLAB files "
+        "where all timestamps were relative to individual trial starts. Inter-trial intervals "
+        "were NOT recorded in the source data.\n\n"
+        "SESSION TIMING: Recording dates are accurate from experimental logs, but precise "
+        "session start times within each day are not available. session_start_time is set to "
+        "midnight (Pittsburgh timezone) with 2-hour systematic offsets for multiple sessions "
+        "recorded on the same date, ordered by file sequence.\n\n"
+        "ARTIFICIAL GAPS: Trials are separated by fixed 3-second gaps for temporal organization. "
+        "These gaps are placeholders and should NOT be interpreted as actual behavioral timing.\n\n"
+        "DATA VALIDITY ANNOTATIONS:\n"
+        "1. invalid_times table: Lists all inter-trial gaps (tagged 'artificial_inter_trial_gap'). "
+        "Use this to exclude gap periods from continuous data analysis (LFP, EMG, kinematics).\n"
+        "2. Units obs_intervals: Each unit has observation intervals specifying when it was recorded. "
+        "Spikes only occurred during these intervals; gaps represent 'not observable', not 'silent'.\n\n"
+        "See documentation: how_we_deal_with_trialized_data.md for usage guidance."
     )
 
     configure_and_write_nwbfile(nwbfile=nwbfile, nwbfile_path=nwbfile_path)

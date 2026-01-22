@@ -259,15 +259,13 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
 
             # Generate trial start times if not provided (should be same for all units in session)
             if trial_start_times is None:
-                # Use analog-based trial durations (same approach as trials_interface.py)
-                analog_data = mat_data["Analog"]
-
-                # Get actual trial durations from analog data
-                trial_durations = []
-                for trial_index in range(n_trials):
-                    trial_analog = analog_data["x"][trial_index]
-                    duration_s = len(trial_analog) / 1000.0  # 1kHz sampling, convert to seconds
-                    trial_durations.append(duration_s)
+                # Use Events['end'] for trial durations - MUST match trials_interface.py exactly
+                # to ensure obs_intervals align with trial boundaries.
+                # Note: Events['end'] is slightly longer than analog data length (~5ms) because
+                # analog recording may stop before the official trial end. Some spikes can occur
+                # in this gap, so we use Events['end'] to capture all valid spikes.
+                events = mat_data["Events"]
+                trial_durations = np.array(events.get("end", [])) / 1000.0  # Convert ms to seconds
 
                 # Create trial start times with inter-trial intervals
                 trial_start_times = []
@@ -295,6 +293,17 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
 
             # Sort all spike times
             all_spike_times = np.array(sorted(all_spike_times))
+
+            # Compute observation intervals: when this unit was observable (trial boundaries only)
+            # The source data is trialized - we only have data during trials, not inter-trial intervals.
+            # This annotation allows downstream analysts to correctly compute firing rates and ISIs.
+            # See documentation/how_we_deal_with_trialized_data.md for details.
+            obs_intervals = []
+            for trial_index in range(n_trials):
+                trial_start = trial_start_times[trial_index]
+                trial_duration = trial_durations[trial_index]
+                obs_intervals.append([trial_start, trial_start + trial_duration])
+            obs_intervals = np.array(obs_intervals)
 
             # Get cell type from metadata (used to determine neuron_projection_type)
             cell_type = unit_meta.get("Antidrom", "unknown")
@@ -392,6 +401,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             # Add unit to NWB file - link to electrode index 0
             nwbfile.add_unit(
                 spike_times=all_spike_times,
+                obs_intervals=obs_intervals,  # When unit was observable (trial boundaries only)
                 electrodes=[0],  # Link to electrode index 0
                 neuron_projection_type=neuron_projection_type,
                 antidromic_stimulation_sites=antidromic_stimulation_sites,

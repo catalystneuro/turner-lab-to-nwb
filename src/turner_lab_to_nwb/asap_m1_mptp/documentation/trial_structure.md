@@ -9,6 +9,7 @@ The Turner lab MPTP dataset contains recordings from macaque monkeys performing 
 - [Anatomical Coordinates](anatomical_coordinates.md) - Recording site locations in motor cortex
 - [Antidromic Stimulation](antidromic_stimulation.md) - Neuron classification methods
 - [Trial Boundary Options](../assets/data_exploration/trial_boundary_options.md) - Technical details on NWB trial boundary definitions
+- [Handling Trialized Data](how_we_deal_with_trialized_data.md) - How inter-trial gaps are annotated in NWB
 
 ---
 

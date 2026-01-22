@@ -101,3 +101,61 @@ def measure_response_amplitude(time_ms, response_uv, latency, window_ms=1.5):
         window = response_uv[mask]
         return np.max(window) - np.min(window)
     return 0
+
+
+def detect_spontaneous_activity(time_ms, response_uv, critical_window_ms, threshold_std=3.0):
+    """
+    Detect spontaneous spike activity in the critical collision window.
+
+    For collision to occur, a spontaneous spike must be traveling down the axon
+    when the antidromic spike is traveling up. This function detects threshold
+    crossings in the critical window before stimulation.
+
+    Parameters
+    ----------
+    time_ms : np.ndarray
+        Time axis in milliseconds (t=0 is stimulation)
+    response_uv : np.ndarray
+        Neural response in microvolts
+    critical_window_ms : float
+        Size of the critical window before stimulation (latency + refractory period)
+    threshold_std : float
+        Threshold for spike detection (standard deviations above baseline)
+
+    Returns
+    -------
+    has_activity : bool
+        Whether spontaneous activity was detected in critical window
+    activity_amplitude : float
+        Peak-to-peak amplitude in critical window (uV)
+    spike_time : float or None
+        Time of detected spike (if any), in ms
+    """
+    # Define baseline window (well before critical window)
+    baseline_mask = (time_ms >= -20) & (time_ms <= -critical_window_ms - 2)
+    # Define critical window (avoid artifact at t=0)
+    critical_mask = (time_ms >= -critical_window_ms) & (time_ms < -0.5)
+
+    # Calculate baseline statistics
+    baseline_data = response_uv[baseline_mask]
+    baseline_std = np.std(baseline_data)
+    baseline_mean = np.mean(baseline_data)
+
+    # Check critical window for threshold crossings
+    critical_data = response_uv[critical_mask]
+    critical_time = time_ms[critical_mask]
+
+    # Peak-to-peak amplitude in critical window
+    activity_amplitude = np.max(critical_data) - np.min(critical_data)
+
+    # Detect threshold crossing
+    above_threshold = np.abs(critical_data - baseline_mean) > threshold_std * baseline_std
+    has_activity = np.any(above_threshold)
+
+    spike_time = None
+    if has_activity:
+        # Find the time of the largest deflection
+        peak_idx = np.argmax(np.abs(critical_data - baseline_mean))
+        spike_time = critical_time[peak_idx]
+
+    return has_activity, activity_amplitude, spike_time

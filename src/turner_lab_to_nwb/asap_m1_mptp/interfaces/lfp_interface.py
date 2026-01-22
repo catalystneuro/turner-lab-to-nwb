@@ -113,8 +113,7 @@ class M1MPTPLFPInterface(BaseDataInterface):
             data=continuous_data_2d,
             timestamps=timestamps,
             electrodes=recording_electrode_region,
-            unit="a.u.",
-            conversion=1.0,
+            conversion=1.0,  # Data are uncalibrated A/D values, no voltage calibration available
             offset=0.0,
             description="Local field potential from M1 microelectrode. "
             "Recorded simultaneously with single-unit activity during visuomotor task. "

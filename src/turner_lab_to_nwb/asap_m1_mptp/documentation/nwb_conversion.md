@@ -10,6 +10,7 @@ This document outlines how each data stream from the Turner-Delong MPTP dataset 
 - [Anatomical Coordinates](anatomical_coordinates.md) - Electrode positioning
 - [Stimulation Events](stimulation_events.md) - In-trial stimulation handling
 - [Sensory Receptive Field Testing](sensory_receptive_field_testing.md) - Unit characterization
+- [Handling Trialized Data](how_we_deal_with_trialized_data.md) - How inter-trial gaps are annotated
 
 ## Data Stream Mapping to NWB
 

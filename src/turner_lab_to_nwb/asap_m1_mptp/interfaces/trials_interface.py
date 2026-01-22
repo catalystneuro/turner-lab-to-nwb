@@ -308,6 +308,23 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 unique_sites = set(s for s in isolation_stim_sites if s)
                 print(f"Stimulation sites: {unique_sites}")
 
+        # STEP 8: Add invalid_times for inter-trial gaps
+        # These gaps are ARTIFICIAL placeholders - the source data did not record inter-trial intervals.
+        # This annotation allows downstream analysts to properly exclude gap periods from analysis.
+        # See documentation/how_we_deal_with_trialized_data.md for details.
+        if n_trials > 1:
+            for trial_index in range(n_trials - 1):
+                gap_start = trial_stop_times[trial_index]
+                gap_stop = gap_start + self.inter_trial_time_interval
+                nwbfile.add_invalid_time_interval(
+                    start_time=gap_start,
+                    stop_time=gap_stop,
+                    tags=["artificial_inter_trial_gap", "not_recorded"],
+                )
+
+            if self.verbose:
+                print(f"Added {n_trials - 1} invalid_times entries for inter-trial gaps")
+
         # Validate HED annotations in the trials table using HedNWBValidator
         # Import here to avoid requiring ndx-events as a top-level dependency
         from ndx_hed.utils.hed_nwb_validator import HedNWBValidator
