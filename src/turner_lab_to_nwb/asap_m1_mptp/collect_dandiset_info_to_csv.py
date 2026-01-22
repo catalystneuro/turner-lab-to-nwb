@@ -61,7 +61,12 @@ columns = [
     "mptp_status", "related_publications", "chamber_grid_ap_mm", "chamber_grid_ml_mm",
     "chamber_insertion_depth_mm", "total_units", "ptn_count", "csn_count", "other_neuron_count",
     "neuron_projection_types", "min_antidromic_latency_ms", "max_antidromic_latency_ms",
-    "mean_antidromic_latency_ms", "receptive_field_locations", "total_trials", "flexion_trials",
+    "mean_antidromic_latency_ms", "receptive_field_locations",
+    # Antidromic protocol information
+    "total_antidromic_sweeps", "has_frequency_following", "frequency_following_sweep_count",
+    "has_collision", "collision_sweep_count", "antidromic_protocols",
+    # Trial/Behavioral Information
+    "total_trials", "flexion_trials",
     "extension_trials", "has_perturbation_trials", "perturbation_trial_count", "mean_peak_velocity",
     "mean_movement_amplitude", "mean_reaction_time", "has_emg", "has_lfp", "has_isolation_monitoring_stim",
 ]
@@ -158,6 +163,38 @@ for asset in tqdm(nwb_assets, desc="Collecting metadata"):
         receptive_field_locations = ""
 
     # -------------------------------------------------------------------------
+    # Antidromic Protocol Information
+    # -------------------------------------------------------------------------
+    if "AntidromicSweepsIntervals" in nwbfile.intervals:
+        sweeps_df = nwbfile.intervals["AntidromicSweepsIntervals"].to_dataframe()
+        total_antidromic_sweeps = len(sweeps_df)
+
+        # Count by protocol type
+        if "stimulation_protocol" in sweeps_df.columns:
+            protocol_counts = sweeps_df["stimulation_protocol"].value_counts()
+
+            frequency_following_sweep_count = int(protocol_counts.get("FrequencyFollowing", 0))
+            collision_sweep_count = int(protocol_counts.get("Collision", 0))
+            has_frequency_following = frequency_following_sweep_count > 0
+            has_collision = collision_sweep_count > 0
+
+            # List all unique protocols
+            antidromic_protocols = "; ".join(sorted(sweeps_df["stimulation_protocol"].unique()))
+        else:
+            frequency_following_sweep_count = 0
+            collision_sweep_count = 0
+            has_frequency_following = False
+            has_collision = False
+            antidromic_protocols = ""
+    else:
+        total_antidromic_sweeps = 0
+        frequency_following_sweep_count = 0
+        collision_sweep_count = 0
+        has_frequency_following = False
+        has_collision = False
+        antidromic_protocols = ""
+
+    # -------------------------------------------------------------------------
     # Trial/Behavioral Information
     # -------------------------------------------------------------------------
     trials_df = nwbfile.trials.to_dataframe()
@@ -228,6 +265,13 @@ for asset in tqdm(nwb_assets, desc="Collecting metadata"):
         "max_antidromic_latency_ms": max_antidromic_latency_ms,
         "mean_antidromic_latency_ms": mean_antidromic_latency_ms,
         "receptive_field_locations": receptive_field_locations,
+        # Antidromic Protocol Information
+        "total_antidromic_sweeps": total_antidromic_sweeps,
+        "has_frequency_following": has_frequency_following,
+        "frequency_following_sweep_count": frequency_following_sweep_count,
+        "has_collision": has_collision,
+        "collision_sweep_count": collision_sweep_count,
+        "antidromic_protocols": antidromic_protocols,
         # Trial/Behavioral Information
         "total_trials": total_trials,
         "flexion_trials": flexion_trials,

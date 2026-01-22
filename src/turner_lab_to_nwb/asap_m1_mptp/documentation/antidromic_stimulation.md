@@ -165,7 +165,7 @@ The Turner lab used chronically implanted "floating" stimulating electrodes:
 **Purpose:** Verify that the response follows high-frequency stimulation, which synaptic activation cannot achieve.
 
 **Protocol:**
-1. Deliver a train of 2-4 stimulation pulses at 200 Hz (5 ms inter-pulse interval)
+1. Deliver a train of 2-4 stimulation pulses at 200+ Hz (≤5 ms inter-pulse interval)
 2. Record the neural response to each pulse
 3. Count the number of evoked responses
 
@@ -179,6 +179,8 @@ The Turner lab used chronically implanted "floating" stimulating electrodes:
 - Verify consistent latency across all pulses in the train
 
 **Data identifier:** `TraceName = 'ff_n'` in MATLAB stimulation sweep structures
+
+**Protocol in this dataset:** Each "FrequencyFollowing" sweep contains 3 biphasic stimulation pulses delivered at approximately 350-400 Hz (~2.5-2.7 ms inter-pulse interval). Each sweep is 50 ms long sampled at 20 kHz. Multiple sweeps (typically 20-30) are collected per neuron. The analysis examines whether the neuron responds at the expected latency after each of the 3 pulses within each sweep.
 
 ### Collision Test
 
