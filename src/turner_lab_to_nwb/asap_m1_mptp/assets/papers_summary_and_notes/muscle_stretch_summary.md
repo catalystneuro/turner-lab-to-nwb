@@ -43,7 +43,7 @@ This study directly tested whether M1 neurons show enhanced responses to muscle 
 - **Method**: Unilateral intracarotid injection
 - **Dose**: 0.5 mg/kg MPTP-HCl dissolved in saline
 - **Injection Site**: Left internal carotid artery
-- **Effect**: Selective dopaminergic denervation of right hemisphere
+- **Effect**: Selective dopaminergic denervation of left hemisphere
 
 ### Parkinsonian Features Relevant to This Study
 - Clear muscle rigidity on clinical examination

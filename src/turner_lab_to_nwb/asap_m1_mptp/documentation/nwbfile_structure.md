@@ -20,7 +20,7 @@ Overview of how the conversion writes the Turner Lab M1 MPTP sessions into an NW
 ## Electrodes table
 - Single recording electrode row created in `electrodes_interface.py` under `ElectrodeGroupMicroelectrodeRecording` (location: left M1).
 - Custom columns: `chamber_grid_ap_mm`, `chamber_grid_ml_mm`, `chamber_insertion_depth_mm`, `recording_site_index`, `recording_session_index`.
-- Recording coordinates/depth derived from session metadata (`A_P`, `M_L`, `Depth`); electrode links all neural series and units.
+- Recording coordinates/depth derived from session metadata (`A_P`, `M_L`, `Depth`). Note: `A_P` is negated during conversion so `chamber_grid_ap_mm` uses +posterior convention; `M_L` is stored as-is (+right). Electrode links all neural series and units.
 
 ## Trials table and HED annotations
 - Built in `trials_interface.py` using MATLAB `Events` and `Mvt` structures; start/stop times from `Events['end']` with 3 s inter-trial spacing.

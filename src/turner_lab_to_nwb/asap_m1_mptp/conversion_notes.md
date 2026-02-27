@@ -59,13 +59,13 @@ The Turner lab dataset uses **chamber-relative coordinates** rather than absolut
 **📖 Full documentation**: [Anatomical Coordinates](documentation/anatomical_coordinates.md)
 
 **Quick reference:**
-- **A_P**: Anterior-Posterior position relative to chamber center (mm, positive = anterior)
-- **M_L**: Medial-Lateral position relative to chamber center (mm, positive = lateral)
+- **chamber_grid_ap_mm**: Anterior-Posterior position relative to chamber center (mm, positive = posterior). Source A_P values are negated during conversion.
+- **chamber_grid_ml_mm**: Medial-Lateral position relative to chamber center (mm, positive = right). Left hemisphere recordings are negative.
 - **Depth**: Electrode depth below chamber reference point (mm, positive = deeper)
 - **Target region**: Primary motor cortex (M1), arm representation area, Layer 5
 
-#### **Atlas Relationship**
-These coordinates do NOT directly correspond to standard macaque brain atlas coordinates (Horsley-Clarke, MNI Macaque Atlas, AC/PC-based). They represent positions within a subject-specific coordinate frame defined by the implanted recording chamber. For cross-study analysis, coordinates would need individual transformation based on each animal's anatomy and chamber placement.
+#### **D99 Atlas Coordinates**
+D99 atlas coordinates (RAS, mm, AC origin) are stored in the `AnatomicalCoordinatesTable` and in the standard NWB electrode `x`, `y`, `z` fields (PIR, microns). These were computed by **Dr. Robert Turner** (data author) from the chamber-relative positions using the known chamber placement geometry (AP offset to AC and 35-degree coronal tilt). No individual MRI registration was used. Currently available for Monkey V only.
 
 ### Data Stream Locations in MATLAB Files
 

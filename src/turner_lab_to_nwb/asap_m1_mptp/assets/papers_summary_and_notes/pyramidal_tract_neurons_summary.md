@@ -37,8 +37,8 @@ This cascade should produce cortical hypoactivity, but the cell-type specific ef
 - **Method**: Unilateral intracarotid injection
 - **Dose**: 0.5 mg/kg MPTP-HCl dissolved in saline
 - **Injection Site**: Left internal carotid artery
-- **Effect**: Selective dopaminergic denervation of right hemisphere
-- **Symptom Profile**: Moderate, stable hemiparkinsonian symptoms on left body side
+- **Effect**: Selective dopaminergic denervation of left hemisphere
+- **Symptom Profile**: Moderate, stable hemiparkinsonian symptoms on right body side
 
 ### Timeline
 - Pre-MPTP recordings: Extended baseline period

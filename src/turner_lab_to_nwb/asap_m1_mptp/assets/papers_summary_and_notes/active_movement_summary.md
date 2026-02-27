@@ -30,7 +30,7 @@ The research tested three competing hypotheses about M1 dysfunction in parkinson
 ### MPTP Administration Protocol
 - **Method**: Unilateral intracarotid injection
 - **Dose**: 0.5 mg/kg MPTP-HCl dissolved in saline
-- **Target**: Left internal carotid artery (affecting right hemisphere)
+- **Target**: Left internal carotid artery (affecting left hemisphere)
 - **Rationale**: Unilateral injection induces stable, moderate parkinsonism suitable for longitudinal behavioral and neurophysiological studies
 
 ### Parkinsonian Symptoms Observed

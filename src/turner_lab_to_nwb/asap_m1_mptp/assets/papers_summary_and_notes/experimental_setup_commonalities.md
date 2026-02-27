@@ -31,8 +31,8 @@ Identical across all studies:
 | **Dose** | 0.5 mg/kg |
 | **Route** | Unilateral intracarotid injection |
 | **Injection Site** | Left internal carotid artery |
-| **Effect** | Selective dopaminergic denervation of right hemisphere |
-| **Symptom Profile** | Moderate, stable left-sided hemiparkinsonian symptoms |
+| **Effect** | Selective dopaminergic denervation of left hemisphere |
+| **Symptom Profile** | Moderate, stable right-sided hemiparkinsonian symptoms |
 
 ### Parkinsonian Symptoms Observed
 - Bradykinesia (slowness of movement)
@@ -50,7 +50,7 @@ Identical across all studies:
 | **Electrode Type** | Glass-coated tungsten microelectrodes |
 | **Electrode Access** | Chronic recording chamber implanted over M1 |
 | **Signal Processing** | Offline spike sorting to isolate single units |
-| **Hemisphere** | Right (contralateral to injection, ipsilateral to symptoms) |
+| **Hemisphere** | Left (ipsilateral to injection, contralateral to task-performing right arm) |
 
 ### Neuron Type Identification
 

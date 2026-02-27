@@ -199,7 +199,7 @@ def convert_session_to_nwbfile(
 
 if __name__ == "__main__":
     # Configuration
-    base_data_path = Path("/home/heberto/data/turner/new_turner/")
+    base_data_path = Path("/home/heberto/data/turner/current_data/")
     root_folder_path = Path(__file__).parent.parent.parent.parent
     output_folder = root_folder_path / "nwbfiles"
     inter_trial_time_interval = 3.0  # seconds
