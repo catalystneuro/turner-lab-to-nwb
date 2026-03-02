@@ -288,12 +288,14 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         # =====================================================================
         # Data structure: {(unit_num, stim_type): {'responses': [], 'stimuli': [], 'metadata': [], 'time_data': array}}
         collected_data = {}
-        stim_type_index = {}  # Track stim type ordering for time offsets
+        stim_type_index = {}  # Track global ordering for time offsets (ensures ascending start_times)
+        global_stim_counter = 0
 
         for unit_num, mat_data, available_stim_types in self.unit_files_data:
             for stim_idx, stim_type in enumerate(available_stim_types):
                 key = (unit_num, stim_type)
-                stim_type_index[key] = stim_idx
+                stim_type_index[key] = global_stim_counter
+                global_stim_counter += 1
 
                 stim_data = mat_data[stim_type]
 
