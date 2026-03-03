@@ -29,8 +29,10 @@ dependencies = [
     "numpy<2.3",
     "ndx-hed",
     "ndx-events",
+    "ndx-anatomical-localization",
     "remfile>=0.1.13",
     "hdmf",
+    "antspyx",
 ]
 
 [project.urls]
@@ -87,13 +89,20 @@ known_first_party = ["turner_lab_to_nwb"]
 
 [tool.uv.sources]
 neuroconv = { path = "../../work_repos/neuroconv", editable = true }
-hdmf = {path = "../../work_repos/hdmf", editable = true}
+# hdmf = {path = "../../work_repos/hdmf", editable = true}
+ndx-anatomical-localization = {path = "../../ndx_extensions/ndx-anatomical-localization", editable = true}
+brainglobe-atlasapi = {path = "../../brainglobe/brainglobe-atlasapi", editable = true}
+brainrender = {path = "../../brainglobe/brainrender", editable = true}
 
 [dependency-groups]
 dev = [
     "ipykernel>=6.30.1",
     "nwbinspector>=0.6.5",
     "pynapple>=0.9.2",
+    "pyvista>=0.47",
+    "trame",
+    "trame-vtk",
+    "trame-vuetify",
     "scikit-learn>=1.7.1",
     "seaborn>=0.13.2",
     "nemos",

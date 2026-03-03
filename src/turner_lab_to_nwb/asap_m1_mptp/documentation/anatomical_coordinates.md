@@ -110,18 +110,62 @@ session_info_dict = {
 
 ## NWB Storage Format
 
+### Summary of All Stored Localization Data
+
+| Storage Location | Field | Value | Source | Units/Convention |
+|---|---|---|---|---|
+| `electrodes` table | `x, y, z` | NMT v2.0-sym coordinates | Derived (RheMAP warp from D99) | micrometers, PIR |
+| `electrodes` table | `location` | D99 region full name | D99 v2.0 atlas voxel lookup | string |
+| `electrodes` table | `chamber_grid_ap_mm` | Chamber A-P position | Dr. Turner (source data) | mm, +posterior |
+| `electrodes` table | `chamber_grid_ml_mm` | Chamber M-L position | Dr. Turner (source data) | mm, +right |
+| `electrodes` table | `chamber_insertion_depth_mm` | Insertion depth | Dr. Turner (source data) | mm, +deeper |
+| `D99AtlasCoordinates` | `x, y, z` | D99 RAS coordinates | Dr. Turner (geometric transform) | mm, RAS, origin=AC |
+| `D99AtlasCoordinates` | `brain_region` | D99 full region name | D99 v2.0 atlas voxel lookup | string |
+| `D99AtlasCoordinates` | `brain_region_id` | D99 abbreviation | D99 v2.0 atlas voxel lookup | string |
+| `NMTv2symAtlasCoordinates` | `x, y, z` | NMT v2.0-sym RAS coordinates | Derived (RheMAP nonlinear warp from D99) | mm, RAS, origin=EBZ |
+| `NMTv2symAtlasCoordinates` | `brain_region` | D99 full region name | D99 v2.0 atlas (looked up before warping) | string |
+| `NMTv2symAtlasCoordinates` | `brain_region_id` | D99 abbreviation | D99 v2.0 atlas (looked up before warping) | string |
+| `MEBRAINSAtlasCoordinates` | `x, y, z` | MEBRAINS 1.0 RAS coordinates | Derived (RheMAP nonlinear warp from D99) | mm, RAS, origin=AC |
+| `MEBRAINSAtlasCoordinates` | `brain_region` | D99 full region name | D99 v2.0 atlas (looked up before warping) | string |
+| `MEBRAINSAtlasCoordinates` | `brain_region_id` | D99 abbreviation | D99 v2.0 atlas (looked up before warping) | string |
+
+### Data Provenance
+
+The localization data in each NWB file comes from three sources with different levels of directness. Understanding this provenance chain is important for interpreting the coordinates and assessing their reliability.
+
+```
+Chamber coords ─→ [geometric transform] ─→ D99 coords ─→ [RheMAP warp] ─→ NMT/MEBRAINS coords
+     (source)          (Dr. Turner)           (source)    (precomputed)         (derived)
+                                                 │
+                                       [D99 voxel lookup]
+                                            (curator)
+                                                 │
+                                                 ▼
+                                        D99 region label
+                                      (carried to all tables)
+```
+
+**Source data (from Dr. Turner).** Chamber-relative coordinates (`A_P`, `M_L`, `Depth`) are recorded daily during experiments. ACx coordinates (`A_P_acx`, `M_L_acx`, `Depth_acx`) are derived by Dr. Turner using the known chamber placement geometry: a constant AP offset (-8.2 mm from chamber center to anterior commissure) and a 35-degree rotation in the coronal plane. These are stored in the metadata table (`ven_table.csv`) and are the authored localization data for this dataset.
+
+**Curator-computed lookups.** We look up the D99 v2.0 atlas label at the D99 RAS coordinates to obtain region names (e.g., "Agranular frontal area F1" / "F1_(4)"). Dr. Turner provided the coordinates but not the atlas labels; the voxel lookup is our contribution. The labels are stored in `brain_region` and `brain_region_id` columns of every `AnatomicalCoordinatesTable` (D99, NMT, and MEBRAINS), because NMT and MEBRAINS do not have their own whole-brain parcellations suitable for automated lookup (see [What We Do Not Store](#what-we-do-not-store-and-why)).
+
+**Curator-computed warps.** NMT v2.0-sym and MEBRAINS coordinates are derived by applying pre-computed nonlinear warps from the RheMAP project (Sirmpilatze & Klink, 2020) to the D99 coordinates. These transforms are atlas-to-atlas (D99 volume to NMT volume, D99 volume to MEBRAINS volume), not subject-specific. Their purpose is interoperability: a downstream user can work in whichever template space their pipeline uses.
+
 ### Standard NWB Electrode Coordinates
 
-The standard NWB `x`, `y`, `z` coordinates are populated with D99 atlas coordinates converted to the NWB PIR convention (Posterior-Inferior-Right) in microns:
-- `x` = `-A_P_acx * 1000` (+posterior, microns). Flipped sign: ACx +anterior becomes NWB +posterior.
-- `y` = `-Depth_acx * 1000` (+inferior, microns). ACx Depth_acx is +superior (dorsal), so sign is flipped for NWB +inferior.
-- `z` = `-M_L_acx * 1000` (+right, microns). Flipped sign: left hemisphere +lateral becomes NWB +right (negative).
+The standard NWB `x`, `y`, `z` coordinates are populated in the PIR convention (Posterior-Inferior-Right) in microns. Coordinates are derived from **NMT v2.0-sym** (the NIMH Macaque Template, the most widely used community standard) via the RheMAP warp. When no atlas coordinates exist (e.g., Monkey L, pending), `x`, `y`, `z` are set to `NaN`.
 
-The coordinates in the `AnatomicalCoordinatesTable` are stored in the native D99 RAS orientation (see below). When acx coordinates are not available (e.g., for Monkey L, pending), `x`, `y`, `z` are set to `NaN`.
+The NMT and MEBRAINS warped coordinates are **precomputed** and stored in `assets/metadata_table/warped_coordinates.csv`. The conversion pipeline reads from this CSV at runtime (instant lookup) rather than calling ANTs per session. To regenerate the precomputed coordinates (e.g., after updating source coordinates), run:
+
+```bash
+uv run python src/turner_lab_to_nwb/asap_m1_mptp/scripts/precompute_warped_coordinates.py
+```
+
+The `AnatomicalCoordinatesTable` entries store coordinates in native RAS orientation for each space (see below).
 
 ### D99 Atlas Coordinates (ndx-anatomical-localization)
 
-Atlas coordinates are also stored using the `ndx-anatomical-localization` extension in the **native D99 RAS orientation** (Right-Anterior-Superior), so the values can be used directly for atlas lookups without additional coordinate transforms:
+Atlas coordinates are stored using the `ndx-anatomical-localization` extension in the **native D99 RAS orientation** (Right-Anterior-Superior), so the values can be used directly for atlas lookups without additional coordinate transforms:
 
 ```python
 # Accessing D99 atlas coordinates (RAS, mm, origin = anterior commissure)
@@ -135,9 +179,73 @@ s = coords_table["z"][0]  # +superior
 brain_region = coords_table["brain_region"][0]
 ```
 
-The `Localization` container includes:
-- A `Space` object describing the D99 atlas (origin: anterior commissure, units: mm, orientation: RAS)
-- An `AnatomicalCoordinatesTable` linking coordinates to the electrode table with brain region labels
+### NMT v2.0-sym Atlas Coordinates (ndx-anatomical-localization)
+
+Coordinates are also stored in **NMT v2.0-sym** (NIMH Macaque Template, symmetric variant) space. These are computed by applying a nonlinear composite warp from the RheMAP project (Sirmpilatze & Klink, 2020) to the D99 coordinates. The warped results are precomputed in batch (see `scripts/precompute_warped_coordinates.py`) and looked up at conversion time from `assets/metadata_table/warped_coordinates.csv`.
+
+```python
+# Accessing NMT v2.0-sym coordinates (RAS, mm, origin = ear bar zero)
+localization = nwbfile.lab_meta_data["localization"]
+nmt_table = localization.anatomical_coordinates_tables["NMTv2symAtlasCoordinates"]
+nmt_space = nmt_table.space  # NMT_v2.0_sym Space object
+
+r_nmt = nmt_table["x"][0]  # +right
+a_nmt = nmt_table["y"][0]  # +anterior
+s_nmt = nmt_table["z"][0]  # +superior
+```
+
+**Note on NMT v2 origin:** The `Space` object for NMT v2 records `origin="ear bar zero"`, reflecting NMT v2's native coordinate system where (0,0,0) corresponds to the intersection of the midsagittal plane and the interaural line. This differs from D99 and MEBRAINS, which both use the anterior commissure (AC) as origin.
+
+The precompute script uses ANTsPy (`ants.apply_transforms_to_points`) with the `NMTv2.0-sym_to_D99_CompositeWarp.nii.gz` warp file (applied in the **reversed direction** for points, per ANTs convention). Coordinates are converted from RAS to LPS before warping and back afterward.
+
+**RheMAP warp file** (needed only for precomputation, not at conversion time): Download `warps_final_NMTv2.0-sym.zip` from [Zenodo (DOI: 10.5281/zenodo.4748589)](https://zenodo.org/records/4748589) and extract `NMTv2.0-sym_to_D99_CompositeWarp.nii.gz` to `data/rhemap_warps/`.
+
+**References:**
+- Sirmpilatze N, Klink PC (2020). "RheMAP: Non-linear warps between common rhesus macaque brain templates." NeuroImage, 226, 117519. DOI: 10.5281/zenodo.4748589
+- Jung B et al. (2021). "A comprehensive macaque fMRI pipeline and hierarchical atlas." NeuroImage, 235, 117997.
+
+### MEBRAINS 1.0 Atlas Coordinates (ndx-anatomical-localization)
+
+Coordinates are also stored in **MEBRAINS 1.0** (Balan et al. 2024), an independent population-based macaque template built from 10 rhesus monkeys. MEBRAINS provides a cross-validation target: if localization results hold in both NMT v2 and MEBRAINS space, they are template-independent. Like NMT, MEBRAINS coordinates are precomputed in batch and looked up from `warped_coordinates.csv` at conversion time.
+
+```python
+# Accessing MEBRAINS 1.0 coordinates (RAS, mm, origin = anterior commissure)
+localization = nwbfile.lab_meta_data["localization"]
+mebrains_table = localization.anatomical_coordinates_tables["MEBRAINSAtlasCoordinates"]
+mebrains_space = mebrains_table.space  # MEBRAINS_1.0 Space object
+
+r_mebrains = mebrains_table["x"][0]  # +right
+a_mebrains = mebrains_table["y"][0]  # +anterior
+s_mebrains = mebrains_table["z"][0]  # +superior
+```
+
+The precompute script uses ANTsPy (`ants.apply_transforms_to_points`) with the `MEBRAINS_to_D99_CompositeWarp.nii.gz` warp file (applied in the **reversed direction** for points, per ANTs convention), following the same RAS-to-LPS conversion as the NMT warp.
+
+MEBRAINS uses the anterior commissure (AC) as its origin with approximate Horsley-Clarke alignment. Because both D99 and MEBRAINS use AC origin, their coordinates are in a similar range (unlike NMT which uses EBZ origin).
+
+MEBRAINS does not have a native whole-brain parcellation comparable to CHARM/SARM. The `brain_region` and `brain_region_id` columns carry the D99-derived label (looked up in D99 native space before warping). The Julich Brain Macaque Maps (partial cortical coverage, registered to the MEBRAINS surface) exist but are not suitable for automated voxel lookup in our pipeline (see [What We Do Not Store](#what-we-do-not-store-and-why)).
+
+**RheMAP warp file** (needed only for precomputation, not at conversion time): Download from the [RheMAP G-NODE repository](https://gin.g-node.org/ChrisKlink/RheMAP) (`warps/final/MEBRAINS_to_D99_CompositeWarp.nii.gz`) and place in `data/rhemap_warps/`.
+
+**References:**
+- Balan PF et al. (2024). "MEBRAINS 1.0: A new population-based macaque atlas." Imaging Neuroscience, 2, imag_a_00077. DOI: 10.1162/imag_a_00077
+- Sirmpilatze N, Klink PC (2020). RheMAP (as above).
+
+### The Localization Container
+
+The `Localization` container (from the `ndx-anatomical-localization` extension) holds all atlas-space data. It includes:
+
+- **Three `Space` objects:**
+  - `D99`: origin = anterior commissure, units = mm, orientation = RAS
+  - `NMTv2sym`: origin = ear bar zero (EBZ), units = mm, orientation = RAS
+  - `MEBRAINS`: origin = anterior commissure, units = mm, orientation = RAS
+
+- **Three `AnatomicalCoordinatesTable` entries**, each linking coordinates to the electrode table:
+  - `D99AtlasCoordinates`: source coordinates from Dr. Turner's geometric transform
+  - `NMTv2symAtlasCoordinates`: coordinates warped from D99 via RheMAP
+  - `MEBRAINSAtlasCoordinates`: coordinates warped from D99 via RheMAP
+
+All three tables include `brain_region` (full name) and `brain_region_id` (abbreviation) columns with D99-derived labels. See [Data Provenance](#data-provenance) for why the same D99 label appears in all three tables.
 
 ### Custom NWB Columns
 
@@ -186,6 +294,60 @@ Stimulation electrodes (cerebral peduncle, putamen, thalamus) are represented as
 - Positions verified histologically but not tracked in chamber coordinates
 - See `nwbfile.devices` for stimulation electrode descriptions
 
+## What We Do Not Store (and Why)
+
+This section documents data we deliberately chose not to include in the NWB files, with the technical reasoning behind each decision. These are informed choices, not oversights.
+
+### CHARM/SARM Hierarchical Labels
+
+**Not stored.** CHARM (Cortical Hierarchy Atlas of the Rhesus Macaque) and SARM (Subcortical Atlas of the Rhesus Macaque) provide hierarchical parcellations at 6 levels of granularity natively defined in NMT v2 space. The community recommendation for NWB annotation is to include CHARM/SARM labels at multiple hierarchy levels (e.g., level 2 for robust coarse labels, level 6 for fine cytoarchitectonic areas). We do not include these labels because CHARM voxel lookup at our atlas-to-atlas warped coordinates is unreliable.
+
+**Technical analysis.** We tested CHARM voxel lookup at NMT coordinates produced by applying the RheMAP D99-to-NMT warp to our D99 source coordinates. Results:
+
+- 3 out of 5 representative M1 coordinates returned CHARM label 0 (unlabeled), meaning the warped point landed outside the cortical gray matter ribbon in NMT space.
+- The nearest CHARM label to one "miss" was 2 mm away (PMdc, caudal dorsal premotor cortex).
+- When a coordinate did hit a labeled voxel, CHARM level 6 returned "PMdc" (premotor cortex), not "M1" (primary motor cortex), even though the D99 atlas correctly labels the original coordinate as F1 (M1). The atlas-to-atlas warp shifted the point across an area boundary.
+
+**Why this happens.** Three factors compound:
+
+1. **Cortical ribbon thickness.** CHARM labels exist only on cortical gray matter voxels. The cortical ribbon is ~1.5-2.5 mm thick at 0.25 mm resolution. White matter, CSF, and subcortical structures are unlabeled (0). SARM covers subcortex separately.
+2. **Atlas-to-atlas warp misalignment.** The RheMAP warp aligns the D99 volume to the NMT v2 volume globally, optimizing tissue boundary correspondence across the whole brain. It does not guarantee that a point on the cortical surface of D99 maps to the cortical surface of NMT. The cortical folding patterns of D99 (one brain) and NMT v2 (average of 31 brains) differ, so a gray matter voxel in D99 can warp to a white matter or CSF voxel in NMT.
+3. **Geometric transform uncertainty.** Our D99 coordinates come from a geometric transform (constant AP offset + 35-degree rotation), not individual MRI registration. This adds ~1-2 mm uncertainty before the atlas warp is even applied.
+
+**What would be needed.** Reliable CHARM lookup requires registering the individual animal's MRI directly to NMT v2 using a subject-specific nonlinear warp (e.g., via AFNI's `@animal_warper`). This produces a warp that respects the animal's specific cortical geometry, keeping cortical points on the cortical surface after transformation. No individual MRI data exists for the animals in this dataset, so subject-specific registration is not possible.
+
+**What downstream users can do.** The NMT v2 coordinates we store are the essential building block. A user who has (or acquires) the animal's MRI could register it to NMT v2, obtain a subject-specific warp, transform our D99 coordinates through that warp, and perform a reliable CHARM lookup at the resulting coordinates.
+
+### Registration Quality Metric
+
+**Not stored as a numeric column.** No individual MRI was used in this dataset, so there is no warp quality metric (e.g., Dice coefficient, Jacobian determinant) to report. The `method` text attribute on each `AnatomicalCoordinatesTable` describes the geometric-only approach and its limitations. The empirical bound on accuracy is: 16 out of 296 sessions (5.4%) with ACx coordinates land on unlabeled D99 voxels, suggesting the geometric transform has ~1-2 mm uncertainty at cortical boundaries.
+
+### Julich Brain Macaque Maps Labels
+
+**Not stored.** The Julich Brain Macaque Maps (Rapan et al. 2021, 2023; Niu et al. 2020, 2021, 2024) provide multimodal cytoarchitectonic maps registered to the MEBRAINS surface. We store MEBRAINS coordinates for cross-validation purposes, but do not look up Julich labels because: (1) the Julich maps have incomplete cortical coverage (frontal, parietal, visual, and somatosensory cortex as of 2024, with gaps); (2) the maps are surface-based probabilistic labels, not volumetric parcellations suitable for direct voxel lookup; and (3) the same atlas-to-atlas warp limitation applies.
+
+### Subject-Native MRI Coordinates
+
+**Not available.** No individual MRI or CT data exists for the animals in this dataset. All atlas coordinates are derived from the geometric chamber-to-D99 transform computed by Dr. Turner.
+
+## Relationship to NWB Best Practices
+
+The community recommendation for well-annotated NWB files with NHP localization data includes: (1) NMT v2 coordinates as the primary space, (2) CHARM/SARM labels at multiple hierarchy levels, (3) reference space metadata, and (4) registration quality indicators. Here is how our files compare:
+
+| Recommendation | Our Status | Rationale |
+|---|---|---|
+| NMT v2 coordinates | Stored (`NMTv2symAtlasCoordinates`) | Derived from D99 via RheMAP warp |
+| CHARM hierarchical labels | Not stored | Atlas-to-atlas warp unreliable for cortical voxel lookup (see above) |
+| SARM subcortical labels | N/A | All recordings are cortical (M1) |
+| Reference space metadata | Stored (three `Space` objects with origin, units, orientation) | Fully specified |
+| Registration quality | Not stored as numeric | No individual MRI; `method` text describes limitations |
+| D99 coordinates + labels | Stored (`D99AtlasCoordinates`) | Source of truth, closest to original data |
+| MEBRAINS coordinates | Stored (`MEBRAINSAtlasCoordinates`) | Cross-validation target |
+
+**Key difference from the ideal.** The community recommendation assumes a lab that has subject MRI and can register directly to NMT v2 using `@animal_warper`. In that workflow, CHARM lookup at the subject-specific warped coordinates is reliable. Our situation is different: we are data curators working with a geometric transform (no individual MRI), so our NMT coordinates come from an atlas-to-atlas warp with insufficient precision for cortical voxel lookup. The D99 labels (looked up at the original D99 coordinates, before any warping) are the most reliable region annotations we can provide.
+
+**What we provide that the ideal does not require.** We store coordinates in three independent template spaces (D99, NMT v2, MEBRAINS), enabling template-independence checks. We also carry the D99 region label through to all three tables, so every coordinate table is self-contained with both coordinates and a region name.
+
 ## Standard Macaque Brain Atlases
 
 This section describes popular macaque brain atlases that could theoretically be used for cross-study comparisons, though mapping from chamber-relative coordinates would require additional registration data not available in this dataset.
@@ -205,14 +367,14 @@ This is the coordinate system used during surgical chamber implantation to posit
 
 ### Popular Macaque Atlases
 
-| Atlas | Type | Resolution | Key Features |
-|-------|------|------------|--------------|
-| **NMT v2** (NIMH Macaque Template) | Population MRI template | 0.25-0.5 mm | Symmetric and asymmetric versions; Horsley-Clarke aligned; integrated with AFNI |
-| **CHARM** (Cortical Hierarchy Atlas of the Rhesus Macaque) | Cortical parcellation | Matched to NMT | Hierarchical parcellation with multiple granularity levels |
-| **SARM** (Subcortical Atlas of the Rhesus Macaque) | Subcortical parcellation | Matched to NMT | 6 hierarchical levels; nomenclature from RMBSC4 |
-| **MEBRAINS 1.0** | Population T1/T2 template | High-res | 10-subject average; multi-modal; Horsley-Clarke aligned (2024) |
-| **D99** | Single-subject MRI | 0.25 mm | AC origin; RAS orientation; used in this dataset (see below) |
-| **RMBSC4** (Rhesus Monkey Brain in Stereotaxic Coordinates) | Histological atlas | Section-based | Gold standard for stereotaxic coordinates; 4th edition |
+| Atlas | Type | Resolution | Key Features | Used in This Dataset |
+|-------|------|------------|--------------|---------------------|
+| **D99** v2.0 | Single-subject MRI + histology | 0.25 mm | AC origin; RAS orientation; 368 labeled regions | Yes: source coordinates and region labels |
+| **NMT v2** (NIMH Macaque Template) | Population MRI template (31 macaques) | 0.25-0.5 mm | EBZ origin; Horsley-Clarke aligned; integrated with AFNI | Yes: derived coordinates via RheMAP warp |
+| **CHARM** (Cortical Hierarchy Atlas of the Rhesus Macaque) | Cortical parcellation on NMT v2 | Matched to NMT | 6 hierarchical levels (4 to 134 regions); derived from D99 boundaries | No: voxel lookup unreliable at atlas-warped coordinates (see [above](#charmsarm-hierarchical-labels)) |
+| **SARM** (Subcortical Atlas of the Rhesus Macaque) | Subcortical parcellation on NMT v2 | Matched to NMT | 6 hierarchical levels; nomenclature from RMBSC4 | No: all recordings are cortical |
+| **MEBRAINS 1.0** | Population T1/T2 template (10 macaques) | 0.20 mm | AC origin; approximate Horsley-Clarke alignment (2024) | Yes: derived coordinates via RheMAP warp |
+| **RMBSC4** (Rhesus Monkey Brain in Stereotaxic Coordinates) | Histological atlas | Section-based | Gold standard for stereotaxic coordinates; 4th edition (Paxinos) | No |
 
 ### D99 Atlas Coordinate System
 
