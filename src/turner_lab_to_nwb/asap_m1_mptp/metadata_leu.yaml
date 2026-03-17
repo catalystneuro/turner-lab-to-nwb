@@ -1,0 +1,13 @@
+Subject:
+  species: Macaca mulatta
+  sex: U  # Pending confirmation from Dr. Turner
+  age: P0D/  # Full uncertainty, pending confirmation from Dr. Turner
+  weight: __REMOVE__  # Pending confirmation from Dr. Turner
+  description: MPTP-treated parkinsonian macaque monkey (Leu) used for motor cortex electrophysiology
+surgery: |
+  Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
+  chamber implanted with stereotaxic guidance over left primary motor cortex (M1), oriented 35°
+  to the coronal plane. Custom floating stimulating electrodes (Teflon-coated PtIr microwires,
+  50-um diameter) implanted in posterior putamen, prepontine cerebral peduncle, VL thalamus,
+  and subthalamic nucleus (STN) for antidromic identification of projection neuron types.
+  Prophylactic antibiotics and analgesics administered perioperatively.
