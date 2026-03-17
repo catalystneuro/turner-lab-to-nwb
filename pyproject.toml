@@ -109,3 +109,7 @@ dev = [
     "jax",
 ]
 
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+

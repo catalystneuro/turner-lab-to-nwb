@@ -48,7 +48,13 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         """
         # Load MATLAB data
         mat_data = read_mat(str(self.file_path))
-        analog_data = mat_data["Analog"]
+        analog_data = mat_data.get("Analog")
+        if not isinstance(analog_data, dict):
+            if self.verbose:
+                print("No analog data found in file (Analog is missing or NaN), skipping manipulandum interface")
+            self.analog_data_missing = True
+            return
+        self.analog_data_missing = False
         file_info = mat_data["file_info"]
         analog_sampling_rate = file_info["analog_fs"]
 

@@ -564,6 +564,35 @@ S = Depth_acx       (+superior/dorsal in both systems)
 
 **ACx coordinates are currently available for Monkey V only.** Coordinates for Monkey L are pending.
 
+## Discussion with Data Author on Atlas Accuracy (2026-03-03)
+
+After integrating the D99 atlas coordinates and warping them to NMT v2.0-sym and MEBRAINS spaces, we sent Dr. Turner a visualization showing recording positions in all three coordinate spaces with their respective atlas parcellations, along with a cross-tabulation of D99 region assignments against antidromic classification. The results showed 17 units (5%) falling outside D99 atlas bounds and 17 PTNs assigned to 3a/b rather than F1.
+
+Dr. Turner confirmed these discrepancies are expected and stem from atlas limitations rather than recording errors. He identified three specific issues, providing figures for each (stored in `assets/turner_correspondence/`):
+
+### 1. NMT/MEBRAINS overestimate sulcal gaps
+
+Post-mortem tissue processing causes shrinkage and distortion, so NMT and MEBRAINS templates show large out-of-brain (black) gaps in sulci that do not exist in the living brain. In vivo, the banks of the central sulcus are nearly touching (<1mm gap). This means coordinates that are within cortical gray matter in the live animal can land in "empty space" in the template.
+(See: `in_vivo_central_sulcus.jpg`, `cicerone_central_sulcus.png`)
+
+### 2. D99 is vertically compressed
+
+When D99 is overlaid on an in vivo MRI (both aligned to anterior commissure), the dorsal brain extends above D99's boundary. Recording sites at dorsal/lateral positions can fall "outside" D99 simply because the template is too small in the dorso-ventral axis.
+(See: `d99_over_in_vivo_mri.png`)
+
+### 3. D99 places the M1/premotor boundary too posteriorly
+
+A substantial amount of arm-related M1 extends onto the gyral surface anterior to the bank of the central sulcus. The D99 template places the F1/F2 boundary too far posteriorly, so units that are functionally in M1 (confirmed by microstimulation at <10-30 uA) get assigned to premotor or 3a/b labels by automated D99 voxel lookup. Dr. Turner cited Matelli et al. (doi: 10.1016/s0013-4694(98)00022-4) and Lemon (doi: 10.1146/annurev-neuro-070918-050216), the latter showing the F1/F4 boundary ~2mm anterior to the genu of the central sulcus.
+(See: `f1_f4_boundary_matelli1991.png`)
+
+### Microstimulation as ground truth
+
+Dr. Turner noted that microstimulation data provides the strongest evidence for M1 identity: M1 is microexcitable at currents <30 uA (10 shocks at 300Hz), unlike surrounding cortical areas (S1, premotor). At many recording locations, movement was evoked at <10 uA. This information was subsequently added to the metadata for both monkeys (Venus: 2026-03-09, Leu: 2026-03-05).
+
+### Implications for the dataset
+
+The atlas-based region labels should be treated as approximate. The 17 units in 3a/b are likely M1 neurons near the cytoarchitectonic boundary, and the 17 "outside atlas" units reflect template size and boundary limitations. Dr. Turner reviewed his chamber position estimate for Venus and could not find improvements, acknowledging intrinsic noise (~1-2mm) in the original location data from the electrode positioning methods used at the time. The microstimulation results now included in the metadata provide an independent, functional confirmation of M1 identity that is more reliable than atlas-based assignment for this dataset.
+
 ## Related Files
 
 | File | Description |

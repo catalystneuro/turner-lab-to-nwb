@@ -120,7 +120,11 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "| 'not_tested': Antidromic identification was not performed for this neuron "
                 "| 'pyramidal_tract_and_corticostriatal_neuron': Dual-projecting neuron responding to both sites "
                 "| 'pyramidal_tract_and_thalamic_neuron': Neuron projecting to both pyramidal tract and thalamus "
-                "| 'thalamic_projection_neuron': Neuron projecting to thalamus",
+                "| 'thalamic_projection_neuron': Neuron projecting to thalamus "
+                "| 'subthalamic_projection_neuron': Neuron projecting to subthalamic nucleus "
+                "| 'subthalamic_and_corticostriatal_neuron': Neuron projecting to both STN and striatum "
+                "| 'subthalamic_and_thalamic_neuron': Neuron projecting to both STN and thalamus "
+                "| 'pyramidal_tract_and_subthalamic_neuron': Neuron projecting to both pyramidal tract and STN",
             )
             nwbfile.add_unit_column(
                 "antidromic_stimulation_sites",
@@ -132,6 +136,8 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "| 'posterolateral_striatum': Stimulation of putamen to identify corticostriatal neurons "
                 "(100-600 uA, 0.2 ms biphasic pulses) "
                 "| 'cerebral_peduncle_and_posterolateral_striatum': Both stimulation sites were tested "
+                "| 'subthalamic_nucleus': Stimulation of subthalamic nucleus (STN) "
+                "| 'cerebral_peduncle_and_subthalamic_nucleus': Both peduncle and STN sites were tested "
                 "| '': Empty string indicates antidromic testing was not attempted for this neuron",
             )
             nwbfile.add_unit_column(
@@ -311,12 +317,16 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             # Map antidromic classification to full neuron type names
             neuron_type_mapping = {
                 "PED": "pyramidal_tract_neuron",
-                "STRI": "corticostriatal_neuron", 
+                "STRI": "corticostriatal_neuron",
                 "NR": "no_response",
                 "NT": "not_tested",
                 "PED/STRI": "pyramidal_tract_and_corticostriatal_neuron",
                 "PED/THAL": "pyramidal_tract_and_thalamic_neuron",
-                "THAL": "thalamic_projection_neuron"
+                "THAL": "thalamic_projection_neuron",
+                "STN": "subthalamic_projection_neuron",
+                "STN/STRI": "subthalamic_and_corticostriatal_neuron",
+                "STN/THAL": "subthalamic_and_thalamic_neuron",
+                "PED/STN": "pyramidal_tract_and_subthalamic_neuron",
             }
             neuron_projection_type = neuron_type_mapping.get(cell_type, "unknown")
             
@@ -325,7 +335,9 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             stimulation_sites_mapping = {
                 "Ped": "cerebral_peduncle",
                 "Str": "posterolateral_striatum",
-                "Ped/Str": "cerebral_peduncle_and_posterolateral_striatum"
+                "Ped/Str": "cerebral_peduncle_and_posterolateral_striatum",
+                "STN": "subthalamic_nucleus",
+                "Ped/STN": "cerebral_peduncle_and_subthalamic_nucleus",
             }
             if pd.isna(stim_data) or stim_data == "":
                 antidromic_stimulation_sites = ""

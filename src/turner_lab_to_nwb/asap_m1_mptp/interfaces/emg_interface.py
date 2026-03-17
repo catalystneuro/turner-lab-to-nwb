@@ -84,7 +84,7 @@ class M1MPTPEMGInterface(BaseDataInterface):
         mat_data = read_mat(str(self.file_path))
         
         # Check if EMG data exists
-        if "Analog" not in mat_data or "emg" not in mat_data["Analog"]:
+        if "Analog" not in mat_data or not isinstance(mat_data["Analog"], dict) or "emg" not in mat_data["Analog"]:
             if self.verbose:
                 print("No EMG data found in file, skipping EMG interface")
             return
@@ -167,7 +167,7 @@ class M1MPTPEMGInterface(BaseDataInterface):
                 f"Preprocessed EMG from {muscle_description}. "
                 "Recording: chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
                 "Signal processing: differentially amplified (gain=10,000), bandpass filtered (20 Hz - 5 kHz), "
-                "full-wave rectified, low-pass filtered (100 Hz), then digitized."
+                "full-wave rectified, sample-hold integrated (10 ms integration interval), then digitized."
             )
 
             comments = (

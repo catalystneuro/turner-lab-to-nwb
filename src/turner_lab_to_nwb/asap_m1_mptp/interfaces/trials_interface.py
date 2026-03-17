@@ -91,6 +91,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         target_directions = np.array(events["targ_dir"])
         cursor_departure_times = np.array(events["home_leave"]) / 1000.0
         reward_times = np.array(events["reward"]) / 1000.0
+        target_amplitudes = np.array(events.get("targ_amp", [np.nan] * len(target_directions)))
         n_trials = len(target_directions)
 
         # STEP 2: Add trial columns for Events data (using sidecar for HED definitions)
@@ -118,6 +119,14 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             col_cls=HedValueVector,
             hed=columns["reward_time"]["HED"]
         )
+        nwbfile.add_trial_column(
+            name="target_amplitude_degrees",
+            description=(
+                "Distance from center (home) position to target center in degrees of joint angle (10, 20, or 30). "
+                "Determines required movement amplitude for target capture. During individual sessions, target "
+                "amplitude is either always 20 degrees or varies randomly among 10, 20, and 30 degrees."
+            ),
+        )
 
         # STEP 3: Extract in-trial stimulation data for isolation monitoring
         # Some sessions delivered single antidromic stimulation pulses early in trials
@@ -143,6 +152,17 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         else:
             # No stimulation in this session
             isolation_stim_sites = [""] * n_trials
+
+        # Expand abbreviated site names to full anatomical names
+        stim_site_name_map = {
+            "Str": "posterolateral striatum",
+            "Ped": "cerebral peduncle",
+            "Thal": "ventrolateral thalamus",
+            "STN": "subthalamic nucleus",
+        }
+        isolation_stim_sites = [
+            stim_site_name_map.get(site, site) for site in isolation_stim_sites
+        ]
 
         # Add columns for isolation monitoring stimulation
         nwbfile.add_trial_column(
@@ -198,13 +218,26 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         )
 
         # STEP 5: Extract movement Mvt data
-        movement_data = mat_data["Mvt"]
-        derived_movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
-        derived_movement_end_times = np.array(movement_data["end_t"]) / 1000.0
-        derived_peak_velocities = np.array(movement_data["pkvel"])
-        derived_peak_velocity_times = np.array(movement_data["pkvel_t"]) / 1000.0
-        derived_end_positions = np.array(movement_data["end_posn"])
-        derived_movement_amplitudes = np.array(movement_data["mvt_amp"])
+        # Mvt is derived from analog kinematic signals (Analog.x, Analog.vel). In 14 Monkey Leu
+        # post-MPTP sessions, an A/D converter malfunction corrupted the analog channel, so both
+        # Analog and Mvt are stored as NaN in the source .mat files. NWB requires uniform columns
+        # across all trials, so these sessions get NaN values for all movement-derived fields.
+        movement_data = mat_data.get("Mvt")
+        if isinstance(movement_data, dict):
+            derived_movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
+            derived_movement_end_times = np.array(movement_data["end_t"]) / 1000.0
+            derived_peak_velocities = np.array(movement_data["pkvel"])
+            derived_peak_velocity_times = np.array(movement_data["pkvel_t"]) / 1000.0
+            derived_end_positions = np.array(movement_data["end_posn"])
+            derived_movement_amplitudes = np.array(movement_data["mvt_amp"])
+        else:
+            nan_array = np.full(n_trials, np.nan)
+            derived_movement_onset_times = nan_array
+            derived_movement_end_times = nan_array
+            derived_peak_velocities = nan_array
+            derived_peak_velocity_times = nan_array
+            derived_end_positions = nan_array
+            derived_movement_amplitudes = nan_array
 
         # STEP 6: Add trial columns for movement data (derived from kinematic analysis)
         nwbfile.add_trial_column(
@@ -282,6 +315,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 start_time=trial_start,
                 stop_time=trial_stop_times[trial_index],
                 movement_type=movement_type[trial_index],
+                target_amplitude_degrees=float(target_amplitudes[trial_index]),
                 center_target_appearance_time=trial_start + center_target_appearance_times[trial_index],
                 lateral_target_appearance_time=trial_start + lateral_target_appearance_times[trial_index],
                 cursor_departure_time=trial_start + cursor_departure_times[trial_index],

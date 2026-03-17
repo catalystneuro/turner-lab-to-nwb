@@ -52,7 +52,7 @@ class M1MPTPLFPInterface(BaseDataInterface):
         mat_data = read_mat(str(self.file_path))
 
         # Check if LFP data exists
-        if "Analog" not in mat_data or "lfp" not in mat_data["Analog"]:
+        if "Analog" not in mat_data or not isinstance(mat_data["Analog"], dict) or "lfp" not in mat_data["Analog"]:
             if self.verbose:
                 print("No LFP data found in file, skipping LFP interface")
             return
@@ -117,7 +117,7 @@ class M1MPTPLFPInterface(BaseDataInterface):
             offset=0.0,
             description="Local field potential from M1 microelectrode. "
             "Recorded simultaneously with single-unit activity during visuomotor task. "
-            "Signal processing: 10k gain, 1-100 Hz bandpass filtered.",
+            "Signal processing: 10k gain, 0.1-45 Hz bandpass filtered.",
             comments="Data are uncalibrated A/D converter values (centered ~2048, consistent with "
             "12-bit digitization). No voltage calibration factor is available. "
             "LFP from same electrode as spike recordings. Trials concatenated with inter-trial gaps.",

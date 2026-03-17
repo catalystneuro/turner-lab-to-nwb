@@ -30,12 +30,12 @@ from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
 
 
 def convert_session_to_nwbfile(
-    matlab_file_path: str,
-    nwbfile_path: str,
+    matlab_file_path: str | Path,
+    nwbfile_path: str | Path,
     session_info_dict: dict,
     session_id: str,
     inter_trial_time_interval: float = 3.0,
-    muscle_names: list = None,
+    muscle_names: list | None = None,
     verbose: bool = False,
 ):
     """
@@ -114,13 +114,26 @@ def convert_session_to_nwbfile(
     metadata_file = Path(__file__).parent / "metadata.yaml"
     general_metadata = load_dict_from_file(metadata_file)
 
+    # Load subject-specific metadata override if provided
+    subject_metadata_file = session_info_dict.get("subject_metadata_file")
+    if subject_metadata_file:
+        subject_override = load_dict_from_file(Path(subject_metadata_file))
+        general_metadata = dict_deep_update(general_metadata, subject_override)
+        # Remove fields marked with __REMOVE__ (used to clear inherited values)
+        for section in general_metadata.values():
+            if isinstance(section, dict):
+                keys_to_remove = [k for k, v in section.items() if v == "__REMOVE__"]
+                for k in keys_to_remove:
+                    del section[k]
+
     # Update metadata with session-specific information
     cell_types = [unit["Antidrom"] for unit in session_info_dict["units"]]
     general_metadata["NWBFile"]["session_id"] = session_id
     general_metadata["NWBFile"][
         "session_description"
     ] += f" MPTP condition: {session_info['MPTP']}. Cell types: {', '.join(cell_types)}."
-    general_metadata["Subject"]["subject_id"] = session_info["Animal"]
+    subject_name_map = {"V": "Venus", "L": "Leu"}
+    general_metadata["Subject"]["subject_id"] = subject_name_map.get(session_info["Animal"], session_info["Animal"])
 
     # Add session-specific MPTP status to pharmacology field
     mptp_condition = session_info["MPTP"]
@@ -173,23 +186,48 @@ def convert_session_to_nwbfile(
     nwbfile = converter.create_nwbfile(metadata=metadata)
 
     # Add temporal data limitation documentation
-    nwbfile.notes = (
+    notes_parts = []
+
+    # Annotate missing analog data at the top if applicable
+    if getattr(manipulandum_interface, "analog_data_missing", False):
+        notes_parts.append(
+            "MISSING ANALOG DATA: This session has no manipulandum angle, velocity, or torque data "
+            "due to an A/D converter malfunction that corrupted the analog recording channel. "
+            "The malfunction produced a completely flat signal. Spike times, trial events, and "
+            "antidromic stimulation data (if any) are unaffected."
+        )
+
+    notes_parts.append(
         "TEMPORAL DATA STRUCTURE: This dataset was converted from trialized MATLAB files "
         "where all timestamps were relative to individual trial starts. Inter-trial intervals "
-        "were NOT recorded in the source data.\n\n"
+        "were NOT recorded in the source data."
+    )
+    notes_parts.append(
         "SESSION TIMING: Recording dates are accurate from experimental logs, but precise "
         "session start times within each day are not available. session_start_time is set to "
         "midnight (Pittsburgh timezone) with 2-hour systematic offsets for multiple sessions "
-        "recorded on the same date, ordered by file sequence.\n\n"
+        "recorded on the same date, ordered by file sequence."
+    )
+    notes_parts.append(
         "ARTIFICIAL GAPS: Trials are separated by fixed 3-second gaps for temporal organization. "
-        "These gaps are placeholders and should NOT be interpreted as actual behavioral timing.\n\n"
+        "These gaps are placeholders and should NOT be interpreted as actual behavioral timing."
+    )
+    notes_parts.append(
         "DATA VALIDITY ANNOTATIONS:\n"
         "1. invalid_times table: Lists all inter-trial gaps (tagged 'artificial_inter_trial_gap'). "
         "Use this to exclude gap periods from continuous data analysis (LFP, EMG, kinematics).\n"
         "2. Units obs_intervals: Each unit has observation intervals specifying when it was recorded. "
-        "Spikes only occurred during these intervals; gaps represent 'not observable', not 'silent'.\n\n"
-        "See documentation: how_we_deal_with_trialized_data.md for usage guidance."
+        "Spikes only occurred during these intervals; gaps represent 'not observable', not 'silent'."
     )
+    notes_parts.append(
+        "ANALOG vs TRIAL TIMING: Analog data (manipulandum, EMG, LFP) ends approximately 5ms before "
+        "the trial stop_time because the analog recorder stopped slightly before the behavioral "
+        "software marked the trial as ended. Some spikes can occur in this gap. Trial boundaries "
+        "(start_time, stop_time, obs_intervals, invalid_times) use the authoritative Events.end "
+        "timestamp, not analog data length."
+    )
+
+    nwbfile.notes = "\n\n".join(notes_parts)
 
     configure_and_write_nwbfile(nwbfile=nwbfile, nwbfile_path=nwbfile_path)
 
@@ -199,106 +237,120 @@ def convert_session_to_nwbfile(
 
 if __name__ == "__main__":
     # Configuration
-    base_data_path = Path("/home/heberto/data/turner/current_data/")
     root_folder_path = Path(__file__).parent.parent.parent.parent
     output_folder = root_folder_path / "nwbfiles"
     inter_trial_time_interval = 3.0  # seconds
     stub_test = False  # Set to True to convert only 5 sessions for testing
     verbose = False  # Set to True to print progress information
 
-    # Load metadata table
     conversion_folder_path = root_folder_path / "src" / "turner_lab_to_nwb" / "asap_m1_mptp"
     assets_folder_path = conversion_folder_path / "assets"
-    metadata_table_path = assets_folder_path / "metadata_table" / "ven_table.csv"
-    metadata_df = pd.read_csv(metadata_table_path)
 
-    # EMG muscle column names for extracting channel mapping
-    emg_muscle_columns = ["emg_muscle_1", "emg_muscle_2", "emg_muscle_3", "emg_muscle_4", "emg_muscle_5", "emg_muscle_6"]
+    # Per-monkey configuration
+    monkey_configs = {
+        "V": {
+            "table_path": assets_folder_path / "metadata_table" / "ven_table.csv",
+            "data_path": Path("/home/heberto/data/turner/ven_data/"),
+            "subject_metadata_file": None,  # Uses default metadata.yaml
+            "emg_muscle_columns": [
+                "emg_muscle_1", "emg_muscle_2", "emg_muscle_3",
+                "emg_muscle_4", "emg_muscle_5", "emg_muscle_6",
+            ],
+        },
+        "L": {
+            "table_path": assets_folder_path / "metadata_table" / "leu_table.csv",
+            "data_path": Path("/home/heberto/data/turner/leu_data/"),
+            "subject_metadata_file": conversion_folder_path / "metadata_leu.yaml",
+            "emg_muscle_columns": [],  # Leu has no EMG
+        },
+    }
+
+    # Select which monkeys to convert (change to ["V"] or ["L"] for single monkey)
+    monkeys_to_convert = ["V", "L"]
 
     # Create output directory if needed
     output_folder.mkdir(parents=True, exist_ok=True)
 
-    # Group metadata by file base (FName1) - each represents one recording session
-    # The spike interface will automatically discover all units (.1.mat, .2.mat) per session
-    session_groups = metadata_df.groupby(["FName1"])
+    for monkey_id in monkeys_to_convert:
+        config = monkey_configs[monkey_id]
+        print(f"\n--- Converting Monkey {monkey_id} ---")
 
-    # Convert groups to list for easier handling
-    sessions_to_convert = [(name, group) for name, group in session_groups]
+        metadata_df = pd.read_csv(config["table_path"])
 
-    # Limit to 5 sessions for testing if stub_test is True
-    if stub_test:
-        sessions_to_convert = sessions_to_convert[:5]
+        # Group metadata by file base (FName1) - each represents one recording session
+        session_groups = metadata_df.groupby(["FName1"])
+        sessions_to_convert = [(name, group) for name, group in session_groups]
 
-    if verbose:
-        print(f"Converting {len(sessions_to_convert)} sessions...")
+        if stub_test:
+            sessions_to_convert = sessions_to_convert[:5]
 
-    # Convert all sessions
-    for (fname,), session_group in tqdm(sessions_to_convert, desc="Converting sessions"):
-        # Use first row for session-level info (prioritize rows with complete metadata)
-        complete_rows = session_group.dropna(subset=["A_P", "M_L", "Depth"])
-        if len(complete_rows) > 0:
-            primary_unit = complete_rows.iloc[0]
-        else:
-            primary_unit = session_group.iloc[0]
+        if verbose:
+            print(f"Converting {len(sessions_to_convert)} sessions...")
 
-        # Create structured session metadata dictionary
-        session_info_dict = {
-            "session_info": {
-                "Animal": primary_unit["Animal"],
-                "MPTP": primary_unit["MPTP"],
-                "DateCollected": primary_unit["DateCollected"],
-                "FName1": fname,
-                "A_P": primary_unit["A_P"],
-                "M_L": primary_unit["M_L"],
-                "Depth": primary_unit["Depth"],
-            },
-            "units": [row.to_dict() for _, row in session_group.iterrows()],
-        }
+        for (fname,), session_group in tqdm(sessions_to_convert, desc=f"Monkey {monkey_id}"):
+            # Use first row for session-level info (prioritize rows with complete metadata)
+            complete_rows = session_group.dropna(subset=["A_P", "M_L", "Depth"])
+            if len(complete_rows) > 0:
+                primary_unit = complete_rows.iloc[0]
+            else:
+                primary_unit = session_group.iloc[0]
 
-        # Construct session ID using format: {subject}++{PreMPTP|PostMPTP}++Depth{depth_um}um++{YearMonthDay}
-        # Convert date from "06-Apr-1999" to "19990406" format, use "NA" for missing dates
-        if primary_unit["DateCollected"] == "NaT" or pd.isna(primary_unit["DateCollected"]):
-            formatted_date = "NA"
-            print(f"Warning: {fname} has missing date, using NA in session_id")
-        else:
-            date_obj = datetime.strptime(primary_unit["DateCollected"], "%d-%b-%Y")
-            formatted_date = date_obj.strftime("%Y%m%d")
+            # Create structured session metadata dictionary
+            session_info_dict = {
+                "session_info": {
+                    "Animal": primary_unit["Animal"],
+                    "MPTP": primary_unit["MPTP"],
+                    "DateCollected": primary_unit["DateCollected"],
+                    "FName1": fname,
+                    "A_P": primary_unit["A_P"],
+                    "M_L": primary_unit["M_L"],
+                    "Depth": primary_unit["Depth"],
+                },
+                "units": [row.to_dict() for _, row in session_group.iterrows()],
+                "subject_metadata_file": config["subject_metadata_file"],
+            }
 
-        # Convert depth to micrometers to avoid decimals in session_id
-        depth_um = int(primary_unit['Depth'] * 1000)  # Convert mm to μm
-        depth_str = f"{depth_um}um"
+            # Construct session ID
+            if primary_unit["DateCollected"] == "NaT" or pd.isna(primary_unit["DateCollected"]):
+                formatted_date = "NA"
+                print(f"Warning: {fname} has missing date, using NA in session_id")
+            else:
+                date_obj = datetime.strptime(primary_unit["DateCollected"], "%d-%b-%Y")
+                formatted_date = date_obj.strftime("%Y%m%d")
 
-        # Create session ID with FName as separate component to avoid collisions
-        # (multiple sessions can have same Animal + MPTP + Depth + Date)
-        mptp_condition = f"{primary_unit['MPTP']}MPTP"
-        session_id = f"{primary_unit['Animal']}++{fname}++{mptp_condition}++Depth{depth_str}++{formatted_date}"
+            depth_um = int(primary_unit["Depth"] * 1000)
+            depth_str = f"{depth_um}um"
+            mptp_condition = f"{primary_unit['MPTP']}MPTP"
+            session_id = f"{primary_unit['Animal']}++{fname}++{mptp_condition}++Depth{depth_str}++{formatted_date}"
 
-        # Use first unit file as base (interface will discover other units automatically)
-        first_unit_num = primary_unit["UnitNum1"]
-        matlab_file_path = base_data_path / f"{fname}.{int(first_unit_num)}.mat"
+            # Use first unit file as base
+            first_unit_num = primary_unit["UnitNum1"]
+            matlab_file_path = config["data_path"] / f"{fname}.{int(first_unit_num)}.mat"
 
-        # Construct output path
-        nwbfile_path = output_folder / f"{session_id}.nwb"
+            nwbfile_path = output_folder / f"{session_id}.nwb"
 
-        # Extract EMG muscle names from metadata (filter out NaN values)
-        muscle_names = [
-            primary_unit[col] if pd.notna(primary_unit.get(col)) else None
-            for col in emg_muscle_columns
-        ]
-        # Remove trailing None values
-        while muscle_names and muscle_names[-1] is None:
-            muscle_names.pop()
+            # Extract EMG muscle names from metadata (Leu has no EMG columns)
+            muscle_names = None
+            if config["emg_muscle_columns"]:
+                muscle_names = [
+                    primary_unit[col] if pd.notna(primary_unit.get(col)) else None
+                    for col in config["emg_muscle_columns"]
+                ]
+                while muscle_names and muscle_names[-1] is None:
+                    muscle_names.pop()
+                if not muscle_names:
+                    muscle_names = None
 
-        # Convert session
-        convert_session_to_nwbfile(
-            matlab_file_path,
-            nwbfile_path,
-            session_info_dict,
-            session_id,
-            inter_trial_time_interval,
-            muscle_names=muscle_names if muscle_names else None,
-            verbose=verbose,
-        )
+            convert_session_to_nwbfile(
+                matlab_file_path,
+                nwbfile_path,
+                session_info_dict,
+                session_id,
+                inter_trial_time_interval,
+                muscle_names=muscle_names,
+                verbose=verbose,
+            )
 
-    if verbose:
-        print(f"Conversion complete! Files saved to {output_folder}")
+        print(f"Monkey {monkey_id}: {len(sessions_to_convert)} sessions converted")
+
+    print(f"\nConversion complete! Files saved to {output_folder}")

@@ -280,7 +280,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             "PedStim": 0,   # Peduncle
             "StrStim": 1,   # Putamen (use first of 3 as representative)
             "ThalStim": 4,  # Thalamus
-            "STNStim": 0,   # Fallback to peduncle
+            "STNStim": 5,   # Subthalamic nucleus
         }
 
         # =====================================================================
@@ -490,8 +490,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             description="Chronically implanted macroelectrodes for antidromic neuron identification. "
             "These electrodes were surgically implanted and present for all recording sessions, "
             "though antidromic testing was not performed for every recorded neuron. "
-            "Used to classify M1 neurons as PTNs (peduncle), CSNs (putamen), or thalamocortical neurons (thalamus). "
-            "Row indices: 0=peduncle, 1-3=putamen (3 electrodes), 4=thalamus.",
+            "Used to classify M1 neurons as PTNs (peduncle), CSNs (putamen), thalamocortical neurons (thalamus), "
+            "or STN-projecting neurons (subthalamic nucleus). "
+            "Row indices: 0=peduncle, 1-3=putamen (3 electrodes), 4=thalamus, 5=STN.",
             columns=[
                 VectorData(
                     name="location",
@@ -502,6 +503,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                         "Putamen (posterolateral)",
                         "Putamen (posterolateral)",
                         "Ventrolateral thalamus",
+                        "Subthalamic nucleus (STN)",
                     ],
                 ),
                 VectorData(
@@ -513,6 +515,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                         "DeviceMicrowirePutamenStimulation2",
                         "DeviceMicrowirePutamenStimulation3",
                         "DeviceMicrowireThalamicStimulation",
+                        "DeviceMicrowireSTNStimulation",
                     ],
                 ),
                 VectorData(
@@ -524,6 +527,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                         "Electrode 2 of 3, posterolateral putamen for M1 CSN projections. Physical electrode documented but not distinguished in source data.",
                         "Electrode 3 of 3, posterolateral putamen for M1 CSN projections. Physical electrode documented but not distinguished in source data.",
                         "VL thalamus for thalamocortical projection identification.",
+                        "Subthalamic nucleus for STN projection identification.",
                     ],
                 ),
             ],
