@@ -640,7 +640,6 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             electrode_location = "Primary motor cortex (M1), area 4, arm area"
 
         # Standard NWB x/y/z: NMT v2.0-sym coordinates in PIR convention (microns).
-        # When no atlas coordinates exist (Monkey L, pending), set to NaN.
         if has_acx:
             x_pir = -nmt_a * 1000.0  # +anterior -> +posterior, mm -> um
             y_pir = -nmt_s * 1000.0  # +superior -> +inferior, mm -> um

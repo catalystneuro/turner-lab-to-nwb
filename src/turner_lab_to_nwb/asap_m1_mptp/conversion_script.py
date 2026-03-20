@@ -321,7 +321,9 @@ if __name__ == "__main__":
             depth_um = int(primary_unit["Depth"] * 1000)
             depth_str = f"{depth_um}um"
             mptp_condition = f"{primary_unit['MPTP']}MPTP"
-            session_id = f"{primary_unit['Animal']}++{fname}++{mptp_condition}++Depth{depth_str}++{formatted_date}"
+            subject_name_map = {"V": "Venus", "L": "Leu"}
+            subject_name = subject_name_map.get(primary_unit["Animal"], primary_unit["Animal"])
+            session_id = f"{subject_name}++{fname}++{mptp_condition}++Depth{depth_str}++{formatted_date}"
 
             # Use first unit file as base
             first_unit_num = primary_unit["UnitNum1"]

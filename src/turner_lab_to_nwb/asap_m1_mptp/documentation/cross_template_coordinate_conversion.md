@@ -33,14 +33,14 @@ Stage 1: Chamber coordinates (source data)
 Stage 2: D99 atlas coordinates (ACx convention)
     A_P_acx, M_L_acx, Depth_acx
     Transform: AP offset (-8.2 mm) + 35-degree coronal rotation
-    Available for: Monkey V only (Monkey L pending)
+    Available for: both monkeys (V and L)
 
         |
         v  (RheMAP nonlinear warp via ANTsPy)
 
 Stage 3: NMT v2.0-sym atlas coordinates
     Computed by: applying pre-computed composite warp field
-    Available for: Monkey V only (requires both D99 coords and warp file)
+    Available for: both monkeys (V and L)
 ```
 
 ## How the Warp Works

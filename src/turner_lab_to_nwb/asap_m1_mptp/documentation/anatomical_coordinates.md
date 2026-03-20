@@ -153,7 +153,7 @@ Chamber coords ─→ [geometric transform] ─→ D99 coords ─→ [RheMAP war
 
 ### Standard NWB Electrode Coordinates
 
-The standard NWB `x`, `y`, `z` coordinates are populated in the PIR convention (Posterior-Inferior-Right) in microns. Coordinates are derived from **NMT v2.0-sym** (the NIMH Macaque Template, the most widely used community standard) via the RheMAP warp. When no atlas coordinates exist (e.g., Monkey L, pending), `x`, `y`, `z` are set to `NaN`.
+The standard NWB `x`, `y`, `z` coordinates are populated in the PIR convention (Posterior-Inferior-Right) in microns. Coordinates are derived from **NMT v2.0-sym** (the NIMH Macaque Template, the most widely used community standard) via the RheMAP warp.
 
 The NMT and MEBRAINS warped coordinates are **precomputed** and stored in `assets/metadata_table/warped_coordinates.csv`. The conversion pipeline reads from this CSV at runtime (instant lookup) rather than calling ANTs per session. To regenerate the precomputed coordinates (e.g., after updating source coordinates), run:
 
@@ -285,7 +285,7 @@ The chamber-relative coordinates (`chamber_grid_ap_mm`, `chamber_grid_ml_mm`, `c
 
 ### D99 Atlas Coordinates Availability
 
-D99 atlas coordinates are currently available for **Monkey V only**. When unavailable (e.g., Monkey L, pending), the standard NWB `x`, `y`, `z` fields are set to `NaN` and the `AnatomicalCoordinatesTable` is omitted. See [Chamber-to-Atlas Transformation](#chamber-to-atlas-transformation-acx-coordinates) for how these coordinates were computed.
+D99 atlas coordinates are available for **both monkeys (V and L)**. See [Chamber-to-Atlas Transformation](#chamber-to-atlas-transformation-acx-coordinates) for how these coordinates were computed.
 
 ### Stimulation Electrodes
 
@@ -320,7 +320,15 @@ This section documents data we deliberately chose not to include in the NWB file
 
 ### Registration Quality Metric
 
-**Not stored as a numeric column.** No individual MRI was used in this dataset, so there is no warp quality metric (e.g., Dice coefficient, Jacobian determinant) to report. The `method` text attribute on each `AnatomicalCoordinatesTable` describes the geometric-only approach and its limitations. The empirical bound on accuracy is: 16 out of 296 sessions (5.4%) with ACx coordinates land on unlabeled D99 voxels, suggesting the geometric transform has ~1-2 mm uncertainty at cortical boundaries.
+**Not stored as a numeric column.** No individual MRI was used in this dataset, so there is no warp quality metric (e.g., Dice coefficient, Jacobian determinant) to report. The `method` text attribute on each `AnatomicalCoordinatesTable` describes the geometric-only approach and its limitations. Out-of-atlas rates across all 447 sessions (computed from the DANDI-uploaded NWB files):
+
+| Atlas | Venus (298 sessions) | Leu (149 sessions) |
+|-------|---------------------|---------------------|
+| D99 v2.0 | 16 (5.4%) | 61 (40.9%) |
+| NMT v2.0-sym | 16 (5.4%) | 61 (40.9%) |
+| MEBRAINS 1.0 | 134 (45.0%) | 149 (100.0%) |
+
+NMT and D99 outside counts are identical because NMT coordinates carry the same D99-derived region label (no separate NMT parcellation lookup is performed). The high MEBRAINS outside rate for Leu (100%) reflects that Leu's electrodes are systematically more dorsal than Venus's (D99 S range: 16.9-23.1 mm for Leu vs 13.2-19.6 mm for Venus) and MEBRAINS has poor cortical coverage at those dorsal positions due to post-mortem sulcal compression. For Venus, the 45% MEBRAINS rate (vs 5.4% D99) reflects the same sulcal compression issue, which is less severe at Venus's lower-dorsal electrode positions.
 
 ### Julich Brain Macaque Maps Labels
 
@@ -560,9 +568,9 @@ A = A_P_acx         (+anterior in both systems)
 S = Depth_acx       (+superior/dorsal in both systems)
 ```
 
-**Precision and limitations**: This transformation is geometric (rigid rotation + translation), not based on individual MRI registration. The accuracy depends on the precision of the stereotaxic chamber placement and the assumption that the chamber angle was exactly 35 degrees. No individual MRI or CT data were used. The atlas (D99) is from a different animal, so there is an inherent cross-subject registration uncertainty of approximately 1-2 mm, visible in the 16 "outside atlas" sessions (5.4%) that fall on unlabeled voxels at cortical boundaries. See [anatomical_coordinates_verification.md](../../build/coordinate_verification/anatomical_coordinates_verification.md) for the full verification analysis.
+**Precision and limitations**: This transformation is geometric (rigid rotation + translation), not based on individual MRI registration. The accuracy depends on the precision of the stereotaxic chamber placement and the assumption that the chamber angle was exactly 35 degrees. No individual MRI or CT data were used. The atlas (D99) is from a different animal, so there is an inherent cross-subject registration uncertainty of approximately 1-2 mm, visible in the 16/298 Venus sessions (5.4%) and 61/149 Leu sessions (40.9%) that fall on unlabeled D99 voxels at cortical boundaries. Leu's higher D99 outside rate reflects more dorsal electrode positions (D99 S: 16.9-23.1 mm vs Venus 13.2-19.6 mm) at the compressed dorsal boundary of the D99 template. See [anatomical_coordinates_verification.md](../../build/coordinate_verification/anatomical_coordinates_verification.md) for the full verification analysis.
 
-**ACx coordinates are currently available for Monkey V only.** Coordinates for Monkey L are pending.
+**ACx coordinates are available for both monkeys (V and L).**
 
 ## Discussion with Data Author on Atlas Accuracy (2026-03-03)
 

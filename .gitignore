@@ -175,3 +175,12 @@ meeting_notes/
 # Scripts (local development/analysis)
 scripts/
 src/turner_lab_to_nwb/asap_m1_mptp/assets/papers_text
+
+# Turner correspondence figures
+src/turner_lab_to_nwb/asap_m1_mptp/assets/turner_correspondence/
+
+# Generated figures
+central_sulcus_anatomy.png
+
+# Local task tracking
+TODO.md
