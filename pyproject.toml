@@ -33,6 +33,7 @@ dependencies = [
     "remfile>=0.1.13",
     "hdmf",
     "antspyx",
+    "scipy>=1.15.3",
 ]
 
 [project.urls]

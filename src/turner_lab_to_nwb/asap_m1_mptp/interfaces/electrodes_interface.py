@@ -6,6 +6,7 @@ from typing import Optional
 
 import nibabel as nib
 import numpy as np
+from scipy.spatial import cKDTree
 import pandas as pd
 from ndx_anatomical_localization import AnatomicalCoordinatesTable, Localization, Space
 from pydantic import FilePath
@@ -89,6 +90,23 @@ _WARPED_COORDS_PATH = (
     / "assets" / "metadata_table" / "warped_coordinates.csv"
 )
 
+# CHARM level 4 atlas on NMT v2.0-sym (for M1 region lookup in NMT space).
+# CHARM is the native hierarchical parcellation for NMT. Level 4 is the first level
+# where M1 (primary_motor_cortex, index 79) is separated from premotor and SMA.
+_CHARM_ATLAS_PATH = (
+    _PROJECT_ROOT / "data" / "nmt_v2" / "NMT_v2.0_sym" / "NMT_v2.0_sym"
+    / "supplemental_CHARM" / "CHARM_4_in_NMT_v2.0_sym.nii.gz"
+)
+_CHARM_KEY_PATH = (
+    _PROJECT_ROOT / "data" / "nmt_v2" / "NMT_v2.0_sym"
+    / "tables_CHARM" / "CHARM_key_4.txt"
+)
+
+# M1-constrained nearest-neighbor parameters.
+_MAX_NEAREST_MM = 5.0
+_CHARM_M1_INDEX = 79
+_MEBRAINS_M1_LABELS = {301: "4a left", 303: "4p left"}
+
 
 @lru_cache(maxsize=1)
 def _load_d99_atlas() -> tuple[np.ndarray, np.ndarray, dict]:
@@ -151,6 +169,134 @@ def _load_mebrains_atlas() -> tuple[np.ndarray, np.ndarray, dict]:
     labels = {int(k): {"name": v} for k, v in raw_labels.items()}
 
     return atlas_data, inv_affine, labels
+
+
+@lru_cache(maxsize=1)
+def _load_charm_m1_tree():
+    """Load CHARM level 4 atlas and build KD-tree of M1 voxels in world RAS mm (cached).
+
+    Returns
+    -------
+    m1_tree : cKDTree
+        KD-tree of M1 voxel positions in NMT RAS world coordinates (mm).
+    atlas_data : np.ndarray
+        3D array of CHARM label IDs.
+    inv_affine : np.ndarray
+        Inverse affine (world RAS mm -> voxel indices).
+    """
+    atlas = nib.load(str(_CHARM_ATLAS_PATH))
+    atlas_data = np.asarray(atlas.dataobj)
+    affine = atlas.affine
+    inv_affine = np.linalg.inv(affine)
+
+    m1_voxels = np.argwhere(atlas_data == _CHARM_M1_INDEX)
+    m1_world_coords = nib.affines.apply_affine(affine, m1_voxels)
+    m1_tree = cKDTree(m1_world_coords)
+
+    return m1_tree, atlas_data, inv_affine
+
+
+@lru_cache(maxsize=1)
+def _load_mebrains_m1_tree():
+    """Build KD-tree of MEBRAINS M1 voxels (4a + 4p) in world RAS mm (cached).
+
+    Reuses atlas data from _load_mebrains_atlas().
+
+    Returns
+    -------
+    m1_tree : cKDTree
+        KD-tree of M1 voxel positions in MEBRAINS RAS world coordinates (mm).
+    m1_voxels : np.ndarray
+        (N, 3) array of M1 voxel indices (for label lookup after query).
+    """
+    atlas_data, inv_affine, _ = _load_mebrains_atlas()
+    affine = np.linalg.inv(inv_affine)
+
+    m1_mask = np.isin(atlas_data, list(_MEBRAINS_M1_LABELS.keys()))
+    m1_voxels = np.argwhere(m1_mask)
+    m1_world_coords = nib.affines.apply_affine(affine, m1_voxels)
+    m1_tree = cKDTree(m1_world_coords)
+
+    return m1_tree, m1_voxels
+
+
+def lookup_charm_m1(nmt_r: float, nmt_a: float, nmt_s: float) -> tuple[str, str, str, float]:
+    """Look up CHARM M1 region for an NMT RAS coordinate, with M1-constrained nearest-neighbor.
+
+    Parameters
+    ----------
+    nmt_r, nmt_a, nmt_s : float
+        NMT v2.0-sym RAS coordinates (mm).
+
+    Returns
+    -------
+    region_name : str
+        "primary_motor_cortex" if within distance cap, else "outside atlas".
+    region_id : str
+        "M1" if within distance cap, else "outside".
+    method : str
+        "exact", "nearest_neighbor", or "outside".
+    distance_mm : float
+        0.0 for exact, Euclidean distance for nearest_neighbor, NaN for outside.
+    """
+    m1_tree, atlas_data, inv_affine = _load_charm_m1_tree()
+
+    world_coord = np.array([nmt_r, nmt_a, nmt_s])
+    voxel = np.round(nib.affines.apply_affine(inv_affine, world_coord)).astype(int)
+
+    if not all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
+        return "outside atlas", "outside", "outside", float("nan")
+
+    label_id = int(atlas_data[tuple(voxel)])
+    if label_id == _CHARM_M1_INDEX:
+        return "primary_motor_cortex", "M1", "exact", 0.0
+
+    dist_mm, _ = m1_tree.query(world_coord)
+    if dist_mm <= _MAX_NEAREST_MM:
+        return "primary_motor_cortex", "M1", "nearest_neighbor", round(float(dist_mm), 4)
+
+    return "outside atlas", "outside", "outside", float("nan")
+
+
+def lookup_mebrains_m1(mebrains_r: float, mebrains_a: float, mebrains_s: float) -> tuple[str, str, str, float]:
+    """Look up MEBRAINS M1 subdivision for a MEBRAINS RAS coordinate, with M1-constrained nearest-neighbor.
+
+    Parameters
+    ----------
+    mebrains_r, mebrains_a, mebrains_s : float
+        MEBRAINS RAS coordinates (mm).
+
+    Returns
+    -------
+    region_name : str
+        "4a left" or "4p left" if within distance cap, else "outside atlas".
+    region_id : str
+        "301" or "303" if within distance cap, else "outside".
+    method : str
+        "exact", "nearest_neighbor", or "outside".
+    distance_mm : float
+        0.0 for exact, Euclidean distance for nearest_neighbor, NaN for outside.
+    """
+    atlas_data, inv_affine, _ = _load_mebrains_atlas()
+    m1_tree, m1_voxels = _load_mebrains_m1_tree()
+
+    world_coord = np.array([mebrains_r, mebrains_a, mebrains_s])
+    voxel = np.round(nib.affines.apply_affine(inv_affine, world_coord)).astype(int)
+
+    if not all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
+        return "outside atlas", "outside", "outside", float("nan")
+
+    label_id = int(atlas_data[tuple(voxel)])
+    if label_id in _MEBRAINS_M1_LABELS:
+        return _MEBRAINS_M1_LABELS[label_id], str(label_id), "exact", 0.0
+
+    dist_mm, idx = m1_tree.query(world_coord)
+    if dist_mm <= _MAX_NEAREST_MM:
+        nearest_voxel = tuple(m1_voxels[idx])
+        nearest_id = int(atlas_data[nearest_voxel])
+        return _MEBRAINS_M1_LABELS[nearest_id], str(nearest_id), "nearest_neighbor", round(float(dist_mm), 4)
+
+    return "outside atlas", "outside", "outside", float("nan")
 
 
 def lookup_mebrains_region(mebrains_r: float, mebrains_a: float, mebrains_s: float) -> tuple[str, str]:
@@ -738,14 +884,41 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                     "by Dr. Robert Turner (geometric transformation: AP offset + 35-degree coronal rotation). "
                     "Then converted from D99 to NMT v2.0-sym using the pre-computed nonlinear composite warp "
                     "from RheMAP v1.3 (NMTv2.0-sym_to_D99_CompositeWarp.nii.gz, applied in reverse for points). "
-                    "RAS-to-LPS conversion applied before ANTs warp, then reversed."
+                    "RAS-to-LPS conversion applied before ANTs warp, then reversed. "
+                    "Region labels use CHARM level 4 parcellation (native to NMT), constrained to M1 "
+                    "(primary_motor_cortex, index 79). Many electrodes land in the central sulcus fundus, "
+                    "where post-mortem tissue shrinkage creates unlabeled gaps in the template that do not "
+                    "exist in vivo. Rather than labeling these 'outside atlas', the nearest M1 voxel is found "
+                    "and its distance stored (brain_region_distance_mm). All recording sites are confirmed M1 "
+                    "by microstimulation (icms_threshold_uA column on the electrodes table). "
+                    "Unconstrained nearest-neighbor was rejected because it snaps to somatosensory cortex (S1) "
+                    "on the opposite bank of the sulcal gap, which is geometrically closer in the template "
+                    "but functionally wrong."
                 ),
                 space=nmt_space,
             )
 
+            charm_region_name, charm_region_id, charm_method, charm_distance = lookup_charm_m1(nmt_r, nmt_a, nmt_s)
+
             nmt_coordinates_table.add_column(
                 name="brain_region_id",
-                description="D99 atlas region abbreviation (looked up in D99 native space before warping)",
+                description="CHARM level 4 region from M1-constrained lookup in NMT space (M1 = index 79)",
+            )
+            nmt_coordinates_table.add_column(
+                name="brain_region_lookup_method",
+                description=(
+                    "How the brain region was determined: "
+                    "'exact' = coordinate falls directly on a CHARM M1 voxel, "
+                    "'nearest_neighbor' = snapped to nearest M1 voxel within 5 mm, "
+                    "'outside' = no M1 voxel within 5 mm"
+                ),
+            )
+            nmt_coordinates_table.add_column(
+                name="brain_region_distance_mm",
+                description=(
+                    "Euclidean distance (mm) from the electrode coordinate to the nearest CHARM M1 voxel. "
+                    "0.0 for exact hits, positive for nearest-neighbor, NaN if outside the 5 mm cap."
+                ),
             )
 
             nmt_coordinates_table.add_row(
@@ -753,8 +926,10 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 y=nmt_a,
                 z=nmt_s,
                 localized_entity=0,
-                brain_region=d99_full_name,
-                brain_region_id=d99_abbreviation,
+                brain_region=charm_region_name,
+                brain_region_id=charm_region_id,
+                brain_region_lookup_method=charm_method,
+                brain_region_distance_mm=charm_distance,
             )
 
             spaces_to_add.append(nmt_space)
@@ -785,16 +960,41 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                     "by Dr. Robert Turner (geometric transformation: AP offset + 35-degree coronal rotation). "
                     "Then converted from D99 to MEBRAINS 1.0 using the pre-computed nonlinear composite warp "
                     "from RheMAP (MEBRAINS_to_D99_CompositeWarp.nii.gz, applied in reverse for points). "
-                    "RAS-to-LPS conversion applied before ANTs warp, then reversed."
+                    "RAS-to-LPS conversion applied before ANTs warp, then reversed. "
+                    "Region labels use the MEBRAINS parcellation (Julich Brain Macaque Maps), constrained to "
+                    "M1 subdivisions 4a (anterior) and 4p (posterior). MEBRAINS has wider sulcal gaps than D99 "
+                    "due to post-mortem tissue processing, causing many electrodes to land in unlabeled voxels "
+                    "at the central sulcus fundus. The nearest M1 (4a or 4p) voxel is found and its distance "
+                    "stored (brain_region_distance_mm). The 4a/4p distinction indicates whether the electrode "
+                    "is closer to anterior or posterior primary motor cortex. All recording sites are confirmed "
+                    "M1 by microstimulation (icms_threshold_uA column on the electrodes table)."
                 ),
                 space=mebrains_space,
             )
 
-            mebrains_region_name, mebrains_region_id = lookup_mebrains_region(mebrains_r, mebrains_a, mebrains_s)
+            mebrains_region_name, mebrains_region_id, mebrains_method, mebrains_distance = lookup_mebrains_m1(
+                mebrains_r, mebrains_a, mebrains_s
+            )
 
             mebrains_coordinates_table.add_column(
                 name="brain_region_id",
-                description="MEBRAINS label ID from voxel lookup in the MEBRAINS parcellation volume",
+                description="MEBRAINS M1 label ID from M1-constrained lookup (301=4a left, 303=4p left)",
+            )
+            mebrains_coordinates_table.add_column(
+                name="brain_region_lookup_method",
+                description=(
+                    "How the brain region was determined: "
+                    "'exact' = coordinate falls directly on a MEBRAINS 4a/4p voxel, "
+                    "'nearest_neighbor' = snapped to nearest M1 (4a or 4p) voxel within 5 mm, "
+                    "'outside' = no M1 voxel within 5 mm"
+                ),
+            )
+            mebrains_coordinates_table.add_column(
+                name="brain_region_distance_mm",
+                description=(
+                    "Euclidean distance (mm) from the electrode coordinate to the nearest MEBRAINS M1 voxel. "
+                    "0.0 for exact hits, positive for nearest-neighbor, NaN if outside the 5 mm cap."
+                ),
             )
 
             mebrains_coordinates_table.add_row(
@@ -804,6 +1004,8 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 localized_entity=0,
                 brain_region=mebrains_region_name,
                 brain_region_id=mebrains_region_id,
+                brain_region_lookup_method=mebrains_method,
+                brain_region_distance_mm=mebrains_distance,
             )
 
             spaces_to_add.append(mebrains_space)
@@ -822,4 +1024,6 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 print(f"Added D99 atlas coordinates (RAS mm): R={d99_r:.2f}, A={d99_a:.2f}, S={d99_s:.2f}")
                 print(f"D99 region: {d99_full_name} ({d99_abbreviation})")
                 print(f"Added NMT v2.0-sym coordinates (RAS mm): R={nmt_r:.2f}, A={nmt_a:.2f}, S={nmt_s:.2f}")
+                print(f"NMT CHARM M1: {charm_region_id} ({charm_method}, {charm_distance:.2f} mm)")
                 print(f"Added MEBRAINS coordinates (RAS mm): R={mebrains_r:.2f}, A={mebrains_a:.2f}, S={mebrains_s:.2f}")
+                print(f"MEBRAINS M1: {mebrains_region_name} ({mebrains_method}, {mebrains_distance:.2f} mm)")
