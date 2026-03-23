@@ -8,7 +8,7 @@ import nibabel as nib
 import numpy as np
 from scipy.spatial import cKDTree
 import pandas as pd
-from ndx_anatomical_localization import AnatomicalCoordinatesTable, Localization, Space
+from ndx_anatomical_localization import AnatomicalCoordinatesTable, D99v2Space, Localization, MEBRAINSSpace, NMTv2Space
 from pydantic import FilePath
 from pynwb import NWBFile
 
@@ -814,13 +814,7 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
         # Add atlas coordinates via ndx-anatomical-localization if available
         if has_acx:
             # D99 space and coordinates table
-            d99_space = Space(
-                name="D99",
-                space_name="D99",
-                origin="anterior commissure",
-                units="mm",
-                orientation="RAS",
-            )
+            d99_space = D99v2Space()
 
             d99_coordinates_table = AnatomicalCoordinatesTable(
                 name="D99AtlasCoordinates",
@@ -861,13 +855,7 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             tables_to_add = [d99_coordinates_table]
 
             # NMT v2.0-sym space and coordinates table (via RheMAP nonlinear warp)
-            nmt_space = Space(
-                name="NMTv2sym",
-                space_name="NMT_v2.0_sym",
-                origin="ear bar zero",
-                units="mm",
-                orientation="RAS",
-            )
+            nmt_space = NMTv2Space()
 
             nmt_coordinates_table = AnatomicalCoordinatesTable(
                 name="NMTv2symAtlasCoordinates",
@@ -937,13 +925,7 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
 
             # MEBRAINS space and coordinates table (via RheMAP nonlinear warp)
 
-            mebrains_space = Space(
-                name="MEBRAINS",
-                space_name="MEBRAINS_1.0",
-                origin="anterior commissure",
-                units="mm",
-                orientation="RAS",
-            )
+            mebrains_space = MEBRAINSSpace()
 
             mebrains_coordinates_table = AnatomicalCoordinatesTable(
                 name="MEBRAINSAtlasCoordinates",
