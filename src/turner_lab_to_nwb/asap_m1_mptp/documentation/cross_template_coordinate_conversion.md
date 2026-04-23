@@ -111,20 +111,30 @@ Both D99 and NMT coordinates are stored using the `ndx-anatomical-localization` 
 nwbfile.lab_meta_data["localization"]
     |
     +-- spaces
-    |   +-- D99  (origin: AC, units: mm, orientation: RAS)
-    |   +-- NMTv2sym  (origin: AC, units: mm, orientation: RAS)
+    |   +-- D99v2  (origin: AC, units: mm, orientation: RAS)
+    |   +-- NMTv2  (origin: ear bar zero, units: mm, orientation: RAS)
+    |   +-- MEBRAINS  (origin: AC, units: mm, orientation: RAS)
     |
     +-- anatomical_coordinates_tables
-        +-- D99AtlasCoordinates
-        |   x (R), y (A), z (S), brain_region, brain_region_id
+        +-- D99v2AtlasCoordinates
+        |   x (R), y (A), z (S), localized_entity,
+        |   brain_region, brain_region_id,
+        |   brain_region_lookup_method, brain_region_distance_mm,
+        |   voxel_label, voxel_label_id
         |
-        +-- NMTv2symAtlasCoordinates
-            x (R), y (A), z (S), brain_region, brain_region_id
+        +-- NMTv2AtlasCoordinates   (same 10 columns as D99)
+        |
+        +-- MEBRAINSAtlasCoordinates   (same 10 columns as D99)
 ```
 
 The standard NWB electrode table `x, y, z` fields use NMT v2.0-sym coordinates when available (converted to PIR convention in microns), falling back to D99 coordinates when the warp is unavailable. Both native coordinate sets remain accessible in their respective `AnatomicalCoordinatesTable` entries.
 
-Brain region labels (e.g., "F1_(4)", "3a/b") are looked up in D99 native space and reused for the NMT table, since the parcellation scheme is the same (the warp moves the coordinates, not the region labels).
+Each table carries **two independent region annotations** per electrode:
+
+- `voxel_label_id` / `voxel_label`: the raw atlas voxel label at that coordinate (no interpolation). For D99 this is whatever the D99 parcellation says; for NMT it is the CHARM level-4 label; for MEBRAINS it is the numeric string form of the Julich Brain Macaque label ID. Special values: `"unlabeled"` (coord in-volume but on label=0), `"outside_volume"` (coord outside the template bounding box).
+- `brain_region_id` / `brain_region`: a curated M1-constrained label. If the raw voxel is the atlas's native M1 label (F1_(4) for D99, M1 for CHARM, 4a/4p for MEBRAINS), it is kept. Otherwise the nearest M1 voxel within 5 mm is chosen, with the distance recorded in `brain_region_distance_mm` and the fallback flagged in `brain_region_lookup_method`.
+
+The curation is dataset-specific to dandiset 001636 (all electrodes are ICMS-verified M1 at threshold <30 µA) and is documented in `documentation/nearest_neighbor_region_labeling.md`.
 
 ## The Two Templates: Key Differences
 

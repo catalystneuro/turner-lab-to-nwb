@@ -104,8 +104,9 @@ _CHARM_KEY_PATH = (
 
 # M1-constrained nearest-neighbor parameters.
 _MAX_NEAREST_MM = 5.0
-_CHARM_M1_INDEX = 79
-_MEBRAINS_M1_LABELS = {301: "4a left", 303: "4p left"}
+_D99_M1_INDEX = 359  # D99 label id for F1_(4), agranular frontal area F1 (= area 4, primary motor cortex).
+_CHARM_M1_INDEX = 79  # CHARM level-4 label id for M1 (primary motor cortex). M1 is a single label at every CHARM level.
+_MEBRAINS_M1_LABELS = {301: "4a left", 303: "4p left"}  # Julich Brain subdivisions of primary motor cortex (left hemisphere).
 
 
 @lru_cache(maxsize=1)
@@ -197,6 +198,69 @@ def _load_charm_m1_tree():
 
 
 @lru_cache(maxsize=1)
+def _load_charm_labels() -> dict:
+    """Parse the CHARM level-4 key file into {index: (abbreviation, full_name)} (cached).
+
+    The key file is tab-separated with a header row:
+        Index  Abbreviation  Full_Name  First_Level  Last_Level
+    """
+    labels: dict[int, tuple[str, str]] = {}
+    with open(_CHARM_KEY_PATH) as f:
+        header = f.readline()  # discard header
+        del header
+        for line in f:
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) < 3:
+                continue
+            try:
+                index = int(parts[0])
+            except ValueError:
+                continue
+            abbreviation = parts[1].strip()
+            full_name = parts[2].strip()
+            labels[index] = (abbreviation, full_name)
+    return labels
+
+
+def lookup_nmt_voxel(nmt_r: float, nmt_a: float, nmt_s: float) -> tuple[str, str]:
+    """Look up the raw CHARM level-4 voxel label at an NMT RAS coordinate.
+
+    This is the honest, direct atlas answer with no interpolation. For the M1-curated
+    label used on the map, see :func:`lookup_charm_m1`.
+
+    Parameters
+    ----------
+    nmt_r, nmt_a, nmt_s : float
+        NMT v2.0-sym RAS coordinates (mm).
+
+    Returns
+    -------
+    voxel_label : str
+        CHARM level-4 full name (e.g. "primary_motor_cortex", "primary_somatosensory_cortex")
+        when the voxel carries a labeled region; "unlabeled voxel (label=0)" when in-volume
+        label=0; "outside template volume" when out-of-bounds.
+    voxel_label_id : str
+        CHARM abbreviation (e.g. "M1", "SI") when labeled; "unlabeled" when in-volume
+        label=0; "outside_volume" when out-of-bounds.
+    """
+    _, atlas_data, inv_affine = _load_charm_m1_tree()  # reuses cached atlas data
+    labels = _load_charm_labels()
+
+    world_coord = np.array([nmt_r, nmt_a, nmt_s])
+    voxel = np.round(nib.affines.apply_affine(inv_affine, world_coord)).astype(int)
+
+    if not all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
+        return "outside template volume", "outside_volume"
+
+    label_id = int(atlas_data[tuple(voxel)])
+    if label_id > 0 and label_id in labels:
+        abbreviation, full_name = labels[label_id]
+        return full_name, abbreviation
+
+    return "unlabeled voxel (label=0)", "unlabeled"
+
+
+@lru_cache(maxsize=1)
 def _load_mebrains_m1_tree():
     """Build KD-tree of MEBRAINS M1 voxels (4a + 4p) in world RAS mm (cached).
 
@@ -220,6 +284,73 @@ def _load_mebrains_m1_tree():
     return m1_tree, m1_voxels
 
 
+@lru_cache(maxsize=1)
+def _load_d99_m1_tree():
+    """Build a KD-tree of D99 F1_(4) voxel world coordinates (cached).
+
+    Returns
+    -------
+    m1_tree : cKDTree
+        KD-tree of F1_(4) voxel positions in D99 RAS world coordinates (mm).
+    atlas_data : np.ndarray
+        3D array of D99 label IDs.
+    inv_affine : np.ndarray
+        Inverse affine (world RAS mm -> voxel indices).
+    """
+    atlas_data, inv_affine, _ = _load_d99_atlas()
+    affine = np.linalg.inv(inv_affine)
+
+    m1_voxels = np.argwhere(atlas_data == _D99_M1_INDEX)
+    m1_world_coords = nib.affines.apply_affine(affine, m1_voxels)
+    m1_tree = cKDTree(m1_world_coords)
+
+    return m1_tree, atlas_data, inv_affine
+
+
+def lookup_d99_m1(ap_acx: float, ml_acx: float, depth_acx: float) -> tuple[str, str, str, float]:
+    """Look up D99 F1_(4) for a chamber-relative ACx coordinate, with M1-constrained nearest-neighbor.
+
+    Parameters
+    ----------
+    ap_acx : float
+        Anterior-posterior coordinate (+anterior, mm).
+    ml_acx : float
+        Medial-lateral coordinate (+lateral left, mm).
+    depth_acx : float
+        Depth coordinate (+superior/dorsal, mm).
+
+    Returns
+    -------
+    region_name : str
+        "agranular frontal area F1 (or area 4)" if within the 5 mm distance cap, else "outside atlas".
+    region_id : str
+        "F1_(4)" if within the 5 mm distance cap, else "outside".
+    method : str
+        "exact", "nearest_neighbor", or "no_m1_within_5mm".
+    distance_mm : float
+        0.0 for exact, Euclidean distance for nearest_neighbor, NaN for no_m1_within_5mm.
+    """
+    m1_tree, atlas_data, inv_affine = _load_d99_m1_tree()
+
+    # ACx -> D99 RAS world (AC is at origin; left hemisphere = negative R).
+    r = -ml_acx
+    a = ap_acx
+    s = depth_acx
+    world_coord = np.array([r, a, s])
+    voxel = np.round(nib.affines.apply_affine(inv_affine, world_coord)).astype(int)
+
+    if all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
+        label_id = int(atlas_data[tuple(voxel)])
+        if label_id == _D99_M1_INDEX:
+            return "agranular frontal area F1 (or area 4)", "F1_(4)", "exact", 0.0
+
+    dist_mm, _ = m1_tree.query(world_coord)
+    if dist_mm <= _MAX_NEAREST_MM:
+        return "agranular frontal area F1 (or area 4)", "F1_(4)", "nearest_neighbor", round(float(dist_mm), 4)
+
+    return "outside atlas", "outside", "no_m1_within_5mm", float("nan")
+
+
 def lookup_charm_m1(nmt_r: float, nmt_a: float, nmt_s: float) -> tuple[str, str, str, float]:
     """Look up CHARM M1 region for an NMT RAS coordinate, with M1-constrained nearest-neighbor.
 
@@ -231,31 +362,29 @@ def lookup_charm_m1(nmt_r: float, nmt_a: float, nmt_s: float) -> tuple[str, str,
     Returns
     -------
     region_name : str
-        "primary_motor_cortex" if within distance cap, else "outside atlas".
+        "primary_motor_cortex" if within the 5 mm distance cap, else "outside atlas".
     region_id : str
-        "M1" if within distance cap, else "outside".
+        "M1" if within the 5 mm distance cap, else "outside".
     method : str
-        "exact", "nearest_neighbor", or "outside".
+        "exact", "nearest_neighbor", or "no_m1_within_5mm".
     distance_mm : float
-        0.0 for exact, Euclidean distance for nearest_neighbor, NaN for outside.
+        0.0 for exact, Euclidean distance for nearest_neighbor, NaN for no_m1_within_5mm.
     """
     m1_tree, atlas_data, inv_affine = _load_charm_m1_tree()
 
     world_coord = np.array([nmt_r, nmt_a, nmt_s])
     voxel = np.round(nib.affines.apply_affine(inv_affine, world_coord)).astype(int)
 
-    if not all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
-        return "outside atlas", "outside", "outside", float("nan")
-
-    label_id = int(atlas_data[tuple(voxel)])
-    if label_id == _CHARM_M1_INDEX:
-        return "primary_motor_cortex", "M1", "exact", 0.0
+    if all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
+        label_id = int(atlas_data[tuple(voxel)])
+        if label_id == _CHARM_M1_INDEX:
+            return "primary_motor_cortex", "M1", "exact", 0.0
 
     dist_mm, _ = m1_tree.query(world_coord)
     if dist_mm <= _MAX_NEAREST_MM:
         return "primary_motor_cortex", "M1", "nearest_neighbor", round(float(dist_mm), 4)
 
-    return "outside atlas", "outside", "outside", float("nan")
+    return "outside atlas", "outside", "no_m1_within_5mm", float("nan")
 
 
 def lookup_mebrains_m1(mebrains_r: float, mebrains_a: float, mebrains_s: float) -> tuple[str, str, str, float]:
@@ -269,13 +398,13 @@ def lookup_mebrains_m1(mebrains_r: float, mebrains_a: float, mebrains_s: float) 
     Returns
     -------
     region_name : str
-        "4a left" or "4p left" if within distance cap, else "outside atlas".
+        "4a left" or "4p left" if within the 5 mm distance cap, else "outside atlas".
     region_id : str
-        "301" or "303" if within distance cap, else "outside".
+        "301" or "303" if within the 5 mm distance cap, else "outside".
     method : str
-        "exact", "nearest_neighbor", or "outside".
+        "exact", "nearest_neighbor", or "no_m1_within_5mm".
     distance_mm : float
-        0.0 for exact, Euclidean distance for nearest_neighbor, NaN for outside.
+        0.0 for exact, Euclidean distance for nearest_neighbor, NaN for no_m1_within_5mm.
     """
     atlas_data, inv_affine, _ = _load_mebrains_atlas()
     m1_tree, m1_voxels = _load_mebrains_m1_tree()
@@ -283,12 +412,10 @@ def lookup_mebrains_m1(mebrains_r: float, mebrains_a: float, mebrains_s: float) 
     world_coord = np.array([mebrains_r, mebrains_a, mebrains_s])
     voxel = np.round(nib.affines.apply_affine(inv_affine, world_coord)).astype(int)
 
-    if not all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
-        return "outside atlas", "outside", "outside", float("nan")
-
-    label_id = int(atlas_data[tuple(voxel)])
-    if label_id in _MEBRAINS_M1_LABELS:
-        return _MEBRAINS_M1_LABELS[label_id], str(label_id), "exact", 0.0
+    if all(0 <= voxel[i] < atlas_data.shape[i] for i in range(3)):
+        label_id = int(atlas_data[tuple(voxel)])
+        if label_id in _MEBRAINS_M1_LABELS:
+            return _MEBRAINS_M1_LABELS[label_id], str(label_id), "exact", 0.0
 
     dist_mm, idx = m1_tree.query(world_coord)
     if dist_mm <= _MAX_NEAREST_MM:
@@ -296,27 +423,36 @@ def lookup_mebrains_m1(mebrains_r: float, mebrains_a: float, mebrains_s: float) 
         nearest_id = int(atlas_data[nearest_voxel])
         return _MEBRAINS_M1_LABELS[nearest_id], str(nearest_id), "nearest_neighbor", round(float(dist_mm), 4)
 
-    return "outside atlas", "outside", "outside", float("nan")
+    return "outside atlas", "outside", "no_m1_within_5mm", float("nan")
 
 
 def lookup_mebrains_region(mebrains_r: float, mebrains_a: float, mebrains_s: float) -> tuple[str, str]:
-    """Look up the MEBRAINS atlas region for a given MEBRAINS RAS coordinate.
+    """Look up the raw MEBRAINS atlas voxel label at a MEBRAINS RAS coordinate.
+
+    This is the honest, direct atlas answer with no interpolation. For the M1-curated
+    label used on the map, see :func:`lookup_mebrains_m1`.
 
     Parameters
     ----------
     mebrains_r : float
-        Right coordinate in MEBRAINS RAS (mm)
+        Right coordinate in MEBRAINS RAS (mm).
     mebrains_a : float
-        Anterior coordinate in MEBRAINS RAS (mm)
+        Anterior coordinate in MEBRAINS RAS (mm).
     mebrains_s : float
-        Superior coordinate in MEBRAINS RAS (mm)
+        Superior coordinate in MEBRAINS RAS (mm).
 
     Returns
     -------
-    region_name : str
-        Region name from MEBRAINS labels (e.g., "4p left")
-    region_id : str
-        String label ID from MEBRAINS (e.g., "303")
+    voxel_label : str
+        Region full-name from the MEBRAINS label table (e.g., "4p left") when the
+        voxel carries a labeled region; the literal string "unlabeled voxel (label=0)"
+        when the coord falls on an unlabeled voxel inside the template; the literal
+        string "outside template volume" when the coord falls outside the template
+        bounding box.
+    voxel_label_id : str
+        Numeric string form of the MEBRAINS label ID (e.g. "303") when labeled;
+        the literal string "unlabeled" when in-volume label=0; the literal string
+        "outside_volume" when out-of-bounds.
     """
     atlas_data, inv_affine, labels = _load_mebrains_atlas()
 
@@ -324,12 +460,14 @@ def lookup_mebrains_region(mebrains_r: float, mebrains_a: float, mebrains_s: flo
     voxel = nib.affines.apply_affine(inv_affine, world_coord)
     voxel_idx = tuple(np.round(voxel).astype(int))
 
-    if all(0 <= voxel_idx[i] < atlas_data.shape[i] for i in range(3)):
-        label_id = int(atlas_data[voxel_idx])
-        if label_id > 0 and label_id in labels:
-            return labels[label_id]["name"], str(label_id)
+    if not all(0 <= voxel_idx[i] < atlas_data.shape[i] for i in range(3)):
+        return "outside template volume", "outside_volume"
 
-    return "outside atlas", "outside"
+    label_id = int(atlas_data[voxel_idx])
+    if label_id > 0 and label_id in labels:
+        return labels[label_id]["name"], str(label_id)
+
+    return "unlabeled voxel (label=0)", "unlabeled"
 
 
 @lru_cache(maxsize=1)
@@ -389,23 +527,29 @@ def lookup_warped_coordinates(
 
 
 def lookup_d99_region(ap_acx: float, ml_acx: float, depth_acx: float) -> tuple[str, str]:
-    """Look up the D99 atlas region for a given ACx coordinate.
+    """Look up the raw D99 atlas voxel label at a chamber-relative ACx coordinate.
+
+    This is the honest, direct atlas answer with no interpolation. For the M1-curated
+    label used on the map, see :func:`lookup_d99_m1`.
 
     Parameters
     ----------
     ap_acx : float
-        Anterior-posterior coordinate (+anterior, mm)
+        Anterior-posterior coordinate (+anterior, mm).
     ml_acx : float
-        Medial-lateral coordinate (+lateral left, mm)
+        Medial-lateral coordinate (+lateral left, mm).
     depth_acx : float
-        Depth coordinate (+superior/dorsal, mm)
+        Depth coordinate (+superior/dorsal, mm).
 
     Returns
     -------
-    full_name : str
-        Full region name from D99 labels
-    abbreviation : str
-        Region abbreviation from D99 labels
+    voxel_label : str
+        Full region name from the D99 label table when the voxel carries a labeled
+        region; "unlabeled voxel (label=0)" when in-volume label=0; "outside template
+        volume" when out-of-bounds.
+    voxel_label_id : str
+        D99 abbreviation (e.g. "F1_(4)", "area_1-2") when labeled; "unlabeled" when
+        in-volume label=0; "outside_volume" when out-of-bounds.
     """
     atlas_data, inv_affine, labels = _load_d99_atlas()
 
@@ -418,13 +562,14 @@ def lookup_d99_region(ap_acx: float, ml_acx: float, depth_acx: float) -> tuple[s
     voxel = nib.affines.apply_affine(inv_affine, world_coord)
     voxel_idx = tuple(np.round(voxel).astype(int))
 
-    # Check bounds
-    if all(0 <= voxel_idx[i] < atlas_data.shape[i] for i in range(3)):
-        label_id = int(atlas_data[voxel_idx])
-        if label_id > 0 and label_id in labels:
-            return labels[label_id]["full_name"], labels[label_id]["abbreviation"]
+    if not all(0 <= voxel_idx[i] < atlas_data.shape[i] for i in range(3)):
+        return "outside template volume", "outside_volume"
 
-    return "outside atlas", "outside"
+    label_id = int(atlas_data[voxel_idx])
+    if label_id > 0 and label_id in labels:
+        return labels[label_id]["full_name"], labels[label_id]["abbreviation"]
+
+    return "unlabeled voxel (label=0)", "unlabeled"
 
 
 def convert_d99_to_nmt(r_d99: float, a_d99: float, s_d99: float) -> tuple[float, float, float]:
@@ -769,9 +914,6 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
         has_acx = not (math.isnan(ap_acx) or math.isnan(ml_acx) or math.isnan(depth_acx))
 
         if has_acx:
-            d99_full_name, d99_abbreviation = lookup_d99_region(ap_acx, ml_acx, depth_acx)
-            electrode_location = d99_full_name
-
             # Convert ACx convention to D99 RAS:
             # R = -M_L (left hemisphere lateral is negative R)
             # A = A_P (source A_P is +anterior, same as RAS)
@@ -782,6 +924,25 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
 
             # Look up precomputed NMT and MEBRAINS coordinates (avoids calling ANTs at runtime)
             nmt_r, nmt_a, nmt_s, mebrains_r, mebrains_a, mebrains_s = lookup_warped_coordinates(d99_r, d99_a, d99_s)
+
+            # Curated M1-constrained labels (what goes in brain_region_id, displayed on the map).
+            d99_region, d99_region_id, d99_method, d99_distance = lookup_d99_m1(ap_acx, ml_acx, depth_acx)
+            charm_region, charm_region_id, charm_method, charm_distance = lookup_charm_m1(nmt_r, nmt_a, nmt_s)
+            mebrains_region, mebrains_region_id, mebrains_method, mebrains_distance = lookup_mebrains_m1(
+                mebrains_r, mebrains_a, mebrains_s
+            )
+
+            # Raw atlas voxel lookups (what goes in voxel_label_id, honest atlas answer).
+            d99_voxel_label, d99_voxel_label_id = lookup_d99_region(ap_acx, ml_acx, depth_acx)
+            nmt_voxel_label, nmt_voxel_label_id = lookup_nmt_voxel(nmt_r, nmt_a, nmt_s)
+            mebrains_voxel_label, mebrains_voxel_label_id = lookup_mebrains_region(
+                mebrains_r, mebrains_a, mebrains_s
+            )
+
+            # electrode.location uses the curated D99 label so Leu sessions (whose raw D99 voxel
+            # often reads S1 due to the sulcal-gap warp artifact) still display as M1, matching
+            # the ICMS-verified identity.
+            electrode_location = d99_region
         else:
             electrode_location = "Primary motor cortex (M1), area 4, arm area"
 
@@ -811,102 +972,195 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             icms_threshold_uA=_to_float_or_nan(self.session_info.get("Microstim_Threshold")),
         )
 
-        # Add atlas coordinates via ndx-anatomical-localization if available
+        # Add atlas coordinates via ndx-anatomical-localization if available.
+        #
+        # Schema (identical across the three tables D99, NMT, MEBRAINS):
+        #   brain_region_id / brain_region               curated M1-constrained label (what the viewer reads)
+        #   brain_region_lookup_method                   "exact" | "nearest_neighbor" | "no_m1_within_5mm"
+        #   brain_region_distance_mm                     0.0 for exact, mm for NN, NaN for no_m1_within_5mm
+        #   voxel_label_id / voxel_label                 raw atlas voxel answer (or "unlabeled" / "outside_volume")
+        #
+        # Invariant: method == "exact" implies brain_region_id == voxel_label_id.
+        # The M1-constrained fallback is a conversion-side convenience specific to dandiset
+        # 001636 (every recording site is ICMS-verified M1, <30 uA threshold); it should not
+        # be interpreted as atlas authority. See table-level method strings and the
+        # documentation at documentation/nearest_neighbor_region_labeling.md for details.
         if has_acx:
-            # D99 space and coordinates table
+            method_column_description = (
+                "How the curated brain_region_id was determined: "
+                "'exact' = the raw atlas voxel at this coordinate is already the atlas's native "
+                "primary motor cortex (M1) label, so the raw voxel answer is used; "
+                "'nearest_neighbor' = the raw voxel was non-M1 or unlabeled, so the label was "
+                "set to the nearest M1 voxel within 5 mm (distance in brain_region_distance_mm); "
+                "'no_m1_within_5mm' = no M1 voxel within the 5 mm cap, brain_region_id is 'outside'."
+            )
+            distance_column_description = (
+                "Euclidean distance in mm from the electrode coordinate to the nearest atlas-native M1 voxel. "
+                "0.0 when brain_region_lookup_method is 'exact'; positive float for 'nearest_neighbor'; "
+                "NaN for 'no_m1_within_5mm'."
+            )
+            voxel_label_id_column_description = (
+                "Raw atlas voxel label ID at this coordinate (no interpolation). Distinct from "
+                "brain_region_id, which is curated to the atlas's native M1 label; voxel_label_id "
+                "is whatever the atlas says at that voxel. Special values: 'unlabeled' when the "
+                "voxel is inside the template but carries label=0 (sulcal-gap artifact or simply "
+                "unparcellated tissue); 'outside_volume' when the coordinate falls outside the "
+                "template's bounding box."
+            )
+            voxel_label_column_description = (
+                "Full-name form of voxel_label_id. Special values: 'unlabeled voxel (label=0)' "
+                "and 'outside template volume'."
+            )
+
+            # D99 space and coordinates table. D99 is the author's canonical frame; coordinates
+            # come directly from Dr. Turner's geometric transform (no MRI registration). M1
+            # target is F1_(4) (label id 359), the D99 label for agranular frontal area F1.
             d99_space = D99v2Space()
 
             d99_coordinates_table = AnatomicalCoordinatesTable(
-                name="D99AtlasCoordinates",
+                name="D99v2AtlasCoordinates",
                 target=nwbfile.electrodes,
                 description=(
-                    "Recording electrode coordinates in D99 macaque atlas space (RAS orientation, mm). "
-                    "Origin: anterior commissure. "
-                    "Coordinates computed by Dr. Robert Turner from chamber-relative positions using "
-                    "the known chamber placement geometry (AP offset to AC and 35-degree coronal tilt). "
-                    "See: https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/nonhuman/macaque_tempatl/atlas_d99v2.html"
+                    "Recording electrode coordinates in D99 macaque atlas space "
+                    "(RAS orientation, mm; origin at the anterior commissure). D99 is the "
+                    "author's canonical coordinate frame for this dataset. "
+                    "See https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/nonhuman/macaque_tempatl/atlas_d99v2.html"
                 ),
                 method=(
-                    "Coordinates transformed from chamber-relative positions to D99 atlas space "
-                    "by Dr. Robert Turner (data author) using a geometric transformation: "
-                    "constant AP offset (-8.2 mm, chamber center to anterior commissure) "
-                    "and 35-degree rotation in the coronal plane (coupling ML and Depth to atlas R and S axes). "
-                    "No individual MRI registration was used."
+                    "COORDINATE ORIGIN (per-electrode x/y/z). "
+                    "Computed by Dr. Robert Turner (data author) from chamber-relative positions "
+                    "using a geometric transform: constant AP offset (-8.2 mm, chamber center to "
+                    "anterior commissure) and 35-degree coronal-plane rotation coupling ML and "
+                    "Depth to the D99 R and S axes. No individual MRI registration was used; "
+                    "coordinate accuracy is limited by the geometric approximation (no subject-specific warping). "
+                    "REGION ANNOTATION (brain_region_id and voxel_label_id columns). "
+                    "Computed by the conversion pipeline, not provided by the data author. "
+                    "'voxel_label_id' is the raw D99 atlas voxel label at the coordinate (honest atlas answer). "
+                    "'brain_region_id' is a curated M1-constrained label: if the raw voxel is F1_(4) "
+                    "(D99 label id 359, primary motor cortex), it is preserved; otherwise the "
+                    "nearest F1_(4) voxel within 5 mm is chosen, with the distance recorded in "
+                    "'brain_region_distance_mm' and flagged in 'brain_region_lookup_method'. "
+                    "AUTHORITY. "
+                    "The curated label reflects the ICMS-verified motor identity of the recording "
+                    "site (every electrode in this dataset has icms_threshold_uA < 30 uA on the "
+                    "electrodes table, which is cytoarchitectonically specific to primary motor "
+                    "cortex). The curation is a dataset-specific convenience for dandiset 001636 "
+                    "and is not authoritative atlas output; it should not be used as a substitute "
+                    "for the ICMS evidence or extended to datasets with non-motor recordings."
                 ),
                 space=d99_space,
             )
 
             d99_coordinates_table.add_column(
                 name="brain_region_id",
-                description="D99 atlas region abbreviation (e.g. F1_(4), F2_(6DR/6DC), 3a/b)",
+                description=(
+                    "Curated D99 M1 label (viewer-facing). Always 'F1_(4)' unless the electrode "
+                    "coordinate is > 5 mm from any D99 F1 voxel, in which case 'outside'."
+                ),
+            )
+            d99_coordinates_table.add_column(
+                name="brain_region_lookup_method",
+                description=method_column_description,
+            )
+            d99_coordinates_table.add_column(
+                name="brain_region_distance_mm",
+                description=distance_column_description,
+            )
+            d99_coordinates_table.add_column(
+                name="voxel_label_id",
+                description=voxel_label_id_column_description,
+            )
+            d99_coordinates_table.add_column(
+                name="voxel_label",
+                description=voxel_label_column_description,
             )
 
             d99_coordinates_table.add_row(
                 x=d99_r,
                 y=d99_a,
                 z=d99_s,
-                localized_entity=0,  # Index into electrode table (single recording electrode)
-                brain_region=d99_full_name,
-                brain_region_id=d99_abbreviation,
+                localized_entity=0,  # Index into electrode table (single recording electrode).
+                brain_region=d99_region,
+                brain_region_id=d99_region_id,
+                brain_region_lookup_method=d99_method,
+                brain_region_distance_mm=d99_distance,
+                voxel_label=d99_voxel_label,
+                voxel_label_id=d99_voxel_label_id,
             )
 
             localization = Localization()
             spaces_to_add = [d99_space]
             tables_to_add = [d99_coordinates_table]
 
-            # NMT v2.0-sym space and coordinates table (via RheMAP nonlinear warp)
+            # NMT v2.0-sym space and coordinates table (coordinates derived via RheMAP warp of D99).
+            # M1 target is CHARM level-4 M1 (index 79); CHARM never subdivides M1 at any level.
             nmt_space = NMTv2Space()
 
             nmt_coordinates_table = AnatomicalCoordinatesTable(
-                name="NMTv2symAtlasCoordinates",
+                name="NMTv2AtlasCoordinates",
                 target=nwbfile.electrodes,
                 description=(
-                    "Recording electrode coordinates in NMT v2.0-sym (NIMH Macaque Template, symmetric) "
-                    "atlas space (RAS orientation, mm). Origin: ear bar zero (EBZ). "
-                    "Coordinates converted from D99 atlas space using a pre-computed nonlinear warp "
-                    "from RheMAP (Sirmpilatze & Klink, 2020; DOI: 10.5281/zenodo.4748589). "
-                    "See: https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/nonhuman/macaque_tempatl/template_nmtv2.html"
+                    "Recording electrode coordinates in NMT v2.0-sym (NIMH Macaque Template, "
+                    "symmetric) atlas space (RAS orientation, mm; origin at ear bar zero). "
+                    "Coordinates are derived by nonlinear warping of the author's D99 coordinate "
+                    "into NMT space. "
+                    "See https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/nonhuman/macaque_tempatl/template_nmtv2.html"
                 ),
                 method=(
-                    "Coordinates first transformed from chamber-relative positions to D99 atlas space "
-                    "by Dr. Robert Turner (geometric transformation: AP offset + 35-degree coronal rotation). "
-                    "Then converted from D99 to NMT v2.0-sym using the pre-computed nonlinear composite warp "
-                    "from RheMAP v1.3 (NMTv2.0-sym_to_D99_CompositeWarp.nii.gz, applied in reverse for points). "
-                    "RAS-to-LPS conversion applied before ANTs warp, then reversed. "
-                    "Region labels use CHARM level 4 parcellation (native to NMT), constrained to M1 "
-                    "(primary_motor_cortex, index 79). Many electrodes land in the central sulcus fundus, "
-                    "where post-mortem tissue shrinkage creates unlabeled gaps in the template that do not "
-                    "exist in vivo. Rather than labeling these 'outside atlas', the nearest M1 voxel is found "
-                    "and its distance stored (brain_region_distance_mm). All recording sites are confirmed M1 "
-                    "by microstimulation (icms_threshold_uA column on the electrodes table). "
-                    "Unconstrained nearest-neighbor was rejected because it snaps to somatosensory cortex (S1) "
-                    "on the opposite bank of the sulcal gap, which is geometrically closer in the template "
-                    "but functionally wrong."
+                    "COORDINATE ORIGIN (per-electrode x/y/z). "
+                    "The author-provided D99 coordinate (geometric transform by Dr. Robert Turner, "
+                    "no MRI registration) is warped into NMT v2.0-sym space using the RheMAP "
+                    "pre-computed nonlinear composite warp (NMTv2.0-sym_to_D99_CompositeWarp.nii.gz, "
+                    "applied in reverse for point transforms; RAS<->LPS conversion around the ANTs "
+                    "call; Sirmpilatze & Klink 2020, DOI:10.5281/zenodo.4748589). The NMT coordinate "
+                    "inherits the uncertainty of the source D99 geometric transform and adds the "
+                    "RheMAP warp uncertainty on top. "
+                    "REGION ANNOTATION (brain_region_id and voxel_label_id columns). "
+                    "Computed by the conversion pipeline, not provided by the data author. "
+                    "'voxel_label_id' is the raw CHARM level-4 voxel label at the coordinate "
+                    "(honest atlas answer). 'brain_region_id' is a curated M1-constrained label: "
+                    "if the raw voxel is M1 (CHARM level-4 index 79, primary motor cortex), it is "
+                    "preserved; otherwise the nearest M1 voxel within 5 mm is chosen, with the "
+                    "distance in 'brain_region_distance_mm' and the flag in 'brain_region_lookup_method'. "
+                    "The CHARM level-4 parcellation does not subdivide M1 (M1 remains a single "
+                    "label at every CHARM level 4-6), so 'brain_region_id' always reads 'M1' on "
+                    "this dataset. Many electrodes land in the central sulcus fundus, where "
+                    "post-mortem tissue shrinkage opens unlabeled gaps in the template that do "
+                    "not exist in vivo; the curation absorbs this artifact. "
+                    "AUTHORITY. "
+                    "The curated label reflects the ICMS-verified motor identity of the recording "
+                    "site (see 'icms_threshold_uA' on the electrodes table). Unconstrained "
+                    "nearest-neighbor (snapping to any labeled region) was tested and rejected: "
+                    "it mislabeled 100% of Leu electrodes as somatosensory cortex, because the "
+                    "S1 bank of the sulcal gap is geometrically closer in the template but "
+                    "functionally wrong for these ICMS-confirmed M1 recordings. The M1-constrained "
+                    "curation is a dataset-specific convenience for dandiset 001636."
                 ),
                 space=nmt_space,
             )
 
-            charm_region_name, charm_region_id, charm_method, charm_distance = lookup_charm_m1(nmt_r, nmt_a, nmt_s)
-
             nmt_coordinates_table.add_column(
                 name="brain_region_id",
-                description="CHARM level 4 region from M1-constrained lookup in NMT space (M1 = index 79)",
+                description=(
+                    "Curated CHARM M1 label (viewer-facing). Always 'M1' unless the electrode "
+                    "coordinate is > 5 mm from any CHARM M1 voxel, in which case 'outside'."
+                ),
             )
             nmt_coordinates_table.add_column(
                 name="brain_region_lookup_method",
-                description=(
-                    "How the brain region was determined: "
-                    "'exact' = coordinate falls directly on a CHARM M1 voxel, "
-                    "'nearest_neighbor' = snapped to nearest M1 voxel within 5 mm, "
-                    "'outside' = no M1 voxel within 5 mm"
-                ),
+                description=method_column_description,
             )
             nmt_coordinates_table.add_column(
                 name="brain_region_distance_mm",
-                description=(
-                    "Euclidean distance (mm) from the electrode coordinate to the nearest CHARM M1 voxel. "
-                    "0.0 for exact hits, positive for nearest-neighbor, NaN if outside the 5 mm cap."
-                ),
+                description=distance_column_description,
+            )
+            nmt_coordinates_table.add_column(
+                name="voxel_label_id",
+                description=voxel_label_id_column_description,
+            )
+            nmt_coordinates_table.add_column(
+                name="voxel_label",
+                description=voxel_label_column_description,
             )
 
             nmt_coordinates_table.add_row(
@@ -914,69 +1168,86 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 y=nmt_a,
                 z=nmt_s,
                 localized_entity=0,
-                brain_region=charm_region_name,
+                brain_region=charm_region,
                 brain_region_id=charm_region_id,
                 brain_region_lookup_method=charm_method,
                 brain_region_distance_mm=charm_distance,
+                voxel_label=nmt_voxel_label,
+                voxel_label_id=nmt_voxel_label_id,
             )
 
             spaces_to_add.append(nmt_space)
             tables_to_add.append(nmt_coordinates_table)
 
-            # MEBRAINS space and coordinates table (via RheMAP nonlinear warp)
-
+            # MEBRAINS space and coordinates table (coordinates derived via RheMAP warp of D99).
+            # M1 target is 4a (label 301) + 4p (label 303) left; MEBRAINS is the only atlas of
+            # the three whose native parcellation subdivides M1 (anterior vs posterior).
             mebrains_space = MEBRAINSSpace()
 
             mebrains_coordinates_table = AnatomicalCoordinatesTable(
                 name="MEBRAINSAtlasCoordinates",
                 target=nwbfile.electrodes,
                 description=(
-                    "Recording electrode coordinates in MEBRAINS 1.0 (population-based macaque template) "
-                    "atlas space (RAS orientation, mm). Origin: anterior commissure. "
-                    "Coordinates converted from D99 atlas space using a pre-computed nonlinear warp "
-                    "from RheMAP (G-NODE repository: https://gin.g-node.org/ChrisKlink/RheMAP). "
-                    "See: https://doi.org/10.1162/imag_a_00077"
+                    "Recording electrode coordinates in MEBRAINS 1.0 (population-based macaque "
+                    "template; Balan et al. 2024) atlas space (RAS orientation, mm; origin at "
+                    "the anterior commissure). Coordinates are derived by nonlinear warping of "
+                    "the author's D99 coordinate into MEBRAINS space. "
+                    "See https://doi.org/10.1162/imag_a_00077"
                 ),
                 method=(
-                    "Coordinates first transformed from chamber-relative positions to D99 atlas space "
-                    "by Dr. Robert Turner (geometric transformation: AP offset + 35-degree coronal rotation). "
-                    "Then converted from D99 to MEBRAINS 1.0 using the pre-computed nonlinear composite warp "
-                    "from RheMAP (MEBRAINS_to_D99_CompositeWarp.nii.gz, applied in reverse for points). "
-                    "RAS-to-LPS conversion applied before ANTs warp, then reversed. "
-                    "Region labels use the MEBRAINS parcellation (Julich Brain Macaque Maps), constrained to "
-                    "M1 subdivisions 4a (anterior) and 4p (posterior). MEBRAINS has wider sulcal gaps than D99 "
-                    "due to post-mortem tissue processing, causing many electrodes to land in unlabeled voxels "
-                    "at the central sulcus fundus. The nearest M1 (4a or 4p) voxel is found and its distance "
-                    "stored (brain_region_distance_mm). The 4a/4p distinction indicates whether the electrode "
-                    "is closer to anterior or posterior primary motor cortex. All recording sites are confirmed "
-                    "M1 by microstimulation (icms_threshold_uA column on the electrodes table)."
+                    "COORDINATE ORIGIN (per-electrode x/y/z). "
+                    "The author-provided D99 coordinate (geometric transform by Dr. Robert Turner, "
+                    "no MRI registration) is warped into MEBRAINS space using the RheMAP "
+                    "pre-computed nonlinear composite warp (MEBRAINS_to_D99_CompositeWarp.nii.gz, "
+                    "applied in reverse for point transforms; RAS<->LPS conversion around the "
+                    "ANTs call; https://gin.g-node.org/ChrisKlink/RheMAP). The MEBRAINS coordinate "
+                    "inherits the uncertainty of the source D99 geometric transform and adds the "
+                    "RheMAP warp uncertainty on top. "
+                    "REGION ANNOTATION (brain_region_id and voxel_label_id columns). "
+                    "Computed by the conversion pipeline, not provided by the data author. "
+                    "'voxel_label_id' is the raw MEBRAINS voxel label at the coordinate (honest "
+                    "atlas answer, numeric string form of the Julich Brain Macaque label ID). "
+                    "'brain_region_id' is a curated M1-constrained label: if the raw voxel is 4a "
+                    "(301) or 4p (303), it is preserved (both are M1 subdivisions, anterior vs "
+                    "posterior); otherwise the nearest M1 voxel (4a or 4p) within 5 mm is chosen, "
+                    "with the distance in 'brain_region_distance_mm' and the flag in "
+                    "'brain_region_lookup_method'. MEBRAINS has wider sulcal gaps than D99 due to "
+                    "post-mortem tissue processing, causing many electrodes to land in unlabeled "
+                    "voxels at the central sulcus fundus; the curation absorbs this. "
+                    "AUTHORITY. "
+                    "The curated label reflects the ICMS-verified motor identity of the recording "
+                    "site (see 'icms_threshold_uA' on the electrodes table). MEBRAINS is the only "
+                    "atlas of the three whose native parcellation subdivides M1, so the 4a/4p "
+                    "distinction is the finest-granularity M1 anatomical position this dataset "
+                    "carries. The M1-constrained curation is a dataset-specific convenience for "
+                    "dandiset 001636."
                 ),
                 space=mebrains_space,
             )
 
-            mebrains_region_name, mebrains_region_id, mebrains_method, mebrains_distance = lookup_mebrains_m1(
-                mebrains_r, mebrains_a, mebrains_s
-            )
-
             mebrains_coordinates_table.add_column(
                 name="brain_region_id",
-                description="MEBRAINS M1 label ID from M1-constrained lookup (301=4a left, 303=4p left)",
+                description=(
+                    "Curated MEBRAINS M1 label (viewer-facing, numeric string form). '301' for 4a "
+                    "left (anterior M1), '303' for 4p left (posterior M1). 'outside' only if the "
+                    "electrode coordinate is > 5 mm from any MEBRAINS M1 voxel."
+                ),
             )
             mebrains_coordinates_table.add_column(
                 name="brain_region_lookup_method",
-                description=(
-                    "How the brain region was determined: "
-                    "'exact' = coordinate falls directly on a MEBRAINS 4a/4p voxel, "
-                    "'nearest_neighbor' = snapped to nearest M1 (4a or 4p) voxel within 5 mm, "
-                    "'outside' = no M1 voxel within 5 mm"
-                ),
+                description=method_column_description,
             )
             mebrains_coordinates_table.add_column(
                 name="brain_region_distance_mm",
-                description=(
-                    "Euclidean distance (mm) from the electrode coordinate to the nearest MEBRAINS M1 voxel. "
-                    "0.0 for exact hits, positive for nearest-neighbor, NaN if outside the 5 mm cap."
-                ),
+                description=distance_column_description,
+            )
+            mebrains_coordinates_table.add_column(
+                name="voxel_label_id",
+                description=voxel_label_id_column_description,
+            )
+            mebrains_coordinates_table.add_column(
+                name="voxel_label",
+                description=voxel_label_column_description,
             )
 
             mebrains_coordinates_table.add_row(
@@ -984,10 +1255,12 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 y=mebrains_a,
                 z=mebrains_s,
                 localized_entity=0,
-                brain_region=mebrains_region_name,
+                brain_region=mebrains_region,
                 brain_region_id=mebrains_region_id,
                 brain_region_lookup_method=mebrains_method,
                 brain_region_distance_mm=mebrains_distance,
+                voxel_label=mebrains_voxel_label,
+                voxel_label_id=mebrains_voxel_label_id,
             )
 
             spaces_to_add.append(mebrains_space)
@@ -1004,8 +1277,17 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             print(f"Added electrode configuration: 1 recording electrode in electrodes table")
             if has_acx:
                 print(f"Added D99 atlas coordinates (RAS mm): R={d99_r:.2f}, A={d99_a:.2f}, S={d99_s:.2f}")
-                print(f"D99 region: {d99_full_name} ({d99_abbreviation})")
+                print(
+                    f"D99 curated: {d99_region_id} ({d99_method}, {d99_distance:.2f} mm); "
+                    f"raw voxel: {d99_voxel_label_id}"
+                )
                 print(f"Added NMT v2.0-sym coordinates (RAS mm): R={nmt_r:.2f}, A={nmt_a:.2f}, S={nmt_s:.2f}")
-                print(f"NMT CHARM M1: {charm_region_id} ({charm_method}, {charm_distance:.2f} mm)")
+                print(
+                    f"NMT curated: {charm_region_id} ({charm_method}, {charm_distance:.2f} mm); "
+                    f"raw voxel: {nmt_voxel_label_id}"
+                )
                 print(f"Added MEBRAINS coordinates (RAS mm): R={mebrains_r:.2f}, A={mebrains_a:.2f}, S={mebrains_s:.2f}")
-                print(f"MEBRAINS M1: {mebrains_region_name} ({mebrains_method}, {mebrains_distance:.2f} mm)")
+                print(
+                    f"MEBRAINS curated: {mebrains_region_id} ({mebrains_method}, {mebrains_distance:.2f} mm); "
+                    f"raw voxel: {mebrains_voxel_label_id}"
+                )

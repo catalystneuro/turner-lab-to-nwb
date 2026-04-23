@@ -115,41 +115,61 @@ session_info_dict = {
 | Storage Location | Field | Value | Source | Units/Convention |
 |---|---|---|---|---|
 | `electrodes` table | `x, y, z` | NMT v2.0-sym coordinates | Derived (RheMAP warp from D99) | micrometers, PIR |
-| `electrodes` table | `location` | D99 region full name | D99 v2.0 atlas voxel lookup | string |
+| `electrodes` table | `location` | Curated D99 M1 region full name ("agranular frontal area F1") | Curator (M1-constrained NN; see below) | string |
 | `electrodes` table | `chamber_grid_ap_mm` | Chamber A-P position | Dr. Turner (source data) | mm, +posterior |
 | `electrodes` table | `chamber_grid_ml_mm` | Chamber M-L position | Dr. Turner (source data) | mm, +right |
 | `electrodes` table | `chamber_insertion_depth_mm` | Insertion depth | Dr. Turner (source data) | mm, +deeper |
-| `D99AtlasCoordinates` | `x, y, z` | D99 RAS coordinates | Dr. Turner (geometric transform) | mm, RAS, origin=AC |
-| `D99AtlasCoordinates` | `brain_region` | D99 full region name | D99 v2.0 atlas voxel lookup | string |
-| `D99AtlasCoordinates` | `brain_region_id` | D99 abbreviation | D99 v2.0 atlas voxel lookup | string |
-| `NMTv2symAtlasCoordinates` | `x, y, z` | NMT v2.0-sym RAS coordinates | Derived (RheMAP nonlinear warp from D99) | mm, RAS, origin=EBZ |
-| `NMTv2symAtlasCoordinates` | `brain_region` | D99 full region name | D99 v2.0 atlas (looked up before warping) | string |
-| `NMTv2symAtlasCoordinates` | `brain_region_id` | D99 abbreviation | D99 v2.0 atlas (looked up before warping) | string |
+| `D99v2AtlasCoordinates` | `x, y, z` | D99 RAS coordinates | Dr. Turner (geometric transform) | mm, RAS, origin=AC |
+| `D99v2AtlasCoordinates` | `brain_region` | Curated D99 M1 region full name | Curator (M1-constrained NN to F1_(4)) | string |
+| `D99v2AtlasCoordinates` | `brain_region_id` | Curated D99 M1 abbreviation | Curator (M1-constrained NN to F1_(4)) | string, always `F1_(4)` on this dataset |
+| `D99v2AtlasCoordinates` | `brain_region_lookup_method` | `exact` / `nearest_neighbor` / `no_m1_within_5mm` | Curator | enum string |
+| `D99v2AtlasCoordinates` | `brain_region_distance_mm` | Distance from coord to nearest D99 F1 voxel | Curator | mm; 0 for exact, positive for NN, NaN for capped |
+| `D99v2AtlasCoordinates` | `voxel_label` | Raw D99 voxel label (e.g. "somatosensory areas 1 and 2") | D99 v2.0 atlas voxel lookup (no interpolation) | string or sentinel |
+| `D99v2AtlasCoordinates` | `voxel_label_id` | Raw D99 voxel abbreviation (e.g. `area_1-2`) | D99 v2.0 atlas voxel lookup | string or `unlabeled` / `outside_volume` |
+| `NMTv2AtlasCoordinates` | `x, y, z` | NMT v2.0-sym RAS coordinates | Derived (RheMAP nonlinear warp from D99) | mm, RAS, origin=EBZ |
+| `NMTv2AtlasCoordinates` | `brain_region` | Curated CHARM M1 region full name (`primary_motor_cortex`) | Curator (M1-constrained NN to CHARM 79) | string |
+| `NMTv2AtlasCoordinates` | `brain_region_id` | Curated CHARM M1 abbreviation | Curator | string, always `M1` on this dataset |
+| `NMTv2AtlasCoordinates` | `brain_region_lookup_method` | `exact` / `nearest_neighbor` / `no_m1_within_5mm` | Curator | enum string |
+| `NMTv2AtlasCoordinates` | `brain_region_distance_mm` | Distance from coord to nearest CHARM M1 voxel | Curator | mm |
+| `NMTv2AtlasCoordinates` | `voxel_label` | Raw CHARM level-4 voxel label | CHARM level-4 voxel lookup | string or sentinel |
+| `NMTv2AtlasCoordinates` | `voxel_label_id` | Raw CHARM abbreviation (e.g. `M1`, `PM`, `SI`) | CHARM level-4 voxel lookup | string or `unlabeled` / `outside_volume` |
 | `MEBRAINSAtlasCoordinates` | `x, y, z` | MEBRAINS 1.0 RAS coordinates | Derived (RheMAP nonlinear warp from D99) | mm, RAS, origin=AC |
-| `MEBRAINSAtlasCoordinates` | `brain_region` | D99 full region name | D99 v2.0 atlas (looked up before warping) | string |
-| `MEBRAINSAtlasCoordinates` | `brain_region_id` | D99 abbreviation | D99 v2.0 atlas (looked up before warping) | string |
+| `MEBRAINSAtlasCoordinates` | `brain_region` | Curated MEBRAINS M1 full name (`4a left` or `4p left`) | Curator (M1-constrained NN to 4a/4p) | string |
+| `MEBRAINSAtlasCoordinates` | `brain_region_id` | Curated MEBRAINS M1 numeric string ID | Curator | `301` or `303` on this dataset |
+| `MEBRAINSAtlasCoordinates` | `brain_region_lookup_method` | `exact` / `nearest_neighbor` / `no_m1_within_5mm` | Curator | enum string |
+| `MEBRAINSAtlasCoordinates` | `brain_region_distance_mm` | Distance from coord to nearest MEBRAINS M1 voxel | Curator | mm |
+| `MEBRAINSAtlasCoordinates` | `voxel_label` | Raw MEBRAINS voxel label | MEBRAINS voxel lookup | string or sentinel |
+| `MEBRAINSAtlasCoordinates` | `voxel_label_id` | Raw MEBRAINS numeric string ID | MEBRAINS voxel lookup | string or `unlabeled` / `outside_volume` |
 
 ### Data Provenance
 
-The localization data in each NWB file comes from three sources with different levels of directness. Understanding this provenance chain is important for interpreting the coordinates and assessing their reliability.
+The localization data in each NWB file is produced in three layers. Keeping these layers distinct is important when interpreting the columns:
 
 ```
 Chamber coords ─→ [geometric transform] ─→ D99 coords ─→ [RheMAP warp] ─→ NMT/MEBRAINS coords
      (source)          (Dr. Turner)           (source)    (precomputed)         (derived)
                                                  │
-                                       [D99 voxel lookup]
-                                            (curator)
-                                                 │
-                                                 ▼
-                                        D99 region label
-                                      (carried to all tables)
+                               ┌─────────────────┴───────────────────────────────┐
+                               ▼                                                 ▼
+                     [raw atlas voxel lookup]                     [M1-constrained NN lookup]
+                          (curator)                                   (curator)
+                               │                                                 │
+                               ▼                                                 ▼
+                voxel_label / voxel_label_id                brain_region / brain_region_id
+              (honest atlas answer, may be                   (curated M1 label, what the
+               non-motor, unlabeled, or OOB)                   dandi-atlas viewer displays)
 ```
 
-**Source data (from Dr. Turner).** Chamber-relative coordinates (`A_P`, `M_L`, `Depth`) are recorded daily during experiments. ACx coordinates (`A_P_acx`, `M_L_acx`, `Depth_acx`) are derived by Dr. Turner using the known chamber placement geometry: a constant AP offset (-8.2 mm from chamber center to anterior commissure) and a 35-degree rotation in the coronal plane. These are stored in the metadata table (`ven_table.csv`) and are the authored localization data for this dataset.
+**Layer 1: Source coordinates (from Dr. Turner).** Chamber-relative coordinates (`A_P`, `M_L`, `Depth`) are recorded daily during experiments. ACx coordinates (`A_P_acx`, `M_L_acx`, `Depth_acx`) are derived by Dr. Turner using the known chamber placement geometry: a constant AP offset (-8.2 mm from chamber center to anterior commissure) and a 35-degree rotation in the coronal plane. These are stored in the metadata table (`ven_table.csv`) and are the authored localization data for this dataset. No individual MRI was used; accuracy is limited by the geometric approximation.
 
-**Curator-computed lookups.** We look up the D99 v2.0 atlas label at the D99 RAS coordinates to obtain region names (e.g., "Agranular frontal area F1" / "F1_(4)"). Dr. Turner provided the coordinates but not the atlas labels; the voxel lookup is our contribution. The labels are stored in `brain_region` and `brain_region_id` columns of every `AnatomicalCoordinatesTable` (D99, NMT, and MEBRAINS), because NMT and MEBRAINS do not have their own whole-brain parcellations suitable for automated lookup (see [What We Do Not Store](#what-we-do-not-store-and-why)).
+**Layer 2: Derived coordinates (curator-computed warps).** NMT v2.0-sym and MEBRAINS coordinates are derived by applying pre-computed nonlinear warps from the RheMAP project (Sirmpilatze & Klink, 2020) to the D99 coordinates. These transforms are atlas-to-atlas (D99 volume to NMT volume, D99 volume to MEBRAINS volume), not subject-specific. Their purpose is interoperability: a downstream user can work in whichever template space their pipeline uses. The warp adds its own uncertainty on top of the geometric-transform uncertainty from Layer 1.
 
-**Curator-computed warps.** NMT v2.0-sym and MEBRAINS coordinates are derived by applying pre-computed nonlinear warps from the RheMAP project (Sirmpilatze & Klink, 2020) to the D99 coordinates. These transforms are atlas-to-atlas (D99 volume to NMT volume, D99 volume to MEBRAINS volume), not subject-specific. Their purpose is interoperability: a downstream user can work in whichever template space their pipeline uses.
+**Layer 3: Region annotations (curator-computed lookups).** Each `AnatomicalCoordinatesTable` carries two region-annotation columns that serve different purposes:
+
+- `voxel_label_id` / `voxel_label` are the **raw atlas voxel answer** at the coordinate, with no interpolation. For D99 this is whatever the D99 parcellation says; for NMT it is the CHARM level-4 label; for MEBRAINS it is the numeric string form of the Julich Brain Macaque label ID. When the coordinate falls on an unlabeled voxel (label=0) or outside the template bounding box, these columns carry the sentinel strings `"unlabeled"` / `"outside_volume"`.
+- `brain_region_id` / `brain_region` are a **curated M1-constrained label**. If the raw voxel is the atlas's native primary motor cortex label (F1_(4) for D99, M1 for CHARM, 4a or 4p for MEBRAINS), it is preserved and the method column is set to `"exact"`. Otherwise the nearest M1 voxel within 5 mm is chosen, with the Euclidean distance recorded in `brain_region_distance_mm` and the fallback flagged in `brain_region_lookup_method`.
+
+The curation is a dataset-specific convenience for dandiset 001636: every recording site in this dataset is ICMS-verified M1 (threshold <30 µA, stored in `icms_threshold_uA` on the electrodes table), so a non-M1 raw-voxel answer is definitionally a warp artifact rather than a real anatomical answer. The curation is documented in full in [documentation/nearest_neighbor_region_labeling.md](nearest_neighbor_region_labeling.md). The curation should not be used as a substitute for the ICMS evidence, and the policy (fall back to M1 when raw voxel is non-motor) is specific to M1-recording datasets.
 
 ### Standard NWB Electrode Coordinates
 
@@ -170,7 +190,7 @@ Atlas coordinates are stored using the `ndx-anatomical-localization` extension i
 ```python
 # Accessing D99 atlas coordinates (RAS, mm, origin = anterior commissure)
 localization = nwbfile.lab_meta_data["localization"]
-coords_table = localization.anatomical_coordinates_tables["D99AtlasCoordinates"]
+coords_table = localization.anatomical_coordinates_tables["D99v2AtlasCoordinates"]
 space = coords_table.space  # D99 Space object with origin, units, orientation="RAS"
 
 r = coords_table["x"][0]  # +right (left hemisphere recordings are negative)
@@ -186,7 +206,7 @@ Coordinates are also stored in **NMT v2.0-sym** (NIMH Macaque Template, symmetri
 ```python
 # Accessing NMT v2.0-sym coordinates (RAS, mm, origin = ear bar zero)
 localization = nwbfile.lab_meta_data["localization"]
-nmt_table = localization.anatomical_coordinates_tables["NMTv2symAtlasCoordinates"]
+nmt_table = localization.anatomical_coordinates_tables["NMTv2AtlasCoordinates"]
 nmt_space = nmt_table.space  # NMT_v2.0_sym Space object
 
 r_nmt = nmt_table["x"][0]  # +right
@@ -233,19 +253,19 @@ MEBRAINS does not have a native whole-brain parcellation comparable to CHARM/SAR
 
 ### The Localization Container
 
-The `Localization` container (from the `ndx-anatomical-localization` extension) holds all atlas-space data. It includes:
+The `Localization` container (from the `ndx-anatomical-localization` extension, v0.1.0) holds all atlas-space data. It includes:
 
-- **Three `Space` objects:**
-  - `D99`: origin = anterior commissure, units = mm, orientation = RAS
-  - `NMTv2sym`: origin = ear bar zero (EBZ), units = mm, orientation = RAS
-  - `MEBRAINS`: origin = anterior commissure, units = mm, orientation = RAS
+- **Three typed `Space` objects** (dedicated classes in the 0.1.0 release; canonical metadata is baked in):
+  - `D99v2Space` — name `D99v2`, origin anterior commissure, units mm, orientation RAS.
+  - `NMTv2Space` — name `NMTv2`, origin ear bar zero, units mm, orientation RAS.
+  - `MEBRAINSSpace` — name `MEBRAINS`, origin anterior commissure, units mm, orientation RAS.
 
 - **Three `AnatomicalCoordinatesTable` entries**, each linking coordinates to the electrode table:
-  - `D99AtlasCoordinates`: source coordinates from Dr. Turner's geometric transform
-  - `NMTv2symAtlasCoordinates`: coordinates warped from D99 via RheMAP
-  - `MEBRAINSAtlasCoordinates`: coordinates warped from D99 via RheMAP
+  - `D99v2AtlasCoordinates`: source coordinates from Dr. Turner's geometric transform; region annotations via D99 voxel lookup plus M1-constrained NN.
+  - `NMTv2AtlasCoordinates`: coordinates warped from D99 via RheMAP; region annotations via CHARM level-4 voxel lookup plus M1-constrained NN.
+  - `MEBRAINSAtlasCoordinates`: coordinates warped from D99 via RheMAP; region annotations via MEBRAINS voxel lookup plus M1-constrained NN.
 
-All three tables include `brain_region` (full name) and `brain_region_id` (abbreviation) columns with D99-derived labels. See [Data Provenance](#data-provenance) for why the same D99 label appears in all three tables.
+All three tables carry the same ten columns (`x`, `y`, `z`, `localized_entity`, `brain_region_id`, `brain_region`, `brain_region_lookup_method`, `brain_region_distance_mm`, `voxel_label_id`, `voxel_label`). The `brain_region_*` columns hold the curated M1 label (what the dandi-atlas viewer displays) and the `voxel_label_*` columns hold the raw atlas answer. See [Data Provenance](#data-provenance) for the distinction.
 
 ### Custom NWB Columns
 
@@ -300,7 +320,9 @@ This section documents data we deliberately chose not to include in the NWB file
 
 ### CHARM/SARM Hierarchical Labels
 
-**Not stored.** CHARM (Cortical Hierarchy Atlas of the Rhesus Macaque) and SARM (Subcortical Atlas of the Rhesus Macaque) provide hierarchical parcellations at 6 levels of granularity natively defined in NMT v2 space. The community recommendation for NWB annotation is to include CHARM/SARM labels at multiple hierarchy levels (e.g., level 2 for robust coarse labels, level 6 for fine cytoarchitectonic areas). We do not include these labels because CHARM voxel lookup at our atlas-to-atlas warped coordinates is unreliable.
+**Partial use only.** We use CHARM level 4 as the native NMT parcellation for the `NMTv2AtlasCoordinates` table's `voxel_label_id` / `voxel_label` columns and as the target for the M1-constrained NN curation of `brain_region_id` (M1 = CHARM index 79). We do **not** store CHARM labels at levels 2, 3, 5, or 6, and we do not store SARM subcortical labels. The reasoning below is why we do not attempt to offer CHARM as a generic multi-level label set; the M1-constrained use is specifically chosen to avoid the reliability issues and is documented in [nearest_neighbor_region_labeling.md](nearest_neighbor_region_labeling.md).
+
+The community recommendation for NWB annotation is to include CHARM/SARM labels at multiple hierarchy levels (e.g., level 2 for robust coarse labels, level 6 for fine cytoarchitectonic areas). We do not include these labels at arbitrary levels because CHARM voxel lookup at our atlas-to-atlas warped coordinates is unreliable in general, even though it works for our specific M1-only use case.
 
 **Technical analysis.** We tested CHARM voxel lookup at NMT coordinates produced by applying the RheMAP D99-to-NMT warp to our D99 source coordinates. Results:
 
@@ -320,15 +342,17 @@ This section documents data we deliberately chose not to include in the NWB file
 
 ### Registration Quality Metric
 
-**Not stored as a numeric column.** No individual MRI was used in this dataset, so there is no warp quality metric (e.g., Dice coefficient, Jacobian determinant) to report. The `method` text attribute on each `AnatomicalCoordinatesTable` describes the geometric-only approach and its limitations. Out-of-atlas rates across all 447 sessions (computed from the DANDI-uploaded NWB files):
+**Not stored as a numeric column.** No individual MRI was used in this dataset, so there is no warp quality metric (e.g., Dice coefficient, Jacobian determinant) to report. The table-level `method` attribute on each `AnatomicalCoordinatesTable` describes the geometric-only approach and its limitations. The `brain_region_lookup_method` and `brain_region_distance_mm` per-row columns function as an anatomically meaningful proxy: electrodes where the curated label came from an `exact` raw-voxel hit are well-registered to the atlas's native M1 territory; electrodes that required `nearest_neighbor` fallback reveal how far the coordinate landed from labeled M1 (warp uncertainty, sulcal-gap artifact, or cytoarchitectonic boundary offset).
 
-| Atlas | Venus (298 sessions) | Leu (149 sessions) |
-|-------|---------------------|---------------------|
-| D99 v2.0 | 16 (5.4%) | 61 (40.9%) |
-| NMT v2.0-sym | 16 (5.4%) | 61 (40.9%) |
-| MEBRAINS 1.0 | 134 (45.0%) | 149 (100.0%) |
+Across all 447 sessions, raw atlas voxel lookups (`voxel_label_id`) give the following breakdown (computed from the locally converted NWB files; see `nearest_neighbor_region_labeling.md` for the full analysis):
 
-NMT and D99 outside counts are identical because NMT coordinates carry the same D99-derived region label (no separate NMT parcellation lookup is performed). The high MEBRAINS outside rate for Leu (100%) reflects that Leu's electrodes are systematically more dorsal than Venus's (D99 S range: 16.9-23.1 mm for Leu vs 13.2-19.6 mm for Venus) and MEBRAINS has poor cortical coverage at those dorsal positions due to post-mortem sulcal compression. For Venus, the 45% MEBRAINS rate (vs 5.4% D99) reflects the same sulcal compression issue, which is less severe at Venus's lower-dorsal electrode positions.
+| Atlas | Venus exact M1 hit | Venus non-motor / unlabeled | Leu exact M1 hit | Leu non-motor / unlabeled |
+|-------|-------------------:|---------------------------:|-----------------:|--------------------------:|
+| D99 v2.0 (F1_(4)) | 61.1% | 38.9% | 1.3% | 98.7% |
+| NMT CHARM-4 (M1) | 45.6% | 54.4% | 0.0% | 100.0% |
+| MEBRAINS (4a/4p) | 40.9% | 59.1% | 0.0% | 100.0% |
+
+All non-exact hits within 5 mm of labeled M1 are recovered by the M1-constrained NN fallback (max observed distance: 4.47 mm), so no electrodes hit the `no_m1_within_5mm` sentinel on this dataset. Leu's higher fallback rate reflects more dorsal electrode placement at the central sulcus fundus (D99 S range: 16.9-23.1 mm for Leu vs 13.2-19.6 mm for Venus) and the post-mortem sulcal-gap artifact that affects all three templates at that depth.
 
 ### Julich Brain Macaque Maps Labels
 
@@ -344,12 +368,12 @@ The community recommendation for well-annotated NWB files with NHP localization 
 
 | Recommendation | Our Status | Rationale |
 |---|---|---|
-| NMT v2 coordinates | Stored (`NMTv2symAtlasCoordinates`) | Derived from D99 via RheMAP warp |
-| CHARM hierarchical labels | Not stored | Atlas-to-atlas warp unreliable for cortical voxel lookup (see above) |
+| NMT v2 coordinates | Stored (`NMTv2AtlasCoordinates`) | Derived from D99 via RheMAP warp |
+| CHARM hierarchical labels | Partial (level 4 only, M1-constrained) | Level-4 M1 index used for curated `brain_region_id` and raw `voxel_label_id` on the NMT table; other levels not stored due to atlas-to-atlas warp reliability limits (see above) |
 | SARM subcortical labels | N/A | All recordings are cortical (M1) |
 | Reference space metadata | Stored (three `Space` objects with origin, units, orientation) | Fully specified |
 | Registration quality | Not stored as numeric | No individual MRI; `method` text describes limitations |
-| D99 coordinates + labels | Stored (`D99AtlasCoordinates`) | Source of truth, closest to original data |
+| D99 coordinates + labels | Stored (`D99v2AtlasCoordinates`) | Source of truth, closest to original data |
 | MEBRAINS coordinates | Stored (`MEBRAINSAtlasCoordinates`) | Cross-validation target |
 
 **Key difference from the ideal.** The community recommendation assumes a lab that has subject MRI and can register directly to NMT v2 using `@animal_warper`. In that workflow, CHARM lookup at the subject-specific warped coordinates is reliable. Our situation is different: we are data curators working with a geometric transform (no individual MRI), so our NMT coordinates come from an atlas-to-atlas warp with insufficient precision for cortical voxel lookup. The D99 labels (looked up at the original D99 coordinates, before any warping) are the most reliable region annotations we can provide.
@@ -379,7 +403,7 @@ This is the coordinate system used during surgical chamber implantation to posit
 |-------|------|------------|--------------|---------------------|
 | **D99** v2.0 | Single-subject MRI + histology | 0.25 mm | AC origin; RAS orientation; 368 labeled regions | Yes: source coordinates and region labels |
 | **NMT v2** (NIMH Macaque Template) | Population MRI template (31 macaques) | 0.25-0.5 mm | EBZ origin; Horsley-Clarke aligned; integrated with AFNI | Yes: derived coordinates via RheMAP warp |
-| **CHARM** (Cortical Hierarchy Atlas of the Rhesus Macaque) | Cortical parcellation on NMT v2 | Matched to NMT | 6 hierarchical levels (4 to 134 regions); derived from D99 boundaries | No: voxel lookup unreliable at atlas-warped coordinates (see [above](#charmsarm-hierarchical-labels)) |
+| **CHARM** (Cortical Hierarchy Atlas of the Rhesus Macaque) | Cortical parcellation on NMT v2 | Matched to NMT | 6 hierarchical levels (4 to 134 regions); derived from D99 boundaries | Partial: level 4 used for the NMT table's `voxel_label_id` and as the M1-constrained curation target (M1 = index 79); other levels not stored (see [CHARM/SARM section](#charmsarm-hierarchical-labels)) |
 | **SARM** (Subcortical Atlas of the Rhesus Macaque) | Subcortical parcellation on NMT v2 | Matched to NMT | 6 hierarchical levels; nomenclature from RMBSC4 | No: all recordings are cortical |
 | **MEBRAINS 1.0** | Population T1/T2 template (10 macaques) | 0.20 mm | AC origin; approximate Horsley-Clarke alignment (2024) | Yes: derived coordinates via RheMAP warp |
 | **RMBSC4** (Rhesus Monkey Brain in Stereotaxic Coordinates) | Histological atlas | Section-based | Gold standard for stereotaxic coordinates; 4th edition (Paxinos) | No |
