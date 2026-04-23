@@ -1,8 +1,8 @@
 Subject:
   species: Macaca mulatta
-  sex: U  # Pending confirmation from Dr. Turner
+  sex: F  # Female (Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312)
   age: P0D/  # Full uncertainty, pending confirmation from Dr. Turner
-  weight: __REMOVE__  # Pending confirmation from Dr. Turner
+  weight: 6 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
   description: MPTP-treated parkinsonian macaque monkey (Leu) used for motor cortex electrophysiology
 surgery: |
   Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording

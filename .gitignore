@@ -184,3 +184,9 @@ central_sulcus_anatomy.png
 
 # Local task tracking
 TODO.md
+
+# Claude Code local settings
+.claude/
+
+# Local location manifest (generated)
+location_manifest.csv
