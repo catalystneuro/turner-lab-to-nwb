@@ -1,9 +1,11 @@
 Subject:
-  species: Macaca mulatta
+  species: Macaca mulatta  # rhesus macaque
   sex: F  # Female (Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312)
-  age: P0D/  # Full uncertainty, pending confirmation from Dr. Turner
+  age: P4Y/P15Y  # Adult female rhesus; exact age not documented, bracketed by typical research range
   weight: 6 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
-  description: MPTP-treated parkinsonian macaque monkey (Leu) used for motor cortex electrophysiology
+  description: |
+    MPTP-treated parkinsonian female rhesus macaque (Monkey L / Leu) used for motor cortex
+    electrophysiology during a step-tracking task performed with the wrist joint.
 surgery: |
   Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
   chamber implanted with stereotaxic guidance over left primary motor cortex (M1), oriented 35°

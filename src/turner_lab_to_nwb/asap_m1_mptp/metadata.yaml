@@ -4,12 +4,13 @@ NWBFile:
     - "https://doi.org/10.3389/fnsys.2013.00098"
     - "https://doi.org/10.1093/brain/awv312"
   session_description: |
-    Single-unit recordings from primary motor cortex (M1) of MPTP-treated parkinsonian macaque monkeys 
-    performing visuomotor step-tracking flexion/extension elbow movements. Data includes spike times from 
-    pyramidal tract neurons (PTNs) and corticostriatal neurons (CSNs) identified through antidromic stimulation.
-    Task involves center hold, target presentation, movement execution, and reward phases with optional 
-    torque perturbations on random trials.
-  institution: Emory University
+    Single-unit recordings from primary motor cortex (M1) of MPTP-treated parkinsonian macaque monkeys
+    performing a visuomotor step-tracking task with flexion/extension movements of the elbow (Monkey V)
+    or wrist (Monkey L) joint. Data includes spike times from pyramidal tract neurons (PTNs) and
+    corticostriatal neurons (CSNs) identified through antidromic stimulation. Task involves center hold,
+    target presentation, movement execution, and reward phases with optional torque perturbations on
+    random trials.
+  institution: University of Pittsburgh
   lab: Turner Lab
   experimenter:
     - Turner, Robert S.
@@ -32,7 +33,9 @@ NWBFile:
     putamen, oriented 35° to the coronal plane. Custom floating stimulating electrodes (Teflon-coated
     PtIr microwires, 50-μm diameter) implanted in posterior putamen (3 electrodes) and prepontine
     cerebral peduncle (1 electrode) for antidromic identification of corticostriatal neurons and
-    pyramidal tract neurons. Prophylactic antibiotics and analgesics administered perioperatively.
+    pyramidal tract neurons. A macroelectrode was additionally implanted in VL thalamus; orthodromic
+    and antidromic responses elicited through this electrode are reported in the recorded data.
+    Prophylactic antibiotics and analgesics administered perioperatively.
   pharmacology: |
     MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine) administered at 0.5 mg/kg via unilateral
     left internal carotid artery under general anesthesia to induce hemiparkinsonian syndrome.
@@ -41,8 +44,10 @@ NWBFile:
     nigra pars compacta of MPTP-treated hemisphere, with contralateral hemisphere showing normal
     dopaminergic neuron counts.
 Subject:
-  species: Macaca mulatta  # Macaque monkey
-  age: P2555D  # Approximately 7 years (typical adult research macaque)
-  sex: F  # Female
-  weight: 4.8 kg
-  description: MPTP-treated parkinsonian macaque monkey used for motor cortex electrophysiology
+  species: Macaca mulatta  # rhesus macaque
+  age: P4Y/P15Y  # Adult female rhesus; exact age not documented, bracketed by typical research range
+  sex: F  # Female (Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312)
+  weight: 4.8 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
+  description: |
+    MPTP-treated parkinsonian female rhesus macaque (Monkey V / Venus) used for motor cortex
+    electrophysiology during a step-tracking task performed with the elbow joint.
