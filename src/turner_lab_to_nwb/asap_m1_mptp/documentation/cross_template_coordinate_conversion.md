@@ -117,14 +117,16 @@ nwbfile.lab_meta_data["localization"]
     |
     +-- anatomical_coordinates_tables
         +-- D99v2AtlasCoordinates
-        |   x (R), y (A), z (S), localized_entity,
+        |   x (R), y (A), z (S),              <- CURATED (snapped to F1 voxel center)
+        |   x_raw, y_raw, z_raw,              <- RAW (authored geometric transform / RheMAP warp)
+        |   localized_entity,
         |   brain_region, brain_region_id,
         |   brain_region_lookup_method, brain_region_distance_mm,
         |   voxel_label, voxel_label_id
         |
-        +-- NMTv2AtlasCoordinates   (same 10 columns as D99)
+        +-- NMTv2AtlasCoordinates   (same 13 columns as D99)
         |
-        +-- MEBRAINSAtlasCoordinates   (same 10 columns as D99)
+        +-- MEBRAINSAtlasCoordinates   (same 13 columns as D99)
 ```
 
 The standard NWB electrode table `x, y, z` fields use NMT v2.0-sym coordinates when available (converted to PIR convention in microns), falling back to D99 coordinates when the warp is unavailable. Both native coordinate sets remain accessible in their respective `AnatomicalCoordinatesTable` entries.

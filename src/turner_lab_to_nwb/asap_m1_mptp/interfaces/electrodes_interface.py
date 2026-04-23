@@ -351,6 +351,36 @@ def lookup_d99_m1(ap_acx: float, ml_acx: float, depth_acx: float) -> tuple[str, 
     return "outside atlas", "outside", "no_m1_within_5mm", float("nan")
 
 
+def snap_d99_to_f1_voxel(d99_r: float, d99_a: float, d99_s: float) -> tuple[float, float, float, bool]:
+    """Snap a D99 RAS coordinate to the nearest F1_(4) voxel center, within a 5 mm cap.
+
+    The curation is done in D99 space (the author's canonical frame). Downstream NMT and
+    MEBRAINS curated coordinates are obtained by warping this curated D99 coordinate
+    through the same RheMAP transforms used for the raw coordinates.
+
+    Parameters
+    ----------
+    d99_r, d99_a, d99_s : float
+        Raw D99 RAS coordinates (mm), typically from the author's geometric transform.
+
+    Returns
+    -------
+    r_curated, a_curated, s_curated : float
+        D99 RAS world coordinates (mm) of the nearest F1_(4) voxel center if within the
+        5 mm cap; otherwise the input (r, a, s) unchanged.
+    snapped : bool
+        True if a snap was applied, False if the input was beyond the cap (no snap).
+    """
+    m1_tree, _, _ = _load_d99_m1_tree()
+    world_coord = np.array([d99_r, d99_a, d99_s])
+    dist_mm, idx = m1_tree.query(world_coord)
+    if dist_mm > _MAX_NEAREST_MM:
+        return d99_r, d99_a, d99_s, False
+    # cKDTree.data holds the exact world-coord array we indexed with.
+    nearest = m1_tree.data[idx]
+    return float(nearest[0]), float(nearest[1]), float(nearest[2]), True
+
+
 def lookup_charm_m1(nmt_r: float, nmt_a: float, nmt_s: float) -> tuple[str, str, str, float]:
     """Look up CHARM M1 region for an NMT RAS coordinate, with M1-constrained nearest-neighbor.
 
@@ -474,8 +504,12 @@ def lookup_mebrains_region(mebrains_r: float, mebrains_a: float, mebrains_s: flo
 def _load_warped_coordinates():
     """Load precomputed warped coordinates CSV (cached across sessions).
 
-    Returns a dict mapping (d99_r, d99_a, d99_s) rounded keys to
-    (nmt_r, nmt_a, nmt_s, mebrains_r, mebrains_a, mebrains_s) tuples.
+    Returns a dict mapping (d99_r, d99_a, d99_s) rounded keys to a 15-tuple of
+    (nmt_r, nmt_a, nmt_s, mebrains_r, mebrains_a, mebrains_s,
+     d99_r_c, d99_a_c, d99_s_c, nmt_r_c, nmt_a_c, nmt_s_c,
+     mebrains_r_c, mebrains_a_c, mebrains_s_c).
+    The _c suffix marks curated values: curated D99 is the nearest F1_(4) voxel center
+    within 5 mm; curated NMT / MEBRAINS are the RheMAP warps of that curated D99 point.
     """
     import pandas as pd
 
@@ -492,23 +526,34 @@ def _load_warped_coordinates():
         lookup[key] = (
             row["nmt_r"], row["nmt_a"], row["nmt_s"],
             row["mebrains_r"], row["mebrains_a"], row["mebrains_s"],
+            row["d99_r_c"], row["d99_a_c"], row["d99_s_c"],
+            row["nmt_r_c"], row["nmt_a_c"], row["nmt_s_c"],
+            row["mebrains_r_c"], row["mebrains_a_c"], row["mebrains_s_c"],
         )
     return lookup
 
 
 def lookup_warped_coordinates(
     d99_r: float, d99_a: float, d99_s: float
-) -> tuple[float, float, float, float, float, float]:
-    """Look up precomputed NMT and MEBRAINS coordinates for a D99 RAS position.
+) -> tuple[float, float, float, float, float, float,
+           float, float, float, float, float, float, float, float, float]:
+    """Look up precomputed NMT and MEBRAINS coordinates (raw + curated) for a D99 RAS position.
 
     Parameters
     ----------
     d99_r, d99_a, d99_s : float
-        D99 RAS coordinates (mm)
+        Raw D99 RAS coordinates (mm), typically from the author's geometric transform.
 
     Returns
     -------
-    tuple of (nmt_r, nmt_a, nmt_s, mebrains_r, mebrains_a, mebrains_s)
+    Tuple of 15 floats in order:
+        (nmt_r, nmt_a, nmt_s,
+         mebrains_r, mebrains_a, mebrains_s,
+         d99_r_c, d99_a_c, d99_s_c,
+         nmt_r_c, nmt_a_c, nmt_s_c,
+         mebrains_r_c, mebrains_a_c, mebrains_s_c).
+    The unsuffixed coordinates are the raw RheMAP warp outputs of the input D99 coord;
+    the _c suffix marks curated values (nearest F1_(4) voxel in D99, then warped).
 
     Raises
     ------
@@ -918,25 +963,39 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             # R = -M_L (left hemisphere lateral is negative R)
             # A = A_P (source A_P is +anterior, same as RAS)
             # S = Depth (both +superior/dorsal)
-            d99_r = -ml_acx
-            d99_a = ap_acx
-            d99_s = depth_acx
+            d99_r_raw = -ml_acx
+            d99_a_raw = ap_acx
+            d99_s_raw = depth_acx
 
-            # Look up precomputed NMT and MEBRAINS coordinates (avoids calling ANTs at runtime)
-            nmt_r, nmt_a, nmt_s, mebrains_r, mebrains_a, mebrains_s = lookup_warped_coordinates(d99_r, d99_a, d99_s)
+            # Look up precomputed NMT and MEBRAINS coordinates (avoids calling ANTs at runtime).
+            # Returns both raw and curated sets: curated D99 is the nearest F1_(4) voxel center
+            # (within 5 mm); curated NMT / MEBRAINS are the RheMAP warps of that curated D99 point.
+            (
+                nmt_r_raw, nmt_a_raw, nmt_s_raw,
+                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw,
+                d99_r, d99_a, d99_s,
+                nmt_r, nmt_a, nmt_s,
+                mebrains_r, mebrains_a, mebrains_s,
+            ) = lookup_warped_coordinates(d99_r_raw, d99_a_raw, d99_s_raw)
 
             # Curated M1-constrained labels (what goes in brain_region_id, displayed on the map).
+            # The label curation uses the RAW coord (same policy we used in round 5); the position
+            # in x/y/z is the curated coord (new in round 7).
             d99_region, d99_region_id, d99_method, d99_distance = lookup_d99_m1(ap_acx, ml_acx, depth_acx)
-            charm_region, charm_region_id, charm_method, charm_distance = lookup_charm_m1(nmt_r, nmt_a, nmt_s)
+            charm_region, charm_region_id, charm_method, charm_distance = lookup_charm_m1(
+                nmt_r_raw, nmt_a_raw, nmt_s_raw
+            )
             mebrains_region, mebrains_region_id, mebrains_method, mebrains_distance = lookup_mebrains_m1(
-                mebrains_r, mebrains_a, mebrains_s
+                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw
             )
 
             # Raw atlas voxel lookups (what goes in voxel_label_id, honest atlas answer).
+            # Lookup is performed at the RAW coordinate so voxel_label_id reflects what the atlas
+            # physically says at the electrode's warp output, not at the snapped M1 voxel center.
             d99_voxel_label, d99_voxel_label_id = lookup_d99_region(ap_acx, ml_acx, depth_acx)
-            nmt_voxel_label, nmt_voxel_label_id = lookup_nmt_voxel(nmt_r, nmt_a, nmt_s)
+            nmt_voxel_label, nmt_voxel_label_id = lookup_nmt_voxel(nmt_r_raw, nmt_a_raw, nmt_s_raw)
             mebrains_voxel_label, mebrains_voxel_label_id = lookup_mebrains_region(
-                mebrains_r, mebrains_a, mebrains_s
+                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw
             )
 
             # electrode.location uses the curated D99 label so Leu sessions (whose raw D99 voxel
@@ -1011,6 +1070,15 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 "Full-name form of voxel_label_id. Special values: 'unlabeled voxel (label=0)' "
                 "and 'outside template volume'."
             )
+            raw_coord_column_description = (
+                "Raw (uncurated) atlas-space coordinate component (mm). For D99 this is the "
+                "output of the author's chamber-to-D99 geometric transform (no MRI registration). "
+                "For NMT and MEBRAINS this is the RheMAP warp of that raw D99 point. Distinct "
+                "from the curated x / y / z columns, which hold the RheMAP warp of the nearest "
+                "F1_(4) voxel center to the raw D99 coordinate (within a 5 mm cap); the curated "
+                "values are what the dandi-atlas viewer renders on the map. Equal to the curated "
+                "value when the raw D99 coord lies exactly on an F1 voxel center."
+            )
 
             # D99 space and coordinates table. D99 is the author's canonical frame; coordinates
             # come directly from Dr. Turner's geometric transform (no MRI registration). M1
@@ -1074,6 +1142,9 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 name="voxel_label",
                 description=voxel_label_column_description,
             )
+            d99_coordinates_table.add_column(name="x_raw", description=raw_coord_column_description)
+            d99_coordinates_table.add_column(name="y_raw", description=raw_coord_column_description)
+            d99_coordinates_table.add_column(name="z_raw", description=raw_coord_column_description)
 
             d99_coordinates_table.add_row(
                 x=d99_r,
@@ -1086,6 +1157,9 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 brain_region_distance_mm=d99_distance,
                 voxel_label=d99_voxel_label,
                 voxel_label_id=d99_voxel_label_id,
+                x_raw=d99_r_raw,
+                y_raw=d99_a_raw,
+                z_raw=d99_s_raw,
             )
 
             localization = Localization()
@@ -1162,6 +1236,9 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 name="voxel_label",
                 description=voxel_label_column_description,
             )
+            nmt_coordinates_table.add_column(name="x_raw", description=raw_coord_column_description)
+            nmt_coordinates_table.add_column(name="y_raw", description=raw_coord_column_description)
+            nmt_coordinates_table.add_column(name="z_raw", description=raw_coord_column_description)
 
             nmt_coordinates_table.add_row(
                 x=nmt_r,
@@ -1174,6 +1251,9 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 brain_region_distance_mm=charm_distance,
                 voxel_label=nmt_voxel_label,
                 voxel_label_id=nmt_voxel_label_id,
+                x_raw=nmt_r_raw,
+                y_raw=nmt_a_raw,
+                z_raw=nmt_s_raw,
             )
 
             spaces_to_add.append(nmt_space)
@@ -1249,6 +1329,9 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 name="voxel_label",
                 description=voxel_label_column_description,
             )
+            mebrains_coordinates_table.add_column(name="x_raw", description=raw_coord_column_description)
+            mebrains_coordinates_table.add_column(name="y_raw", description=raw_coord_column_description)
+            mebrains_coordinates_table.add_column(name="z_raw", description=raw_coord_column_description)
 
             mebrains_coordinates_table.add_row(
                 x=mebrains_r,
@@ -1261,6 +1344,9 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 brain_region_distance_mm=mebrains_distance,
                 voxel_label=mebrains_voxel_label,
                 voxel_label_id=mebrains_voxel_label_id,
+                x_raw=mebrains_r_raw,
+                y_raw=mebrains_a_raw,
+                z_raw=mebrains_s_raw,
             )
 
             spaces_to_add.append(mebrains_space)
