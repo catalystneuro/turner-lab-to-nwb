@@ -68,7 +68,7 @@ extend-exclude = '''
 [tool.codespell]
 skip = '*.git*,*.pdf,*.css, *.ipynb,*/assets/*,*.txt'
 check-hidden = true
-ignore-words-list = 'assertin,sems,sinlge,singl,som'
+ignore-words-list = 'assertin,sems,sinlge,singl,som,mebrains'
 
 [tool.ruff]
 
@@ -108,6 +108,7 @@ dev = [
     "seaborn>=0.13.2",
     "nemos",
     "jax",
+    "optimistix<0.1.0",
 ]
 
 [tool.pyright]
