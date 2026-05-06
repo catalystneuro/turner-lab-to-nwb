@@ -276,11 +276,15 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             "STNStim": "STN"
         }
 
+        # Stimulation electrode index map matches the per-monkey StimulationElectrodesTable layout.
+        # Both monkeys: row 0 peduncle, rows 1-2 the two posterior-putamen electrodes (StrStim uses
+        # the first as representative since the source data does not distinguish them), row 3
+        # VL thalamus. Leu only: row 4 STN.
         stim_electrode_index_map = {
-            "PedStim": 0,   # Peduncle
-            "StrStim": 1,   # Putamen (use first of 3 as representative)
-            "ThalStim": 4,  # Thalamus
-            "STNStim": 5,   # Subthalamic nucleus
+            "PedStim": 0,
+            "StrStim": 1,
+            "ThalStim": 3,
+            "STNStim": 4,  # only valid for Leu sessions
         }
 
         # =====================================================================
@@ -470,65 +474,115 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         """
         Add stimulation electrodes table to the antidromic_identification processing module.
 
-        This table documents the chronically implanted macroelectrodes used for antidromic
-        neuron identification.
+        This table documents the chronically implanted multi-contact macroelectrodes used
+        for antidromic neuron identification. Per-animal complement and contact counts were
+        confirmed by R. Turner (personal communication, 2026-05-04):
+
+        - Venus: peduncle (2c), 2x posterior putamen (3c, 2c), VL thalamus (1c)        -> 4 rows
+        - Leu:   peduncle (2c), 2x posterior putamen (2c, 2c), VL thalamus (2c), STN (2c) -> 5 rows
+
+        Row layout (matches stim_electrode_index_map): 0=peduncle, 1-2=putamen (2 electrodes,
+        first used as the representative for StrStim because the source data does not
+        distinguish them), 3=VL thalamus, 4=STN (Leu only).
 
         Parameters
         ----------
         antidromic_module : ProcessingModule
             The antidromic_identification processing module
         """
+        from pathlib import Path
+
         from hdmf.common import DynamicTable, VectorData
 
         # Only add the table once (check if it already exists)
         if "StimulationElectrodesTable" in antidromic_module.data_interfaces:
             return
 
-        # Create stimulation electrodes table
+        animal_letter = Path(self.source_data["file_path"]).stem.lower()[:1]
+        if animal_letter == "v":
+            putamen_contact_counts = (3, 2)
+            thalamus_contacts = 1
+            has_stn = False
+            row_summary = "Row indices: 0=peduncle, 1-2=putamen (2 electrodes), 3=thalamus."
+        elif animal_letter == "l":
+            putamen_contact_counts = (2, 2)
+            thalamus_contacts = 2
+            has_stn = True
+            row_summary = "Row indices: 0=peduncle, 1-2=putamen (2 electrodes), 3=thalamus, 4=STN."
+        else:
+            raise ValueError(
+                f"Cannot determine animal from file_path {self.source_data['file_path']!r}; "
+                "expected stem starting with 'v' (Venus) or 'l' (Leu)."
+            )
+
+        locations = ["Cerebral peduncle (pre-pontine)"]
+        device_names = ["DeviceMicrowirePeduncleStimulation"]
+        n_contacts = [2]
+        notes = [
+            "Pre-pontine peduncle (2 contacts). For PTN identification."
+        ]
+
+        n_putamen = len(putamen_contact_counts)
+        for i, contact_count in enumerate(putamen_contact_counts, start=1):
+            locations.append("Putamen (posterolateral)")
+            device_names.append(f"DeviceMicrowirePutamenStimulation{i}")
+            n_contacts.append(contact_count)
+            representative_note = (
+                " Used as representative electrode reference for all StrStim data; "
+                "the two physical putamen electrodes are documented but not distinguished in source data."
+                if i == 1
+                else " Physical electrode documented but not distinguished in source data."
+            )
+            notes.append(
+                f"Electrode {i} of {n_putamen}, posterolateral putamen ({contact_count} contacts), "
+                f"for M1 CSN projections.{representative_note}"
+            )
+
+        locations.append("Ventrolateral thalamus")
+        device_names.append("DeviceMicrowireThalamicStimulation")
+        n_contacts.append(thalamus_contacts)
+        notes.append(
+            f"VL thalamus ({thalamus_contacts} contact{'s' if thalamus_contacts != 1 else ''}) "
+            f"for thalamocortical projection identification."
+        )
+
+        if has_stn:
+            locations.append("Subthalamic nucleus (STN)")
+            device_names.append("DeviceMicrowireSTNStimulation")
+            n_contacts.append(2)
+            notes.append("Subthalamic nucleus (2 contacts) for STN projection identification.")
+
         stim_electrodes_table = DynamicTable(
             name="StimulationElectrodesTable",
-            description="Chronically implanted macroelectrodes for antidromic neuron identification. "
-            "These electrodes were surgically implanted and present for all recording sessions, "
-            "though antidromic testing was not performed for every recorded neuron. "
-            "Used to classify M1 neurons as PTNs (peduncle), CSNs (putamen), thalamocortical neurons (thalamus), "
-            "or STN-projecting neurons (subthalamic nucleus). "
-            "Row indices: 0=peduncle, 1-3=putamen (3 electrodes), 4=thalamus, 5=STN.",
+            description=(
+                "Chronically implanted multi-contact macroelectrodes (custom-built PtIr microwires) "
+                "for antidromic neuron identification. These electrodes were surgically implanted and "
+                "present for all recording sessions, though antidromic testing was not performed for "
+                "every recorded neuron. Used to classify M1 neurons as PTNs (peduncle), CSNs (putamen), "
+                "thalamocortical neurons (thalamus), or STN-projecting neurons (subthalamic nucleus). "
+                "Per-animal complement confirmed by R. Turner (personal communication, 2026-05-04). "
+                f"{row_summary}"
+            ),
             columns=[
                 VectorData(
                     name="location",
                     description="Anatomical location of stimulation site",
-                    data=[
-                        "Cerebral peduncle (pre-pontine)",
-                        "Putamen (posterolateral)",
-                        "Putamen (posterolateral)",
-                        "Putamen (posterolateral)",
-                        "Ventrolateral thalamus",
-                        "Subthalamic nucleus (STN)",
-                    ],
+                    data=locations,
                 ),
                 VectorData(
                     name="device_name",
                     description="Name of the device in nwbfile.devices",
-                    data=[
-                        "DeviceMicrowirePeduncleStimulation",
-                        "DeviceMicrowirePutamenStimulation1",
-                        "DeviceMicrowirePutamenStimulation2",
-                        "DeviceMicrowirePutamenStimulation3",
-                        "DeviceMicrowireThalamicStimulation",
-                        "DeviceMicrowireSTNStimulation",
-                    ],
+                    data=device_names,
+                ),
+                VectorData(
+                    name="n_contacts",
+                    description="Number of stimulation contacts on this multi-contact electrode.",
+                    data=n_contacts,
                 ),
                 VectorData(
                     name="notes",
                     description="Additional electrode-specific notes",
-                    data=[
-                        "Ventral to substantia nigra, arm-responsive pre-pontine region. For PTN identification.",
-                        "Electrode 1 of 3, posterolateral putamen for M1 CSN projections. Used as representative electrode reference for all StrStim data.",
-                        "Electrode 2 of 3, posterolateral putamen for M1 CSN projections. Physical electrode documented but not distinguished in source data.",
-                        "Electrode 3 of 3, posterolateral putamen for M1 CSN projections. Physical electrode documented but not distinguished in source data.",
-                        "VL thalamus for thalamocortical projection identification.",
-                        "Subthalamic nucleus for STN projection identification.",
-                    ],
+                    data=notes,
                 ),
             ],
         )

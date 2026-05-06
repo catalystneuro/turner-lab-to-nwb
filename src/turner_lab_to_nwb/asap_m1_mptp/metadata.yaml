@@ -30,12 +30,13 @@ NWBFile:
   surgery: |
     Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
     chamber implanted with stereotaxic guidance over left primary motor cortex (M1) and posterior
-    putamen, oriented 35° to the coronal plane. Custom floating stimulating electrodes (Teflon-coated
-    PtIr microwires, 50-μm diameter) implanted in posterior putamen (3 electrodes) and prepontine
-    cerebral peduncle (1 electrode) for antidromic identification of corticostriatal neurons and
-    pyramidal tract neurons. A macroelectrode was additionally implanted in VL thalamus; orthodromic
-    and antidromic responses elicited through this electrode are reported in the recorded data.
-    Prophylactic antibiotics and analgesics administered perioperatively.
+    putamen, oriented 35° to the coronal plane. Multi-contact stimulating electrodes (Teflon-coated
+    PtIr microwires, 50-μm diameter) implanted for antidromic identification of corticostriatal
+    neurons and pyramidal tract neurons: posterior putamen (3-contact electrode), posterior putamen
+    (2-contact electrode), prepontine cerebral peduncle (2-contact electrode), and VL thalamus
+    (1-contact electrode). Orthodromic and antidromic responses elicited through these electrodes
+    are reported in the recorded data. Prophylactic antibiotics and analgesics administered
+    perioperatively.
   pharmacology: |
     MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine) administered at 0.5 mg/kg via unilateral
     left internal carotid artery under general anesthesia to induce hemiparkinsonian syndrome.
@@ -45,7 +46,7 @@ NWBFile:
     dopaminergic neuron counts.
 Subject:
   species: Macaca mulatta  # rhesus macaque
-  age: P4Y/P15Y  # Adult female rhesus; exact age not documented, bracketed by typical research range
+  age: P3Y/P5Y  # Approximately 4 years at time of recording (R. Turner, personal communication, 2026-05-04); ISO 8601 interval encodes uncertainty
   sex: F  # Female (Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312)
   weight: 4.8 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
   description: |

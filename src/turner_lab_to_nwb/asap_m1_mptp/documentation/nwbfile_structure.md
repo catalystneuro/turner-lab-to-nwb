@@ -45,7 +45,7 @@ Overview of how the conversion writes the Turner Lab M1 MPTP sessions into an NW
 
 ## Antidromic identification processing
 - Processing module `antidromic_identification` from `antidromic_stimulation_interface.py` stores per-sweep antidromic tests used for neuron classification.
-- `StimulationElectrodesTable` (DynamicTable) documents peduncle, putamen (3 electrodes), and thalamus stimulation sites with device references.
+- `StimulationElectrodesTable` (DynamicTable) documents the chronically implanted multi-contact stimulation electrodes (peduncle, two posterior putamen, VL thalamus, plus STN for monkey Leu only). Per-electrode contact counts are stored in the `n_contacts` column and the per-monkey complement was confirmed by R. Turner (2026-05-04). Venus has 4 rows; Leu has 5 rows.
 - `AntidromicSweepsIntervals` (TimeIntervals) rows reference:
   - `AntidromicStimulation{Unit}{Location}{TestType}SweepNN` (`TimeSeries`, amperes, estimated conversion)
   - `AntidromicResponse{Unit}{Location}{TestType}SweepNN` (`ElectricalSeries`, volts, estimated conversion, electrode region pointing to recording electrode)

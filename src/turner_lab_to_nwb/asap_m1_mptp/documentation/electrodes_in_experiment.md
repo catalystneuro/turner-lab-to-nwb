@@ -43,7 +43,14 @@ The recording electrode is advanced through the chronic chamber on each recordin
 
 **Purpose**: Identify neuron cell types by antidromically activating their axons at known projection targets.
 
-### Two Separate Stimulating Sites
+### Stimulating Sites
+
+Per-monkey complement (R. Turner, personal communication, 2026-05-04):
+
+- **Venus** (4 chronic multi-contact electrodes): cerebral peduncle (2 contacts), posterior putamen (3 contacts), posterior putamen (2 contacts), VL thalamus (1 contact).
+- **Leu** (5 chronic multi-contact electrodes): cerebral peduncle (2 contacts), posterior putamen (2 contacts), posterior putamen (2 contacts), VL thalamus (2 contacts), subthalamic nucleus (2 contacts).
+
+The peduncle electrode targets PTNs; the two posterior putamen electrodes target CSNs (the source data does not distinguish which putamen electrode delivered a given StrStim sweep, so the first row is used as the representative reference). VL thalamus and STN electrodes are used for thalamocortical and STN-projecting neuron identification respectively.
 
 #### Cerebral Peduncle Electrode (for PTN identification)
 

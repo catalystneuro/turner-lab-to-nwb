@@ -131,7 +131,7 @@ The Turner lab investigated how MPTP-induced parkinsonism differentially affects
 
 | Parameter | Value |
 |-----------|-------|
-| Stimulation site | Posterolateral putamen (3 electrodes between planes HC A8-14) |
+| Stimulation site | Posterolateral putamen (2 multi-contact electrodes between planes HC A8-14) |
 | Stimulation current | 100-600 uA |
 | Pulse duration | 0.2 ms biphasic pulses |
 | Antidromic latency | 2.0-20 ms |
@@ -151,10 +151,10 @@ The Turner lab used chronically implanted "floating" stimulating electrodes:
 - Wires threaded through 30-gauge stainless steel cannula
 - Wire tips staggered by 0.5 mm for depth coverage
 
-**Implantation configuration:**
-- 3 electrodes in posterolateral putamen (for CSN identification)
-- 1 electrode in prepontine cerebral peduncle (for PTN identification)
-- Additional electrodes in thalamus (VL) and subthalamic nucleus (STN) in some sessions
+**Implantation configuration (R. Turner, personal communication, 2026-05-04):**
+- Venus: 2 multi-contact electrodes in posterolateral putamen (3 contacts and 2 contacts), 1 multi-contact electrode in prepontine cerebral peduncle (2 contacts), 1 single-contact electrode in VL thalamus
+- Leu: 2 multi-contact electrodes in posterolateral putamen (2 contacts each), 1 multi-contact electrode in prepontine cerebral peduncle (2 contacts), 1 multi-contact electrode in VL thalamus (2 contacts), 1 multi-contact electrode in subthalamic nucleus (2 contacts)
+- Putamen electrodes are used for CSN identification; peduncle for PTN identification; thalamus for thalamocortical projection identification; STN (Leu only) for STN-projecting neuron identification
 
 ---
 

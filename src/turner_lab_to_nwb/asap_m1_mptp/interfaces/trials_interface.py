@@ -91,7 +91,12 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         target_directions = np.array(events["targ_dir"])
         cursor_departure_times = np.array(events["home_leave"]) / 1000.0
         reward_times = np.array(events["reward"]) / 1000.0
-        target_amplitudes = np.array(events.get("targ_amp", [np.nan] * len(target_directions)))
+        # Venus source files do not carry an Events.targ_amp field; R. Turner (2026-05-04)
+        # confirmed every Venus trial used a 20 deg target. Leu source files supply per-trial
+        # amplitudes (10/20/30 deg).
+        is_venus = self.file_path.stem.lower().startswith("v")
+        default_amplitude = 20.0 if is_venus else np.nan
+        target_amplitudes = np.array(events.get("targ_amp", [default_amplitude] * len(target_directions)))
         n_trials = len(target_directions)
 
         # STEP 2: Add trial columns for Events data (using sidecar for HED definitions)

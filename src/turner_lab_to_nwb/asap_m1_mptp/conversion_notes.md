@@ -242,10 +242,11 @@ For this study:
 
 **How This Study Used Antidromic Identification:**
 
-1. **Chronic implantation**: Stimulation electrodes were permanently implanted in:
-   - **Cerebral peduncle** (pre-pontine, arm-responsive region): Tests for PTNs
-   - **Posterior putamen** (posterolateral striatum, 3 electrodes): Tests for CSNs
-   - Additional sites: Thalamus and STN in some sessions
+1. **Chronic implantation**: Multi-contact stimulation electrodes were permanently implanted (per-monkey complement confirmed by R. Turner, 2026-05-04):
+   - **Cerebral peduncle** (pre-pontine, arm-responsive region): 1 multi-contact electrode in each monkey, for PTN identification
+   - **Posterior putamen** (posterolateral striatum): 2 multi-contact electrodes in each monkey, for CSN identification
+   - **VL thalamus**: 1 electrode in each monkey
+   - **Subthalamic nucleus (STN)**: 1 multi-contact electrode (Leu only)
 
 2. **Classification during recording**: While recording from M1 neurons during behavioral tasks, researchers periodically delivered electrical pulses to each stimulation site to identify:
    - **PED response** → Pyramidal tract neuron (projects to spinal cord via corticospinal tract)
@@ -282,9 +283,9 @@ The converted NWB files include detailed surgical and pharmacological metadata e
 - Chamber implantation procedure under Isoflurane anesthesia
 - Cylindrical stainless steel recording chamber positioned over left M1 and posterior putamen
 - Chamber orientation: 35° to coronal plane for orthogonal cortical penetration
-- Implanted stimulating electrodes for antidromic identification:
-  - 3 custom floating electrodes (Teflon-coated PtIr microwires, 50-μm diameter) in posterior putamen
-  - 1 electrode in prepontine cerebral peduncle
+- Implanted stimulating electrodes for antidromic identification (custom floating Teflon-coated PtIr microwires, 50-μm diameter; per-monkey complement confirmed by R. Turner, 2026-05-04):
+  - Venus: 2 multi-contact electrodes in posterior putamen (3 contacts and 2 contacts), 1 multi-contact electrode in prepontine cerebral peduncle (2 contacts), 1 single-contact electrode in VL thalamus
+  - Leu: 2 multi-contact electrodes in posterior putamen (2 contacts each), 1 multi-contact electrode in prepontine cerebral peduncle (2 contacts), 1 multi-contact electrode in VL thalamus (2 contacts), 1 multi-contact electrode in subthalamic nucleus (2 contacts)
 - Prophylactic antibiotics and analgesics administered perioperatively
 
 **Pharmacology Information** (`nwbfile.pharmacology`):

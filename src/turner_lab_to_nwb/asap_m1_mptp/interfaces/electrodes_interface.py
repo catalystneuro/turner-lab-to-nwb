@@ -865,39 +865,52 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             "Signal amplified 10^4, bandpass filtered 0.3-10kHz. Sampling: 20kHz for unit discrimination.",
         )
 
-        # Create devices for chronically implanted stimulation electrodes
+        # Create devices for chronically implanted stimulation electrodes (multi-contact PtIr microwires).
+        # Per-animal complement and contact counts confirmed by R. Turner (2026-05-04, ninth email):
+        #   Venus: peduncle (2c), posterior putamen (3c), posterior putamen (2c), VL thalamus (1c)
+        #   Leu:   peduncle (2c), posterior putamen (2c), posterior putamen (2c), VL thalamus (2c), STN (2c)
         # These are documented as devices even though they're not in the electrodes table
-        # (stimulation electrode metadata is in StimulationElectrodesTable in the antidromic_identification module)
+        # (stimulation electrode metadata is in StimulationElectrodesTable in the antidromic_identification module).
+        animal = self.session_info["Animal"]
+        if animal == "V":
+            putamen_contact_counts = (3, 2)
+            thalamus_contacts = 1
+            has_stn = False
+        elif animal == "L":
+            putamen_contact_counts = (2, 2)
+            thalamus_contacts = 2
+            has_stn = True
+        else:
+            raise ValueError(f"Unknown animal code {animal!r}; expected 'V' or 'L'.")
+
         nwbfile.create_device(
             name="DeviceMicrowirePeduncleStimulation",
-            description="Custom-built PtIr microwire electrode for antidromic stimulation in cerebral peduncle. "
-            "Chronically implanted for PTN identification.",
+            description="Custom-built PtIr multi-contact microwire electrode (2 contacts) for antidromic "
+            "stimulation in pre-pontine cerebral peduncle. Chronically implanted for PTN identification.",
         )
-        nwbfile.create_device(
-            name="DeviceMicrowirePutamenStimulation1",
-            description="Custom-built PtIr microwire electrode 1 of 3 for antidromic stimulation in posterolateral putamen. "
-            "Chronically implanted for CSN identification.",
-        )
-        nwbfile.create_device(
-            name="DeviceMicrowirePutamenStimulation2",
-            description="Custom-built PtIr microwire electrode 2 of 3 for antidromic stimulation in posterolateral putamen. "
-            "Chronically implanted for CSN identification.",
-        )
-        nwbfile.create_device(
-            name="DeviceMicrowirePutamenStimulation3",
-            description="Custom-built PtIr microwire electrode 3 of 3 for antidromic stimulation in posterolateral putamen. "
-            "Chronically implanted for CSN identification.",
-        )
+        for i, n_contacts in enumerate(putamen_contact_counts, start=1):
+            nwbfile.create_device(
+                name=f"DeviceMicrowirePutamenStimulation{i}",
+                description=(
+                    f"Custom-built PtIr multi-contact microwire electrode ({n_contacts} contacts), "
+                    f"{i} of {len(putamen_contact_counts)} chronically implanted in posterolateral "
+                    f"putamen for CSN identification."
+                ),
+            )
         nwbfile.create_device(
             name="DeviceMicrowireThalamicStimulation",
-            description="Custom-built PtIr microwire electrode for antidromic stimulation in VL thalamus. "
-            "Chronically implanted for thalamocortical projection identification.",
+            description=(
+                f"Custom-built PtIr microwire electrode ({thalamus_contacts} contact"
+                f"{'s' if thalamus_contacts != 1 else ''}) for antidromic stimulation in VL thalamus. "
+                f"Chronically implanted for thalamocortical projection identification."
+            ),
         )
-        nwbfile.create_device(
-            name="DeviceMicrowireSTNStimulation",
-            description="Custom-built PtIr microwire electrode for antidromic stimulation in subthalamic nucleus (STN). "
-            "Chronically implanted for STN projection identification.",
-        )
+        if has_stn:
+            nwbfile.create_device(
+                name="DeviceMicrowireSTNStimulation",
+                description="Custom-built PtIr multi-contact microwire electrode (2 contacts) for antidromic "
+                "stimulation in subthalamic nucleus (STN). Chronically implanted for STN projection identification.",
+            )
 
         # Recording electrode group for M1 chamber (left hemisphere)
         recording_electrode_group = nwbfile.create_electrode_group(

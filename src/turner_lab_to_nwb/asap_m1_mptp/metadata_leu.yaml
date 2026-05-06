@@ -1,7 +1,7 @@
 Subject:
   species: Macaca mulatta  # rhesus macaque
   sex: F  # Female (Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312)
-  age: P4Y/P15Y  # Adult female rhesus; exact age not documented, bracketed by typical research range
+  age: P2Y/P4Y  # Approximately 3 years at time of recording (R. Turner, personal communication, 2026-05-04); ISO 8601 interval encodes uncertainty
   weight: 6 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
   description: |
     MPTP-treated parkinsonian female rhesus macaque (Monkey L / Leu) used for motor cortex
@@ -9,7 +9,8 @@ Subject:
 surgery: |
   Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
   chamber implanted with stereotaxic guidance over left primary motor cortex (M1), oriented 35°
-  to the coronal plane. Custom floating stimulating electrodes (Teflon-coated PtIr microwires,
-  50-um diameter) implanted in posterior putamen, prepontine cerebral peduncle, VL thalamus,
-  and subthalamic nucleus (STN) for antidromic identification of projection neuron types.
-  Prophylactic antibiotics and analgesics administered perioperatively.
+  to the coronal plane. Multi-contact stimulating electrodes (Teflon-coated PtIr microwires,
+  50-um diameter) implanted for antidromic identification of projection neuron types: posterior
+  putamen (2-contact electrode), posterior putamen (2-contact electrode), prepontine cerebral
+  peduncle (2-contact electrode), VL thalamus (2-contact electrode), and subthalamic nucleus
+  (2-contact electrode). Prophylactic antibiotics and analgesics administered perioperatively.
