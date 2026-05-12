@@ -42,6 +42,31 @@ class M1MPTPEMGInterface(BaseDataInterface):
         "biceps longus": "Biceps brachii (long head) - elbow flexor and forearm supinator",
     }
 
+    # Inferred-compartment notes for muscles where we have empirical evidence
+    # about the anatomical role of a specific channel but no confirmation from
+    # the original investigators. The series name itself is intentionally NOT
+    # changed; the inference is recorded in the description so it is discoverable
+    # without being claimed as fact in the channel name. See
+    # scripts/triceps_compartment_analysis/ and meeting_notes/ for the analysis.
+    INFERRED_COMPARTMENT_NOTES = {
+        "EMGTricepsLongus1": (
+            " Inferred compartment: distal (provisional). Empirical analysis across "
+            "~280 Venus sessions, using cross-correlation lead-lag and posterior-deltoid "
+            "correlation between the two triceps longus channels (see "
+            "scripts/triceps_compartment_analysis/), suggests this channel is the more "
+            "distal of the two compartments. The assignment is not confirmed by the "
+            "original investigators and is intentionally not encoded in the channel name."
+        ),
+        "EMGTricepsLongus2": (
+            " Inferred compartment: proximal (provisional). Empirical analysis across "
+            "~280 Venus sessions, using cross-correlation lead-lag and posterior-deltoid "
+            "correlation between the two triceps longus channels (see "
+            "scripts/triceps_compartment_analysis/), suggests this channel is the more "
+            "proximal of the two compartments. The assignment is not confirmed by the "
+            "original investigators and is intentionally not encoded in the channel name."
+        ),
+    }
+
     def __init__(
         self,
         file_path: FilePath,
@@ -176,8 +201,10 @@ class M1MPTPEMGInterface(BaseDataInterface):
                     f"The numeric suffix reflects channel order in the source mapping, not a known anatomical position."
                 )
 
+            inferred_compartment_note = self.INFERRED_COMPARTMENT_NOTES.get(series_name, "")
+
             description = (
-                f"Preprocessed EMG from {muscle_description}.{duplicate_note} "
+                f"Preprocessed EMG from {muscle_description}.{duplicate_note}{inferred_compartment_note} "
                 "Recording: chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
                 "Signal processing: differentially amplified (gain=10,000), bandpass filtered (20 Hz - 5 kHz), "
                 "full-wave rectified, sample-hold integrated (10 ms integration interval), then digitized."
