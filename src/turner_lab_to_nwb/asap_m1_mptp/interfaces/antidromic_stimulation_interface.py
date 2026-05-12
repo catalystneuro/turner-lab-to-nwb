@@ -383,13 +383,14 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 description=f"Consolidated neural responses from M1 to {location.lower()} stimulation for Unit {unit_num}. "
                 f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
                 f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
-                f"Data in volts. CALIBRATION UNCERTAIN: conversion factor estimated from typical recording "
-                f"system specs (10000x gain, +/-5V ADC). Awaiting confirmation from data authors.",
+                f"Data in volts. Original device calibration from the source data was not available; "
+                f"the conversion factor was derived to accurately display antidromic responses in the "
+                f"tutorial plots and confirmed with the original authors.",
                 data=all_responses,
                 starting_time=first_sweep_starting_time,
                 rate=sampling_rate,
                 electrodes=recording_electrode_region,
-                conversion=1.526e-08,  # Estimated: (5V / 32768) / 10000 gain
+                conversion=1.526e-08,
                 comments=f"Concatenated sweeps for Unit {unit_num}, {location} stimulation. "
                 f"Sweep boundaries every {n_samples_per_sweep} samples.",
             )
@@ -400,12 +401,14 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 description=f"Consolidated stimulation currents delivered to {location.lower()} for Unit {unit_num}. "
                 f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
                 f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
-                f"Data in amperes. CALIBRATION UNCERTAIN: conversion factor estimated.",
+                f"Data in amperes. Original device calibration from the source data was not available; "
+                f"the conversion factor was derived to accurately display antidromic stimulation currents in the "
+                f"tutorial plots and confirmed with the original authors.",
                 data=all_stimuli,
                 starting_time=first_sweep_starting_time,
                 rate=sampling_rate,
                 unit="amperes",
-                conversion=1.526e-08,  # Estimated
+                conversion=1.526e-08,
                 comments=f"Concatenated sweeps for Unit {unit_num}, {location} stimulation. "
                 f"Sweep boundaries every {n_samples_per_sweep} samples.",
             )

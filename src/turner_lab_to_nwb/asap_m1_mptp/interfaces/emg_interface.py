@@ -163,8 +163,21 @@ class M1MPTPEMGInterface(BaseDataInterface):
             # Get muscle description with anatomical function
             muscle_description = self.MUSCLE_DESCRIPTIONS.get(muscle_name, muscle_name)
 
+            # For muscles recorded on more than one channel (Venus has two triceps longus
+            # channels in different muscle compartments), surface that this is intentional
+            # and that the numeric suffix does not encode anatomy.
+            base_name = f"EMG{self.MUSCLE_NAME_MAP.get(muscle_name, muscle_name)}"
+            duplicate_note = ""
+            if base_name_counts.get(base_name, 0) > 1:
+                channel_index_within_muscle = int(series_name.replace(base_name, ""))
+                duplicate_note = (
+                    f" Channel {channel_index_within_muscle} of {base_name_counts[base_name]} separate "
+                    f"electrodes placed in different compartments of {muscle_description.split(' - ')[0].lower()}. "
+                    f"The numeric suffix reflects channel order in the source mapping, not a known anatomical position."
+                )
+
             description = (
-                f"Preprocessed EMG from {muscle_description}. "
+                f"Preprocessed EMG from {muscle_description}.{duplicate_note} "
                 "Recording: chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
                 "Signal processing: differentially amplified (gain=10,000), bandpass filtered (20 Hz - 5 kHz), "
                 "full-wave rectified, sample-hold integrated (10 ms integration interval), then digitized."

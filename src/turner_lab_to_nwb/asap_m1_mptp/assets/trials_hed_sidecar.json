@@ -53,5 +53,9 @@
   },
   "isolation_monitoring_stim_site": {
     "Description": "Anatomical target of antidromic stimulation for isolation monitoring. Values: 'Str' (striatum), 'Thal' (thalamus), 'Ped' (cerebral peduncle), or empty string if no stimulation was delivered in that trial"
+  },
+  "target_amplitude_degrees": {
+    "Description": "Distance from center (home) position to target center in degrees of joint angle (10, 20, or 30). Determines required movement amplitude for target capture. During individual sessions, target amplitude is either always 20 degrees or varies randomly among 10, 20, and 30 degrees.",
+    "HED": "(Target, Angle/# degree)"
   }
 }

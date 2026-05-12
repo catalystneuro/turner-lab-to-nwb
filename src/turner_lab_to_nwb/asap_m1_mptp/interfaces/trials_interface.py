@@ -126,11 +126,9 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         )
         nwbfile.add_trial_column(
             name="target_amplitude_degrees",
-            description=(
-                "Distance from center (home) position to target center in degrees of joint angle (10, 20, or 30). "
-                "Determines required movement amplitude for target capture. During individual sessions, target "
-                "amplitude is either always 20 degrees or varies randomly among 10, 20, and 30 degrees."
-            ),
+            description=columns["target_amplitude_degrees"]["Description"],
+            col_cls=HedValueVector,
+            hed=columns["target_amplitude_degrees"]["HED"],
         )
 
         # STEP 3: Extract in-trial stimulation data for isolation monitoring

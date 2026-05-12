@@ -190,3 +190,6 @@ TODO.md
 
 # Local location manifest (generated)
 location_manifest.csv
+
+# Presentation slides (local working directory)
+slides/
