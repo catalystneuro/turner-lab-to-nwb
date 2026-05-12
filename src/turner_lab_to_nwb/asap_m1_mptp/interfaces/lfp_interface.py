@@ -3,8 +3,7 @@ from typing import Optional
 
 import numpy as np
 from pydantic import FilePath
-from pynwb import NWBFile
-from pynwb.ecephys import ElectricalSeries
+from pynwb import NWBFile, TimeSeries
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
@@ -36,10 +35,9 @@ class M1MPTPLFPInterface(BaseDataInterface):
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """
-        Add LFP data to the NWB file as an ElectricalSeries linked to the M1 recording electrode.
-
-        The LFP is stored in an ecephys processing module within an LFP container,
-        following NWB best practices for processed electrophysiology data.
+        Add LFP data to the NWB file as a TimeSeries (unit="a.u.") in the ecephys
+        processing module. Stored as a plain TimeSeries rather than ElectricalSeries
+        because the ADC range needed to calibrate to volts is undocumented.
 
         Parameters
         ----------
@@ -67,20 +65,6 @@ class M1MPTPLFPInterface(BaseDataInterface):
         if self.verbose:
             print(f"Processing LFP data: {n_trials} trials")
 
-        # Verify electrodes table exists
-        if nwbfile.electrodes is None or len(nwbfile.electrodes) == 0:
-            raise ValueError(
-                "Electrodes table must be populated before adding LFP. "
-                "Ensure ElectrodesInterface runs before LFPInterface."
-            )
-
-        # Create electrode table region for M1 recording electrode (index 0)
-        # This is the same electrode used for spike recording
-        recording_electrode_region = nwbfile.create_electrode_table_region(
-            region=[0],  # M1 recording electrode
-            description="M1 recording electrode - same electrode used for single-unit recordings"
-        )
-
         # Build concatenated timeline
         trial_data_list = []
         timestamps = []
@@ -102,25 +86,25 @@ class M1MPTPLFPInterface(BaseDataInterface):
         continuous_data = np.concatenate(trial_data_list, axis=0)
         timestamps = np.array(timestamps)
 
-        # Reshape to 2D for neuroconv compatibility (n_samples, n_channels)
-        continuous_data_2d = continuous_data.reshape(-1, 1)
-
-        # Create LFP as ElectricalSeries with electrode linkage
-        # Note: Data are uncalibrated A/D converter values (centered ~2048, consistent with
-        # 12-bit digitization). No voltage calibration factor is available from the source data.
-        lfp_series = ElectricalSeries(
+        # Stored as plain TimeSeries with unit="a.u." rather than ElectricalSeries
+        # (which would imply volts). The voltage calibration cannot be confirmed:
+        # the LFP digitizer's ADC range is undocumented, and even by parallel
+        # reasoning to the antidromic factor it would rest on an unverified
+        # assumption about the ADC range. Mirrors the EMG approach. Counts are
+        # 12-bit unsigned, centered on the midpoint 2048; subtract 2048 for
+        # zero-baseline analyses.
+        lfp_series = TimeSeries(
             name="LFP",
-            data=continuous_data_2d,
+            data=continuous_data,
             timestamps=timestamps,
-            electrodes=recording_electrode_region,
-            conversion=1.0,  # Data are uncalibrated A/D values, no voltage calibration available
-            offset=0.0,
+            unit="a.u.",
             description="Local field potential from M1 microelectrode. "
             "Recorded simultaneously with single-unit activity during visuomotor task. "
-            "Signal processing: 10k gain, 0.1-45 Hz bandpass filtered.",
-            comments="Data are uncalibrated A/D converter values (centered ~2048, consistent with "
-            "12-bit digitization). No voltage calibration factor is available. "
-            "LFP from same electrode as spike recordings. Trials concatenated with inter-trial gaps.",
+            "Signal processing: 10k gain, 1-100 Hz bandpass filtered.",
+            comments="Raw 12-bit unsigned A/D counts (centered ~2048). No voltage "
+            "calibration applied: the LFP digitizer's ADC range is undocumented. "
+            "LFP from same electrode as spike recordings (electrode metadata available "
+            "in nwbfile.electrodes). Trials concatenated with inter-trial gaps.",
         )
 
         # Get or create ecephys processing module
@@ -132,10 +116,9 @@ class M1MPTPLFPInterface(BaseDataInterface):
                 description="Processed extracellular electrophysiology data"
             )
 
-        # Add the LFP ElectricalSeries directly to the processing module
+        # Add the LFP TimeSeries directly to the processing module
         ecephys_module.add(lfp_series)
 
         if self.verbose:
             print(f"Added LFP: {len(continuous_data)} samples across {n_trials} trials")
-            print(f"  Linked to electrode: {nwbfile.electrodes[0].location[0]}")
             print(f"  Stored in: processing/ecephys/LFP")

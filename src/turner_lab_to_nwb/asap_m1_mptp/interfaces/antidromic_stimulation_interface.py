@@ -377,7 +377,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 description="Recording electrode in M1",
             )
 
-            # Create consolidated response series
+            # Create consolidated response series.
+            # conversion = 10 V / 2**16 / 10000 = 1.526e-8 V/count (range / bits / amp gain).
+            # The signed int16 data are already centered at 0, so no offset is needed.
             response_series = ElectricalSeries(
                 name=f"AntidromicResponseUnit{unit_num}{location}",
                 description=f"Consolidated neural responses from M1 to {location.lower()} stimulation for Unit {unit_num}. "

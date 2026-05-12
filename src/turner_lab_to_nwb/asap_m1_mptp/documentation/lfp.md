@@ -51,7 +51,7 @@ Analog['lfp'][trial_idx]  # LFP signal for trial trial_idx
 ### Data Format
 
 - **Structure**: List of 1D arrays, one per trial
-- **Units**: Uncalibrated A/D converter values (centered ~2048, consistent with 12-bit digitization)
+- **Units**: Raw 12-bit unsigned A/D counts (centered ~2048). Stored as-is in the NWB file under `unit="a.u."` (see [Why no voltage calibration](#why-no-voltage-calibration) below).
 - **Shape**: `(n_samples_per_trial,)` for each trial
 - **Sampling**: 1 kHz (matches position, velocity, torque, EMG)
 
@@ -127,9 +127,21 @@ The LFP interface (`lfp_interface.py`) writes LFP data to the NWB file as an `El
 | Field | Value |
 |-------|-------|
 | NWB container | `nwbfile.processing['ecephys']['LFP']` |
-| Class | `pynwb.ecephys.ElectricalSeries` |
-| Unit | a.u. (arbitrary units - uncalibrated A/D values) |
+| Class | `pynwb.TimeSeries` |
+| Unit | `a.u.` (arbitrary units) |
+| Conversion | 1.0 (default) |
+| Offset | 0 (default) |
 | Description | Local field potential from microelectrode (10k gain, 1-100 Hz bandpass filtered) |
+
+### Why no voltage calibration
+
+The LFP is stored as a plain `TimeSeries` rather than as an `ElectricalSeries`. `ElectricalSeries` is contractually a volts container per the NWB schema, and storing raw A/D counts there with `conversion=1.0` would make a false physical-unit claim that downstream tools could be tripped up by.
+
+A voltage calibration would require knowing both the LFP amplifier gain (documented as 10000x) and the LFP digitizer's ADC voltage range. The ADC range is **not documented** in the source materials. By parallel reasoning to the antidromic Unit factor (`1.526e-8 V/count = 10 V / 2^16 / 10000`, derived by back-fitting tutorial plots and confirmed with the authors), one could conjecture that the LFP path uses the same 10 V ADC range with a 12-bit digitizer, giving `2.4414e-7 V/count` and an offset of `-5.0e-4 V` to map the 12-bit midpoint (count 2048) to 0 V. The resulting amplitudes (~20 µV RMS, hundreds of µV peak-to-peak) are physiologically plausible. However, this rests on an assumption about the ADC range that we cannot independently verify, so we chose to make no physical-unit claim rather than a provisional one.
+
+This mirrors the EMG approach (also `TimeSeries(unit="a.u.")`) and trades two things: the electrode-table linkage that an `ElectricalSeries` would carry (electrode metadata is still in `nwbfile.electrodes` and can be cross-referenced via the spike data, but is not a direct foreign-key from this signal), and auto-discovery as "LFP" by NWB-aware tools that scan for `ElectricalSeries` inside the LFP processing-module container.
+
+The data values themselves are unchanged: 12-bit unsigned A/D counts centered on the midpoint 2048. Subtract 2048 for zero-baseline analyses.
 
 ### Trial Concatenation
 
@@ -180,7 +192,7 @@ trial_lfp = lfp.data[mask]
 1. **Single channel**: LFP is recorded from a single microelectrode (no multi-site array)
 2. **Not all sessions**: Only 64% of sessions include LFP data
 3. **Bandpass filtered**: Raw broadband signal not available (1-100 Hz only)
-4. **Uncalibrated units**: Data are raw 12-bit A/D converter values (centered ~2048), not calibrated voltage. No voltage calibration factor is available from source data. Use for relative comparisons only.
+4. **No voltage calibration**: Data are stored as raw 12-bit A/D counts under `unit="a.u."`. No physical-unit (volts) conversion is applied because the LFP digitizer's ADC range is undocumented. Use for relative amplitude analyses, spectral analysis, normalized measures, and within-dataset comparisons. See [Why no voltage calibration](#why-no-voltage-calibration) above.
 5. **Simultaneous with spikes**: LFP and spikes come from the same electrode, which may affect spike-field coherence interpretation
 
 ## References
