@@ -2,14 +2,24 @@ from typing import Optional
 
 import numpy as np
 from pydantic import FilePath
-from pynwb import NWBFile, TimeSeries
+from pynwb import NWBFile, TimeSeries, register_map
 from pynwb.ecephys import ElectricalSeries
 from pynwb.file import TimeIntervals
 from pynwb.base import TimeSeriesReferenceVectorData, TimeSeriesReference
+from pynwb.io.core import VectorDataMap
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
 from neuroconv.utils import DeepDict
+
+
+# Workaround for hdmf >= 6.0: columns added with add_column are built with the
+# generic VectorData spec, which drops the compound dtype. Remove once fixed upstream.
+@register_map(TimeSeriesReferenceVectorData)
+class TimeSeriesReferenceVectorDataMap(VectorDataMap):
+    def build(self, *args, **kwargs):
+        kwargs.pop("matched_spec", None)
+        return super().build(*args, **kwargs)
 
 
 class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
