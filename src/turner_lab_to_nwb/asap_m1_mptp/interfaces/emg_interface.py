@@ -202,8 +202,8 @@ class M1MPTPEMGInterface(BaseDataInterface):
             description = (
                 f"Preprocessed EMG from {muscle_description}.{duplicate_note}{inferred_compartment_note} "
                 "Recording: chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
-                "Signal processing: differentially amplified (gain=10,000), bandpass filtered (20 Hz - 5 kHz), "
-                "full-wave rectified, sample-hold integrated (10 ms integration interval), then digitized."
+                "Signal processing (Pasquereau and Turner 2013): differentially amplified (gain = 10,000), "
+                "band-pass filtered (20 Hz to 5 kHz), rectified and then low-pass filtered (100 Hz), then digitized."
             )
 
             comments = (
