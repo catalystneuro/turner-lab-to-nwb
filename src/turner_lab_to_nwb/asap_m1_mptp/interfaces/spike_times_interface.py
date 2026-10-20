@@ -3,12 +3,13 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import FilePath
 from pynwb import NWBFile
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
 from neuroconv.utils import DeepDict
+
+from .trial_sources import get_trial_timeline, read_trial_source_files
 
 
 class M1MPTPSpikeTimesInterface(BaseDataInterface):
@@ -20,8 +21,8 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
 
     def __init__(
         self,
-        file_path: FilePath,
-        session_metadata: dict,
+        units: list[dict],
+        trial_sources: list[tuple[Path, int]],
         inter_trial_time_interval: float = 3.0,
         verbose: bool = False,
     ):
@@ -30,39 +31,25 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
 
         Parameters
         ----------
-        file_path : FilePath
-            Path to the first Turner Lab .mat file (will check for additional units automatically)
-        session_metadata : dict
-            Metadata for all units in this session (each unit contains session-level info)
+        units : list of dict
+            One entry per unit, with "name" (source files, e.g. "v2701.1+v2702.2"), "metadata" (the unit's
+            row of the metadata table), "spike_sources" ((unit .mat file, trial index in that file, session
+            trial index) for every trial the unit was recorded in) and "electrode_indices"
+        trial_sources : list of (Path, int)
+            The session's trials in order, as (Turner Lab .mat file, trial index in that file)
         inter_trial_time_interval : float, optional
             Time interval between trials in seconds, by default 3.0
         verbose : bool, optional
             Whether to print verbose output, by default False
         """
         super().__init__(verbose=verbose)
-        self.base_file_path = Path(file_path)
-        self.session_metadata = session_metadata
+        self.units = units
+        self.trial_sources = trial_sources
         self.inter_trial_time_interval = inter_trial_time_interval
 
-        # Extract session-level info from first unit (all units have same session info)
-        if self.session_metadata:
-            first_unit = self.session_metadata[0]
-            self.session_info = {
-                "Animal": first_unit["Animal"],
-                "MPTP": first_unit["MPTP"],
-                "DateCollected": first_unit["DateCollected"],
-                "A_P": first_unit["A_P"],
-                "M_L": first_unit["M_L"],
-                "Depth": first_unit["Depth"],
-            }
-
-
-    def add_to_nwbfile(
-        self, nwbfile: NWBFile, metadata: Optional[dict] = None, trial_start_times: Optional[np.ndarray] = None
-    ) -> None:
+    def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """
-        Add spike times to the NWB file as a Units table. Automatically detects and loads
-        multiple units from the same session.
+        Add spike times to the NWB file as a Units table, one row per unit of the session.
 
         Parameters
         ----------
@@ -70,40 +57,16 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             The NWB file object to add data to
         metadata : dict, optional
             Metadata dictionary
-        trial_start_times : np.ndarray, optional
-            Array of trial start times in seconds. If provided, spike times will be
-            adjusted to global timeline. If None, assumes trials are concatenated
-            with inter-trial intervals.
         """
         if metadata is None:
             metadata = self.get_metadata()
 
         # Electrode table should already be created by electrodes interface
 
-        # Discover all unit files for this session
-        base_name = self.base_file_path.stem.split(".")[0]  # e.g., "v5811" from "v5811.1.mat"
-        base_dir = self.base_file_path.parent
-
-        unit_files = []
-        unit_metadata_list = []
-
-        # Check for .1.mat and .2.mat files
-        for unit_num in [1, 2]:
-            unit_file_path = base_dir / f"{base_name}.{unit_num}.mat"
-            if unit_file_path.exists():
-                # Find metadata for this unit
-                unit_meta = None
-                for unit_info in self.session_metadata:
-                    if unit_info["UnitNum1"] == unit_num:
-                        unit_meta = unit_info
-                        break
-
-                if unit_meta:
-                    unit_files.append(unit_file_path)
-                    unit_metadata_list.append(unit_meta)
-
-        if self.verbose:
-            print(f"Found {len(unit_files)} unit files for session {base_name}")
+        # Session timeline: must match trials_interface.py exactly so obs_intervals align with trials
+        trial_start_times, trial_durations = get_trial_timeline(
+            read_trial_source_files(self.trial_sources), self.trial_sources, self.inter_trial_time_interval
+        )
 
         # Initialize units table if needed
         if nwbfile.units is None:
@@ -203,20 +166,11 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             )
             nwbfile.add_unit_column(
                 "unit_name",
-                "Unit identifier extracted from source MATLAB filename. When multiple well-isolated single units "
-                "were recorded simultaneously during the same electrode penetration, each was saved separately. "
-                "Most sessions contain a single unit. "
-                "Values: "
-                "| 1: First (or only) unit from this session, from file '{session}.1.mat' "
-                "| 2: Second unit from this session, from file '{session}.2.mat'",
-            )
-            nwbfile.add_unit_column(
-                "unit_also_in_session_id",
-                "Cross-reference to another NWB session containing recordings from this same neuron, identified "
-                "by the experimenter based on waveform similarity and recording location during the same electrode "
-                "penetration. Empty string if this unit was only recorded in one session. Format matches session_id: "
-                "{subject_id}++{fname}++{Pre|Post}MPTP++Depth{um}um++{YYYYMMDD}. This enables tracking individual "
-                "neurons across multiple recording sessions or experimental conditions.",
+                "Source of this unit in the lab's MATLAB files, as '{file}.{unit}': the file name and the unit "
+                "number within it, matching FName1/UnitNum1 of the lab's metadata table (e.g. 'v0502.1' is unit 1 "
+                "of file v0502). A neuron recorded across several files of the same day lists those files in "
+                "recording order joined by '+' (e.g. 'v2701.1+v2702.2'); only files that contribute trials are "
+                "listed.",
             )
             nwbfile.add_unit_column(
                 "is_post_mptp",
@@ -233,87 +187,52 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             )
 
         # Process each unit
-        for unit_file_path, unit_meta in zip(unit_files, unit_metadata_list):
-            # Extract unit number from filename (e.g., "v1001.1.mat" -> 1)
-            from pathlib import Path
-            unit_num = int(Path(unit_file_path).stem.split('.')[1])
+        unit_mat_data = {}
+        for unit in self.units:
+            unit_meta = unit["metadata"]
 
-            # Load MATLAB data for this unit
-            mat_data = read_mat(str(unit_file_path))
-
-            # Validate required data fields
-            if "unit_ts" not in mat_data:
-                raise ValueError(f"Missing 'unit_ts' field in MATLAB file: {unit_file_path}")
-
-            # Spike times are stored on the unit sampling clock (unit_fs, 1 kHz in every file)
-            if nwbfile.units.resolution is None:
-                nwbfile.units.resolution = 1.0 / mat_data["file_info"]["unit_fs"]
-
-            # Load spike times matrix - handle both 1D and 2D formats
-            spike_times_matrix = mat_data["unit_ts"]
-
-            if spike_times_matrix.ndim == 1:
-                # 1D format: one value per trial (or two values per trial for different conditions)
-                # Convert to 2D format for consistent processing
-                if self.verbose:
-                    print(f"Converting 1D unit_ts array (shape {spike_times_matrix.shape}) to 2D format")
-                spike_times_matrix = spike_times_matrix.reshape(-1, 1)  # Each row is a trial with 1 spike max
-                n_trials, _ = spike_times_matrix.shape
-            elif spike_times_matrix.ndim == 2:
-                # 2D format: trials x max_spikes_per_trial (standard format)
-                n_trials, _ = spike_times_matrix.shape
-            else:
-                raise ValueError(
-                    f"Unexpected unit_ts array dimensions: {spike_times_matrix.ndim}. Expected 1D or 2D array."
-                )
-
-            # Generate trial start times if not provided (should be same for all units in session)
-            if trial_start_times is None:
-                # Use Events['end'] for trial durations - MUST match trials_interface.py exactly
-                # to ensure obs_intervals align with trial boundaries.
-                # Note: Events['end'] is slightly longer than analog data length (~5ms) because
-                # analog recording may stop before the official trial end. Some spikes can occur
-                # in this gap, so we use Events['end'] to capture all valid spikes.
-                events = mat_data["Events"]
-                trial_durations = np.array(events.get("end", [])) / 1000.0  # Convert ms to seconds
-
-                # Create trial start times with inter-trial intervals
-                trial_start_times = []
-                current_time = 0.0
-
-                for trial_index in range(n_trials):
-                    trial_start_times.append(current_time)
-                    current_time += trial_durations[trial_index] + self.inter_trial_time_interval
-
-                trial_start_times = np.array(trial_start_times)
-
-            # Convert trial-based spike times to continuous timeline
+            # Convert trial-based spike times to the session timeline, trial by trial
             all_spike_times = []
-
-            for trial_idx in range(n_trials):
-                trial_spikes = spike_times_matrix[trial_idx, :]
-
-                # Remove NaN values (padding)
-                valid_spikes = trial_spikes[~np.isnan(trial_spikes)]
-
-                if len(valid_spikes) > 0:
-                    # Convert from milliseconds to seconds and add trial start time offset
-                    global_spike_times = (valid_spikes / 1000.0) + trial_start_times[trial_idx]
-                    all_spike_times.extend(global_spike_times)
-
-            # Sort all spike times
-            all_spike_times = np.array(sorted(all_spike_times))
-
-            # Compute observation intervals: when this unit was observable (trial boundaries only)
-            # The source data is trialized - we only have data during trials, not inter-trial intervals.
-            # This annotation allows downstream analysts to correctly compute firing rates and ISIs.
-            # See documentation/how_we_deal_with_trialized_data.md for details.
             obs_intervals = []
-            for trial_index in range(n_trials):
-                trial_start = trial_start_times[trial_index]
-                trial_duration = trial_durations[trial_index]
-                obs_intervals.append([trial_start, trial_start + trial_duration])
-            obs_intervals = np.array(obs_intervals)
+            for unit_file_path, file_trial, session_trial in unit["spike_sources"]:
+                if unit_file_path not in unit_mat_data:
+                    mat_data = read_mat(str(unit_file_path))
+                    if "unit_ts" not in mat_data:
+                        raise ValueError(f"Missing 'unit_ts' field in MATLAB file: {unit_file_path}")
+                    spike_times_matrix = mat_data["unit_ts"]
+                    if spike_times_matrix.ndim == 1:
+                        # 1D format: one value per trial; convert to 2D for consistent processing
+                        spike_times_matrix = spike_times_matrix.reshape(-1, 1)
+                    elif spike_times_matrix.ndim != 2:
+                        raise ValueError(
+                            f"Unexpected unit_ts array dimensions: {spike_times_matrix.ndim}. Expected 1D or 2D array."
+                        )
+                    n_file_trials = len(np.atleast_1d(mat_data["Events"]["end"]))
+                    if spike_times_matrix.shape[0] != n_file_trials:
+                        raise ValueError(
+                            f"{unit_file_path} has {spike_times_matrix.shape[0]} rows of unit_ts for {n_file_trials} trials"
+                        )
+                    unit_mat_data[unit_file_path] = (spike_times_matrix, mat_data["file_info"]["unit_fs"])
+
+                spike_times_matrix, unit_fs = unit_mat_data[unit_file_path]
+
+                # Spike times are stored on the unit sampling clock (unit_fs, 1 kHz in every file)
+                if nwbfile.units.resolution is None:
+                    nwbfile.units.resolution = 1.0 / unit_fs
+
+                # Remove NaN values (padding), convert ms to s and add the trial start time
+                trial_spikes = spike_times_matrix[file_trial, :]
+                valid_spikes = trial_spikes[~np.isnan(trial_spikes)]
+                all_spike_times.extend(valid_spikes / 1000.0 + trial_start_times[session_trial])
+
+                # Observation interval: the unit was observable during this trial only. The source data
+                # is trialized, so this lets analysts compute firing rates and ISIs correctly.
+                # See documentation/how_we_deal_with_trialized_data.md for details.
+                trial_start = trial_start_times[session_trial]
+                obs_intervals.append([trial_start, trial_start + trial_durations[session_trial]])
+
+            all_spike_times = np.array(sorted(all_spike_times))
+            obs_intervals = np.array(sorted(obs_intervals))
 
             # Get cell type from metadata (used to determine neuron_projection_type)
             cell_type = unit_meta.get("Antidrom", "unknown")
@@ -374,51 +293,15 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             else:
                 receptive_field_stimulus = rf_stimulus_raw  # Keep verbatim for richness
 
-            # Determine unit_also_in_session_id for cross-referenced recordings
-            # If FName2 and UnitNum2 are present, this unit was also recorded in another session
-            fname2 = unit_meta.get("FName2", "")
-            unitnum2 = unit_meta.get("UnitNum2", float("nan"))
-
-            if pd.notna(fname2) and fname2 != "" and pd.notna(unitnum2):
-                # This unit has a cross-reference to another session
-                # Construct session_id using same format as conversion_script.py
-                from datetime import datetime
-
-                # Get metadata for constructing session_id (subject name as in conversion_script.py)
-                animal = {"V": "Venus", "L": "Leu"}[unit_meta.get("Animal", "V")]
-                mptp_condition = unit_meta.get("MPTP", "Pre")
-                date_str = unit_meta.get("DateCollected", "")
-                depth_mm = unit_meta.get("Depth", 0.0)
-
-                # Format date from "29-Jul-1999" to "19990729"
-                if date_str and date_str != "NaT" and not pd.isna(date_str):
-                    try:
-                        date_obj = datetime.strptime(date_str, "%d-%b-%Y")
-                        formatted_date = date_obj.strftime("%Y%m%d")
-                    except:
-                        formatted_date = "NA"
-                else:
-                    formatted_date = "NA"
-
-                # Convert depth to micrometers
-                depth_um = int(depth_mm * 1000) if pd.notna(depth_mm) else 0
-
-                # Construct session_id: {Animal}++{fname}++{MPTP}MPTP++Depth{um}um++{YYYYMMDD}
-                mptp_str = f"{mptp_condition}MPTP"
-                unit_also_in_session_id = f"{animal}++{fname2}++{mptp_str}++Depth{depth_um}um++{formatted_date}"
-            else:
-                # No cross-reference for this unit
-                unit_also_in_session_id = ""
-
             # Determine MPTP treatment status (boolean)
             mptp_status = unit_meta.get("MPTP", "")
             is_post_mptp = mptp_status == "Post"
 
-            # Add unit to NWB file - link to electrode index 0
+            # Add unit to NWB file, linked to the electrodes of the files it was recorded in
             nwbfile.add_unit(
                 spike_times=all_spike_times,
                 obs_intervals=obs_intervals,  # When unit was observable (trial boundaries only)
-                electrodes=[0],  # Link to electrode index 0
+                electrodes=unit["electrode_indices"],
                 neuron_projection_type=neuron_projection_type,
                 antidromic_stimulation_sites=antidromic_stimulation_sites,
                 antidromic_latency_ms=antidromic_latency,
@@ -427,8 +310,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 antidromic_threshold_2=antidromic_threshold_2,
                 receptive_field_location=receptive_field_location,
                 receptive_field_stimulus=receptive_field_stimulus,
-                unit_name=unit_num,
-                unit_also_in_session_id=unit_also_in_session_id,
+                unit_name=unit["name"],
                 is_post_mptp=is_post_mptp,
             )
 

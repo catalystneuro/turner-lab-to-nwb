@@ -39,6 +39,7 @@ Two complementary NWB mechanisms annotate the artificial gaps:
 All inter-trial gaps are recorded in the `invalid_times` table with tags:
 - `artificial_inter_trial_gap`: Identifies the gap type
 - `not_recorded`: Emphasizes no data was collected during this period
+- `file_boundary`: In sessions merged from several source files of the same day, marks the gap between the last trial of one file and the first trial of the next
 
 **Use for**: Filtering continuous data (LFP, EMG, kinematics)
 

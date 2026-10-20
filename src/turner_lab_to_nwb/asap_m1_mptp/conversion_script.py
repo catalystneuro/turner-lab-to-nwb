@@ -18,6 +18,7 @@ from neuroconv.utils import load_dict_from_file, dict_deep_update
 from neuroconv.tools import configure_and_write_nwbfile
 from neuroconv import ConverterPipe
 
+from turner_lab_to_nwb.asap_m1_mptp.session_plan import plan_sessions
 from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
     M1MPTPElectrodesInterface,
     M1MPTPSpikeTimesInterface,
@@ -30,28 +31,24 @@ from turner_lab_to_nwb.asap_m1_mptp.interfaces import (
 
 
 def convert_session_to_nwbfile(
-    matlab_file_path: str | Path,
+    session_plan: dict,
     nwbfile_path: str | Path,
-    session_info_dict: dict,
     session_id: str,
     inter_trial_time_interval: float = 3.0,
     muscle_names: list | None = None,
     verbose: bool = False,
 ):
     """
-    Convert a single Turner Lab MATLAB session to NWB format.
+    Convert a single Turner Lab session to NWB format.
 
     Parameters
     ----------
-    matlab_file_path : str
-        Path to the MATLAB .mat file
+    session_plan : dict
+        One session from session_plan.plan_sessions: its trials as (MATLAB file, trial index) pairs,
+        its units, its electrode locations, notes, and the primary unit row used for session-level
+        metadata (Animal, MPTP, DateCollected, ...). Also "subject_metadata_file", the monkey's YAML.
     nwbfile_path : str
         Path where to save the NWB file
-    session_info_dict : dict
-        Structured session metadata containing:
-        - 'session_info': Dict with session-level data (Animal, MPTP, DateCollected,
-          stereotactic coordinates A_P/M_L, Depth, etc.)
-        - 'units': List of unit-specific metadata dicts (UnitNum1, Antidrom, etc.)
     session_id : str
         Unique identifier for this session
     inter_trial_time_interval : float, optional
@@ -61,53 +58,52 @@ def convert_session_to_nwbfile(
     verbose : bool, optional
         Whether to print verbose output, by default False
     """
-    if not matlab_file_path.exists():
-        raise FileNotFoundError(f"MATLAB file not found: {matlab_file_path}")
-
     # Extract session-level info
-    session_info = session_info_dict["session_info"]
+    primary_unit = session_plan["primary_unit"]
+    session_info = {key: primary_unit[key] for key in ("Animal", "MPTP", "DateCollected", "A_P", "M_L", "Depth")}
     joint = {"V": "elbow", "L": "wrist"}[session_info["Animal"]]
+    trial_sources = session_plan["trial_sources"]
 
     # Create interfaces
     # Electrodes interface must be first to set up electrode table
     electrodes_interface = M1MPTPElectrodesInterface(
-        file_path=matlab_file_path,
-        session_metadata=session_info_dict["units"],
+        electrode_locations=session_plan["electrode_locations"],
         verbose=verbose,
     )
     spike_interface = M1MPTPSpikeTimesInterface(
-        file_path=matlab_file_path,
-        session_metadata=session_info_dict["units"],
+        units=session_plan["units"],
+        trial_sources=trial_sources,
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
     # Specialized interfaces for different analog data types
     manipulandum_interface = M1MPTPManipulandumInterface(
-        file_path=matlab_file_path,
+        trial_sources=trial_sources,
         joint=joint,
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
     lfp_interface = M1MPTPLFPInterface(
-        file_path=matlab_file_path,
+        trial_sources=trial_sources,
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
     emg_interface = M1MPTPEMGInterface(
-        file_path=matlab_file_path,
+        trial_sources=trial_sources,
         inter_trial_time_interval=inter_trial_time_interval,
         muscle_names=muscle_names,
         verbose=verbose,
     )
     trials_interface = M1MPTPTrialsInterface(
-        file_path=matlab_file_path,
+        trial_sources=trial_sources,
+        trial_files=session_plan["trial_files"],
         joint=joint,
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
     antidromic_interface = M1MPTPAntidromicStimulationInterface(
-        file_path=matlab_file_path,
-        session_metadata=session_info_dict["units"],
+        units=session_plan["units"],
+        animal=session_info["Animal"],
         antidromic_exploration_offset=4000.0,  # Place antidromic data 4000s after trial start
         inter_sweep_interval=0.1,  # 100ms between sweeps
         verbose=verbose,
@@ -118,7 +114,7 @@ def convert_session_to_nwbfile(
     general_metadata = load_dict_from_file(metadata_file)
 
     # Load subject-specific metadata override if provided
-    subject_metadata_file = session_info_dict.get("subject_metadata_file")
+    subject_metadata_file = session_plan.get("subject_metadata_file")
     if subject_metadata_file:
         subject_override = load_dict_from_file(Path(subject_metadata_file))
         general_metadata = dict_deep_update(general_metadata, subject_override)
@@ -130,7 +126,7 @@ def convert_session_to_nwbfile(
                     del section[k]
 
     # Update metadata with session-specific information
-    cell_types = [unit["Antidrom"] for unit in session_info_dict["units"]]
+    cell_types = [unit["metadata"]["Antidrom"] for unit in session_plan["units"]]
     general_metadata["NWBFile"]["session_id"] = session_id
     general_metadata["NWBFile"][
         "session_description"
@@ -200,6 +196,9 @@ def convert_session_to_nwbfile(
             "antidromic stimulation data (if any) are unaffected."
         )
 
+    # Session-specific notes from planning (merged files, duplicated units)
+    notes_parts.extend(session_plan["notes"])
+
     notes_parts.append(
         "TEMPORAL DATA STRUCTURE: This dataset was converted from trialized MATLAB files "
         "where all timestamps were relative to individual trial starts. Inter-trial intervals "
@@ -235,7 +234,7 @@ def convert_session_to_nwbfile(
     configure_and_write_nwbfile(nwbfile=nwbfile, nwbfile_path=nwbfile_path)
 
     if verbose:
-        print(f"Successfully converted {matlab_file_path} to {nwbfile_path}")
+        print(f"Successfully converted {session_plan['fname']} to {nwbfile_path}")
 
 
 if __name__ == "__main__":
@@ -280,9 +279,8 @@ if __name__ == "__main__":
 
         metadata_df = pd.read_csv(config["table_path"])
 
-        # Group metadata by file base (FName1) - each represents one recording session
-        session_groups = metadata_df.groupby(["FName1"])
-        sessions_to_convert = [(name, group) for name, group in session_groups]
+        # One session per group of files linked by a neuron recorded across them (see session_plan.py)
+        sessions_to_convert = plan_sessions(metadata_df, config["data_path"])
 
         if stub_test:
             sessions_to_convert = sessions_to_convert[:5]
@@ -290,28 +288,10 @@ if __name__ == "__main__":
         if verbose:
             print(f"Converting {len(sessions_to_convert)} sessions...")
 
-        for (fname,), session_group in tqdm(sessions_to_convert, desc=f"Monkey {monkey_id}"):
-            # Use first row for session-level info (prioritize rows with complete metadata)
-            complete_rows = session_group.dropna(subset=["A_P", "M_L", "Depth"])
-            if len(complete_rows) > 0:
-                primary_unit = complete_rows.iloc[0]
-            else:
-                primary_unit = session_group.iloc[0]
-
-            # Create structured session metadata dictionary
-            session_info_dict = {
-                "session_info": {
-                    "Animal": primary_unit["Animal"],
-                    "MPTP": primary_unit["MPTP"],
-                    "DateCollected": primary_unit["DateCollected"],
-                    "FName1": fname,
-                    "A_P": primary_unit["A_P"],
-                    "M_L": primary_unit["M_L"],
-                    "Depth": primary_unit["Depth"],
-                },
-                "units": [row.to_dict() for _, row in session_group.iterrows()],
-                "subject_metadata_file": config["subject_metadata_file"],
-            }
+        for session_plan in tqdm(sessions_to_convert, desc=f"Monkey {monkey_id}"):
+            fname = session_plan["fname"]
+            primary_unit = session_plan["primary_unit"]
+            session_plan["subject_metadata_file"] = config["subject_metadata_file"]
 
             # Construct session ID
             if primary_unit["DateCollected"] == "NaT" or pd.isna(primary_unit["DateCollected"]):
@@ -328,10 +308,6 @@ if __name__ == "__main__":
             subject_name = subject_name_map.get(primary_unit["Animal"], primary_unit["Animal"])
             session_id = f"{subject_name}++{fname}++{mptp_condition}++Depth{depth_str}++{formatted_date}"
 
-            # Use first unit file as base
-            first_unit_num = primary_unit["UnitNum1"]
-            matlab_file_path = config["data_path"] / f"{fname}.{int(first_unit_num)}.mat"
-
             nwbfile_path = output_folder / f"{session_id}.nwb"
 
             # Extract EMG muscle names from metadata (Leu has no EMG columns)
@@ -347,9 +323,8 @@ if __name__ == "__main__":
                     muscle_names = None
 
             convert_session_to_nwbfile(
-                matlab_file_path,
+                session_plan,
                 nwbfile_path,
-                session_info_dict,
                 session_id,
                 inter_trial_time_interval,
                 muscle_names=muscle_names,

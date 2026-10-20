@@ -29,8 +29,8 @@ Overview of how the conversion writes the Turner Lab M1 MPTP sessions into an NW
 - `HedLabMetaData` stored in `lab_meta_data` for schema versioning; trials table validated with HedNWBValidator.
 
 ## Units table (spike times and cell ID metadata)
-- Added in `spike_times_interface.py`; spike times concatenated across trials with trial offsets (ms → s) and linked to electrode index 0.
-- Key columns: `neuron_projection_type` (PTN/CSN/variants), `antidromic_stimulation_sites`, `antidromic_latency_ms`, `antidromic_threshold`, optional secondary latency/threshold, `receptive_field_location`, `receptive_field_stimulus`, `unit_name` (1 or 2), `unit_also_in_session_id` (cross-session link), `is_post_mptp`.
+- Added in `spike_times_interface.py`; spike times concatenated across trials with trial offsets (ms → s) and linked to the electrode of each file the unit was recorded in.
+- Key columns: `neuron_projection_type` (PTN/CSN/variants), `antidromic_stimulation_sites`, `antidromic_latency_ms`, `antidromic_threshold`, optional secondary latency/threshold, `receptive_field_location`, `receptive_field_stimulus`, `unit_name` (source file and unit, e.g. `v0502.1`, or `v2701.1+v2702.2` for a neuron recorded across two files), `is_post_mptp`.
 - Cell-type metadata derived from antidromic tests and receptive field notes in the metadata table, aligning with the paper summaries in `assets/papers_summary_and_notes/`.
 
 ## Behavioral and electrophysiology acquisitions

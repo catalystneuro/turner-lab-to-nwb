@@ -2,13 +2,13 @@ from pathlib import Path
 from typing import Literal, Optional
 
 import numpy as np
-from pydantic import FilePath
 from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import SpatialSeries
 from pynwb.device import Device
-from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
+
+from .trial_sources import get_trial_timeline, read_trial_source_files
 
 
 class M1MPTPManipulandumInterface(BaseDataInterface):
@@ -20,7 +20,7 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
 
     def __init__(
         self,
-        file_path: FilePath,
+        trial_sources: list[tuple[Path, int]],
         joint: Literal["elbow", "wrist"],
         inter_trial_time_interval: float = 3.0,
         verbose: bool = False,
@@ -30,8 +30,8 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
 
         Parameters
         ----------
-        file_path : FilePath
-            Path to the Turner Lab .mat file containing analog data
+        trial_sources : list of (Path, int)
+            The session's trials in order, as (Turner Lab .mat file, trial index in that file)
         joint : {"elbow", "wrist"}
             Joint moved in the task: elbow for monkey V, wrist for monkey L
         inter_trial_time_interval : float, optional
@@ -40,7 +40,7 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             Whether to print verbose output, by default False
         """
         super().__init__(verbose=verbose)
-        self.file_path = Path(file_path)
+        self.trial_sources = trial_sources
         self.joint = joint
         self.inter_trial_time_interval = inter_trial_time_interval
 
@@ -56,16 +56,20 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             Metadata dictionary
         """
         # Load MATLAB data
-        mat_data = read_mat(str(self.file_path))
-        analog_data = mat_data.get("Analog")
-        if not isinstance(analog_data, dict):
+        mat_data_by_file = read_trial_source_files(self.trial_sources)
+        analog_data_by_file = {path: mat_data.get("Analog") for path, mat_data in mat_data_by_file.items()}
+        has_analog = [isinstance(analog_data, dict) for analog_data in analog_data_by_file.values()]
+        if not any(has_analog):
             if self.verbose:
                 print("No analog data found in file (Analog is missing or NaN), skipping manipulandum interface")
             self.analog_data_missing = True
             return
+        if not all(has_analog):
+            raise ValueError(f"Only some source files of this session have analog data: {list(analog_data_by_file)}")
         self.analog_data_missing = False
-        file_info = mat_data["file_info"]
-        analog_sampling_rate = file_info["analog_fs"]
+        first_file = self.trial_sources[0][0]
+        analog_data = analog_data_by_file[first_file]
+        analog_sampling_rate = mat_data_by_file[first_file]["file_info"]["analog_fs"]
 
         # Add torque motor device if not already present
         if "TorqueMotor" not in nwbfile.devices:
@@ -91,10 +95,9 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         if self.verbose:
             print(f"Processing manipulandum signals: {manipulandum_signals}")
 
-        # Place each trial's samples from that trial's start time, using the same Events['end']
-        # durations and inter-trial gap as the trials table and the spike times
-        trial_durations = np.array(mat_data["Events"]["end"]) / 1000.0
-        trial_start_times = np.concatenate([[0.0], np.cumsum(trial_durations[:-1] + self.inter_trial_time_interval)])
+        # Place each trial's samples from that trial's start time, on the same timeline as the
+        # trials table and the spike times
+        trial_start_times, _ = get_trial_timeline(mat_data_by_file, self.trial_sources, self.inter_trial_time_interval)
 
         # Process each signal
         for signal_name in manipulandum_signals:
@@ -103,13 +106,12 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
                     print(f"Signal '{signal_name}' not found in data, skipping...")
                 continue
 
-            signal_data_list = analog_data[signal_name]
-            n_trials = len(signal_data_list)
+            n_trials = len(self.trial_sources)
 
             trial_data_list = []
             timestamps = []
-            for trial_index in range(n_trials):
-                trial_data = signal_data_list[trial_index]
+            for trial_index, (path, file_trial) in enumerate(self.trial_sources):
+                trial_data = analog_data_by_file[path][signal_name][file_trial]
                 n_samples = trial_data.shape[0]
                 trial_timestamps = trial_start_times[trial_index] + np.arange(n_samples) / analog_sampling_rate
                 trial_data_list.append(trial_data)

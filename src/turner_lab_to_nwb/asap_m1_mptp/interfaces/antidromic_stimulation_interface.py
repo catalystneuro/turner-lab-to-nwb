@@ -1,7 +1,7 @@
+from pathlib import Path
 from typing import Optional
 
 import numpy as np
-from pydantic import FilePath
 from pynwb import NWBFile, TimeSeries, register_map
 from pynwb.ecephys import ElectricalSeries
 from pynwb.file import TimeIntervals
@@ -31,8 +31,8 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
     def __init__(
         self,
-        file_path: FilePath,
-        session_metadata: dict,
+        units: list[dict],
+        animal: str,
         antidromic_exploration_offset: float = 4000.0,
         inter_sweep_interval: float = 0.1,
         verbose: bool = False,
@@ -42,10 +42,11 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
         Parameters
         ----------
-        file_path : FilePath
-            Path to the Turner Lab .mat file
-        session_metadata : dict
-            Metadata for all units in this session
+        units : list of dict
+            One entry per unit, with "name", "electrode_indices" and "antidromic_files" (the unit's .mat
+            file, plus the file of any dropped copy of the unit)
+        animal : str
+            "V" (Venus) or "L" (Leu), which sets the stimulation electrode complement
         antidromic_exploration_offset : float, optional
             Time offset in seconds to place antidromic stimulation data after behavioral trials
             to avoid timeline overlap, by default 4000.0 seconds
@@ -55,42 +56,29 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             Whether to print verbose output, by default False
         """
         super().__init__(verbose=verbose)
-        self.source_data = {"file_path": str(file_path)}
+        self.animal = animal
         self.antidromic_exploration_offset = antidromic_exploration_offset
         self.inter_sweep_interval = inter_sweep_interval
-        self.session_metadata = session_metadata
 
-        # Discover all unit files for this session (handles multi-unit sessions)
-        from pathlib import Path
-        base_path = Path(file_path)
-        base_dir = base_path.parent
-        base_name = base_path.stem.split('.')[0]  # e.g., "v1001" from "v1001.1.mat"
-
-        # Collect all unit files and their data
-        self.unit_files_data = []  # List of (unit_num, mat_data, available_stim_types)
-
-        # Check for .1.mat and .2.mat files
-        for unit_num in [1, 2]:
-            unit_file_path = base_dir / f"{base_name}.{unit_num}.mat"
-            if unit_file_path.exists():
-                # Load MATLAB data
+        # Collect the stimulation data of every unit, from its own file and from any dropped copy of it
+        self.unit_files_data = []  # List of (unit, file_label, mat_data, available_stim_types)
+        for unit in units:
+            for unit_file_path in unit["antidromic_files"]:
                 mat_data = read_mat(str(unit_file_path))
 
                 # Check which stimulation types are available
-                available_stim_types = []
                 stim_types = ["StrStim", "PedStim", "ThalStim", "STNStim"]
-                for stim_type in stim_types:
-                    if stim_type in mat_data:
-                        available_stim_types.append(stim_type)
+                available_stim_types = [stim_type for stim_type in stim_types if stim_type in mat_data]
 
-                # Only add if this unit has stimulation data
+                # Only add if this file has stimulation data
                 if available_stim_types:
-                    self.unit_files_data.append((unit_num, mat_data, available_stim_types))
+                    file_label = Path(unit_file_path).name.removesuffix(".mat")  # e.g. "v1001.1"
+                    self.unit_files_data.append((unit, file_label, mat_data, available_stim_types))
                     if self.verbose:
-                        print(f"Found antidromic data in Unit {unit_num}: {available_stim_types}")
+                        print(f"Found antidromic data for unit {unit['name']} in {file_label}: {available_stim_types}")
 
         if self.verbose:
-            print(f"Total units with antidromic data: {len(self.unit_files_data)}")
+            print(f"Total files with antidromic data: {len(self.unit_files_data)}")
 
     def get_metadata(self) -> DeepDict:
         """Get metadata for the NWB file."""
@@ -221,7 +209,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             )
             antidromic_sweeps.add_column(
                 name="unit_name",
-                description="Unit number (1 or 2) from source filename, matching the unit_name in the units table",
+                description="unit_name of the unit (units table) whose antidromic test this sweep belongs to",
             )
             antidromic_sweeps.add_column(
                 name="location",
@@ -276,9 +264,6 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             if self.verbose:
                 print(f"No trials found, using configured offset: {base_start_time:.1f}s")
 
-        # Define electrode mapping
-        recording_electrode_index = 0  # M1 recording electrode in nwbfile.electrodes
-
         location_map = {
             "PedStim": "Peduncle",
             "StrStim": "Striatum",
@@ -298,16 +283,16 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         }
 
         # =====================================================================
-        # FIRST PASS: Collect all sweep data per (unit_num, stim_type) combination
+        # FIRST PASS: Collect all sweep data per (file_label, stim_type) combination
         # =====================================================================
-        # Data structure: {(unit_num, stim_type): {'responses': [], 'stimuli': [], 'metadata': [], 'time_data': array}}
+        # Data structure: {(file_label, stim_type): {'unit': dict, 'responses': [], 'stimuli': [], 'metadata': [], 'time_data': array}}
         collected_data = {}
         stim_type_index = {}  # Track global ordering for time offsets (ensures ascending start_times)
         global_stim_counter = 0
 
-        for unit_num, mat_data, available_stim_types in self.unit_files_data:
+        for unit, file_label, mat_data, available_stim_types in self.unit_files_data:
             for stim_idx, stim_type in enumerate(available_stim_types):
-                key = (unit_num, stim_type)
+                key = (file_label, stim_type)
                 stim_type_index[key] = global_stim_counter
                 global_stim_counter += 1
 
@@ -328,6 +313,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
                 # Initialize collection for this key
                 collected_data[key] = {
+                    'unit': unit,
                     'responses': [],
                     'stimuli': [],
                     'metadata': [],
@@ -354,10 +340,11 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         total_sweeps_added = 0
         series_count = 0
 
-        for (unit_num, stim_type), data in collected_data.items():
+        for (file_label, stim_type), data in collected_data.items():
+            unit_name = data['unit']['name']
             location = location_map[stim_type]
             stim_electrode_index = stim_electrode_index_map[stim_type]
-            stim_idx = stim_type_index[(unit_num, stim_type)]
+            stim_idx = stim_type_index[(file_label, stim_type)]
 
             # Concatenate all sweeps into single arrays
             # Note: ElectricalSeries needs 2D data (n_samples, n_channels) for neuroconv compatibility
@@ -383,7 +370,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
             # Create electrode table region for recording
             recording_electrode_region = nwbfile.create_electrode_table_region(
-                region=[recording_electrode_index],
+                region=[data['unit']['electrode_indices'][0]],
                 description="Recording electrode in M1",
             )
 
@@ -391,8 +378,9 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             # conversion = 10 V / 2**16 / 10000 = 1.526e-8 V/count (range / bits / amp gain).
             # The signed int16 data are already centered at 0, so no offset is needed.
             response_series = ElectricalSeries(
-                name=f"AntidromicResponseUnit{unit_num}{location}",
-                description=f"Consolidated neural responses from M1 to {location.lower()} stimulation for Unit {unit_num}. "
+                name=f"AntidromicResponse_{file_label}_{location}",
+                description=f"Consolidated neural responses from M1 to {location.lower()} stimulation for unit {unit_name} "
+                f"(sweeps from {file_label}.mat). "
                 f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
                 f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
                 f"Data in volts. Original device calibration from the source data was not available; "
@@ -403,14 +391,15 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 rate=sampling_rate,
                 electrodes=recording_electrode_region,
                 conversion=1.526e-08,
-                comments=f"Concatenated sweeps for Unit {unit_num}, {location} stimulation. "
+                comments=f"Concatenated sweeps for unit {unit_name}, {location} stimulation. "
                 f"Sweep boundaries every {n_samples_per_sweep} samples.",
             )
 
             # Create consolidated stimulation series
             stim_series = TimeSeries(
-                name=f"AntidromicStimulationUnit{unit_num}{location}",
-                description=f"Consolidated stimulation currents delivered to {location.lower()} for Unit {unit_num}. "
+                name=f"AntidromicStimulation_{file_label}_{location}",
+                description=f"Consolidated stimulation currents delivered to {location.lower()} for unit {unit_name} "
+                f"(sweeps from {file_label}.mat). "
                 f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
                 f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
                 f"Data in amperes. Original device calibration from the source data was not available; "
@@ -421,7 +410,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 rate=sampling_rate,
                 unit="amperes",
                 conversion=1.526e-08,
-                comments=f"Concatenated sweeps for Unit {unit_num}, {location} stimulation. "
+                comments=f"Concatenated sweeps for unit {unit_name}, {location} stimulation. "
                 f"Sweep boundaries every {n_samples_per_sweep} samples.",
             )
 
@@ -461,7 +450,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     start_time=interval_start_time,
                     stop_time=interval_stop_time,
                     stimulation_onset_time=stimulation_onset_time,
-                    unit_name=str(unit_num),
+                    unit_name=unit_name,
                     location=location,
                     stimulation_protocol=sweep_metadata['test_type'],
                     sweep_number=sweep_index,
@@ -478,7 +467,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     tt = m['test_type']
                     test_type_counts[tt] = test_type_counts.get(tt, 0) + 1
                 test_summary = ", ".join([f"{count} {ttype}" for ttype, count in test_type_counts.items()])
-                print(f"Added Unit{unit_num}{location}: {n_sweeps} sweeps ({test_summary}), "
+                print(f"Added {file_label} {location}: {n_sweeps} sweeps ({test_summary}), "
                       f"{n_samples_per_sweep} samples each at {sampling_rate:.0f}Hz")
 
         if self.verbose:
@@ -513,7 +502,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         if "StimulationElectrodesTable" in antidromic_module.data_interfaces:
             return
 
-        animal_letter = Path(self.source_data["file_path"]).stem.lower()[:1]
+        animal_letter = self.animal.lower()
         if animal_letter == "v":
             putamen_contact_counts = (3, 2)
             thalamus_contacts = 1
@@ -526,8 +515,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             row_summary = "Row indices: 0=peduncle, 1-2=putamen (2 electrodes), 3=thalamus, 4=STN."
         else:
             raise ValueError(
-                f"Cannot determine animal from file_path {self.source_data['file_path']!r}; "
-                "expected stem starting with 'v' (Venus) or 'l' (Leu)."
+                f"Unknown animal {self.animal!r}; expected 'V' (Venus) or 'L' (Leu)."
             )
 
         locations = ["Cerebral peduncle (pre-pontine)"]
