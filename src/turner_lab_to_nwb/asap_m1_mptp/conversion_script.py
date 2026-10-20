@@ -66,6 +66,7 @@ def convert_session_to_nwbfile(
 
     # Extract session-level info
     session_info = session_info_dict["session_info"]
+    joint = {"V": "elbow", "L": "wrist"}[session_info["Animal"]]
 
     # Create interfaces
     # Electrodes interface must be first to set up electrode table
@@ -83,6 +84,7 @@ def convert_session_to_nwbfile(
     # Specialized interfaces for different analog data types
     manipulandum_interface = M1MPTPManipulandumInterface(
         file_path=matlab_file_path,
+        joint=joint,
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )
@@ -99,6 +101,7 @@ def convert_session_to_nwbfile(
     )
     trials_interface = M1MPTPTrialsInterface(
         file_path=matlab_file_path,
+        joint=joint,
         inter_trial_time_interval=inter_trial_time_interval,
         verbose=verbose,
     )

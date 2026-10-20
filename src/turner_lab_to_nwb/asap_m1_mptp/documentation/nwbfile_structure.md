@@ -34,8 +34,8 @@ Overview of how the conversion writes the Turner Lab M1 MPTP sessions into an NW
 - Cell-type metadata derived from antidromic tests and receptive field notes in the metadata table, aligning with the paper summaries in `assets/papers_summary_and_notes/`.
 
 ## Behavioral and electrophysiology acquisitions
-- Manipulandum signals (`manipulandum_interface.py`):
-  - `ElbowAngle` (`SpatialSeries`, acquisition) – joint angle (deg).
+- Manipulandum signals (`manipulandum_interface.py`), named for the joint moved: `Elbow*` in monkey V files, `Wrist*` in monkey L files:
+  - `ElbowAngle` (`SpatialSeries`, acquisition) – joint angle (deg), positive = flexion.
   - `ElbowTorque` (`TimeSeries`, acquisition) – torque command (a.u.).
   - `ElbowVelocity` (`TimeSeries`, behavior processing module) – joint velocity (deg/s).
 - EMG (`emg_interface.py`):

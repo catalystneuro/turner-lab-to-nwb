@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 import numpy as np
 
 from hed import load_schema_version
@@ -31,12 +31,14 @@ class M1MPTPTrialsInterface(BaseDataInterface):
     def __init__(
         self,
         file_path: FilePath,
+        joint: Literal["elbow", "wrist"],
         inter_trial_time_interval: float = 3.0,
         hed_sidecar_path: Optional[FilePath] = None,
         verbose: bool = False,
     ):
         super().__init__(verbose=verbose)
         self.file_path = Path(file_path)
+        self.joint = joint
         self.inter_trial_time_interval = inter_trial_time_interval
 
         # Default to assets/trials_hed_sidecar.json if not provided
@@ -76,6 +78,9 @@ class M1MPTPTrialsInterface(BaseDataInterface):
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None):
         # Load and validate HED sidecar (BIDS-compliant flat structure)
         columns, schema_version = self._load_and_validate_hed_sidecar()
+        # The sidecar describes the elbow task of monkey V; monkey L moved the wrist
+        if self.joint == "wrist":
+            columns = json.loads(json.dumps(columns).replace("Elbow", "Wrist").replace("elbow", "wrist"))
 
         # Add HED schema metadata if not already present
         if "hed_schema" not in nwbfile.lab_meta_data:

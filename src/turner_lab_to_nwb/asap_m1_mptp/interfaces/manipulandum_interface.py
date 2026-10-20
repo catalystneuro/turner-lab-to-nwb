@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 import numpy as np
 from pydantic import FilePath
@@ -18,7 +18,13 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
     associated_suffixes = (".mat",)
     info = "Interface for Turner Lab M1 MPTP manipulandum angle, velocity, and torque signals"
 
-    def __init__(self, file_path: FilePath, inter_trial_time_interval: float = 3.0, verbose: bool = False):
+    def __init__(
+        self,
+        file_path: FilePath,
+        joint: Literal["elbow", "wrist"],
+        inter_trial_time_interval: float = 3.0,
+        verbose: bool = False,
+    ):
         """
         Initialize the M1MPTPManipulandumInterface.
 
@@ -26,6 +32,8 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         ----------
         file_path : FilePath
             Path to the Turner Lab .mat file containing analog data
+        joint : {"elbow", "wrist"}
+            Joint moved in the task: elbow for monkey V, wrist for monkey L
         inter_trial_time_interval : float, optional
             Time interval between trials in seconds, by default 3.0
         verbose : bool, optional
@@ -33,6 +41,7 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         """
         super().__init__(verbose=verbose)
         self.file_path = Path(file_path)
+        self.joint = joint
         self.inter_trial_time_interval = inter_trial_time_interval
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
@@ -67,8 +76,8 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
                         "TQ40W torque motor (Aerotech Inc.) used in the manipulandum system for two purposes: "
                         "(1) providing resistance and position control during the visuomotor step-tracking task, and "
                         "(2) delivering brief, temporally-unpredictable torque perturbations (0.1 Nm, 50ms impulse) "
-                        "to the elbow joint on randomly-selected trials to evoke proprioceptive stretch reflexes. "
-                        "The monkey's arm was held in a padded manipulandum with the elbow joint aligned with the "
+                        f"to the {self.joint} joint on randomly-selected trials to evoke proprioceptive stretch reflexes. "
+                        f"The monkey's arm was held in a padded manipulandum with the {self.joint} joint aligned with the "
                         "torque motor axis of rotation."
                     ),
                     manufacturer="Aerotech Inc.",
@@ -110,14 +119,14 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
 
             # Add appropriate data series based on signal type
             if signal_name == "x":
-                # Elbow joint angle data - raw manipulandum angle sensor data
+                # Joint angle data - raw manipulandum angle sensor data
                 angle_series = SpatialSeries(
-                    name="ElbowAngle",
+                    name=f"{self.joint.capitalize()}Angle",
                     data=continuous_data.reshape(-1, 1),  # Make 2D
                     timestamps=timestamps,
                     unit="degrees",
                     description="Raw manipulandum angle from sensor during visuomotor flexion/extension task",
-                    reference_frame="Anatomical flexion/extension axis, 0 degrees = neutral position, positive = extension",
+                    reference_frame="Anatomical flexion/extension axis, 0 degrees = neutral position, positive = flexion",
                 )
 
                 nwbfile.add_acquisition(angle_series)
@@ -125,11 +134,11 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             elif signal_name == "vel":
                 # Velocity data
                 velocity_series = TimeSeries(
-                    name="ElbowVelocity",
+                    name=f"{self.joint.capitalize()}Velocity",
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="degrees/s",
-                    description="Elbow joint velocity during visuomotor task",
+                    description=f"{self.joint.capitalize()} joint velocity during visuomotor task",
                 )
 
                 # Add to behavior processing module
@@ -143,7 +152,7 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             elif signal_name == "torq":
                 # Torque data - raw commands sent to torque controller
                 torque_series = TimeSeries(
-                    name="ElbowTorque",
+                    name=f"{self.joint.capitalize()}Torque",
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="arbitrary",
