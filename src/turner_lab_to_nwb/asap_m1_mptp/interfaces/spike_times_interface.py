@@ -245,6 +245,10 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             if "unit_ts" not in mat_data:
                 raise ValueError(f"Missing 'unit_ts' field in MATLAB file: {unit_file_path}")
 
+            # Spike times are stored on the unit sampling clock (unit_fs, 1 kHz in every file)
+            if nwbfile.units.resolution is None:
+                nwbfile.units.resolution = 1.0 / mat_data["file_info"]["unit_fs"]
+
             # Load spike times matrix - handle both 1D and 2D formats
             spike_times_matrix = mat_data["unit_ts"]
 
