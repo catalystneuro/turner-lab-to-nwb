@@ -124,23 +124,19 @@ class M1MPTPEMGInterface(BaseDataInterface):
         if self.verbose:
             print(f"Processing EMG data: {n_trials} trials")
 
-        # Build concatenated timeline
+        # Place each trial's samples from that trial's start time, using the same Events['end']
+        # durations and inter-trial gap as the trials table and the spike times
+        trial_durations = np.array(mat_data["Events"]["end"]) / 1000.0
+        trial_start_times = np.concatenate([[0.0], np.cumsum(trial_durations[:-1] + self.inter_trial_time_interval)])
+
         trial_data_list = []
         timestamps = []
-        current_time = 0.0
-        
         for trial_index in range(n_trials):
             trial_data = signal_data_list[trial_index]
-            trial_start_time = current_time
-
             n_samples = trial_data.shape[0]
-            trial_duration = n_samples / analog_sampling_rate
-            trial_timestamps = np.linspace(trial_start_time, trial_start_time + trial_duration, n_samples)
-            
+            trial_timestamps = trial_start_times[trial_index] + np.arange(n_samples) / analog_sampling_rate
             trial_data_list.append(trial_data)
             timestamps.extend(trial_timestamps)
-            
-            current_time = trial_start_time + trial_duration + self.inter_trial_time_interval
         
         continuous_data = np.concatenate(trial_data_list, axis=0)
         timestamps = np.array(timestamps)
