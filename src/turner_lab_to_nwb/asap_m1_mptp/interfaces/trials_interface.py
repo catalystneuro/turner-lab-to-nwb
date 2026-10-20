@@ -204,6 +204,10 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             elif not np.isnan(extension_perturbations[i]):
                 torque_perturbation_type.append("extension")
                 torque_perturbation_onset_times.append(extension_perturbations[i] / 1000.0)
+            # Monkey L source files carry no perturbation times in any trial, so they are not "none"
+            elif not is_venus:
+                torque_perturbation_type.append("not_available")
+                torque_perturbation_onset_times.append(np.nan)
             # No perturbation
             else:
                 torque_perturbation_type.append("none")
@@ -216,7 +220,10 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         )
         nwbfile.add_trial_column(
             name="torque_perturbation_type",
-            description="direction of torque perturbation causing muscle stretch (flexion/extension/none)",
+            description=(
+                "direction of torque perturbation causing muscle stretch (flexion/extension/none). "
+                "'not_available' in monkey L files, whose source data contain no perturbation times."
+            ),
         )
         nwbfile.add_trial_column(
             name="torque_perturbation_onset_time",
