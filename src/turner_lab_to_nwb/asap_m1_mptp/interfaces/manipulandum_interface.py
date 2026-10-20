@@ -73,12 +73,13 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
                 Device(
                     name="TorqueMotor",
                     description=(
-                        "TQ40W torque motor (Aerotech Inc.) used in the manipulandum system for two purposes: "
-                        "(1) providing resistance and position control during the visuomotor step-tracking task, and "
-                        "(2) delivering brief, temporally-unpredictable torque perturbations (0.1 Nm, 50ms impulse) "
-                        f"to the {self.joint} joint on randomly-selected trials to evoke proprioceptive stretch reflexes. "
-                        f"The monkey's arm was held in a padded manipulandum with the {self.joint} joint aligned with the "
-                        "torque motor axis of rotation."
+                        "TQ40W torque motor (Aerotech Inc.) used in the manipulandum system to provide resistance "
+                        "and position control during the visuomotor step-tracking task. The monkey's arm was held in "
+                        f"a padded manipulandum with the {self.joint} joint aligned with the torque motor axis of "
+                        "rotation. See the torque series description for what the recorded command shows. "
+                        "Note: Pasquereau and Turner (2013) describe a second use, brief, temporally unpredictable "
+                        "torque perturbations (0.1 Nm, 50 ms impulse) on randomly selected trials to evoke stretch "
+                        "reflexes."
                     ),
                     manufacturer="Aerotech Inc.",
                 )
@@ -150,13 +151,33 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
                 behavior_module.add(velocity_series)
 
             elif signal_name == "torq":
-                # Torque data - raw commands sent to torque controller
+                # Torque data - raw commands sent to torque controller. What the command shows differs
+                # between the monkeys: monkey V (elbow) has perturbation pulses, monkey L (wrist) has none.
+                no_newton_metres = (
+                    "No conversion to newton-metres is available: the amplifier and controller gains are not in "
+                    "these MATLAB files, and the original recordings they were exported from were not provided."
+                )
+                if self.joint == "elbow":
+                    torque_description = (
+                        "Command sent to the torque motor controller, in arbitrary units. Perturbations appear as "
+                        "50 ms pulses starting about 8 ms after torque_perturbation_onset_time. The pulse size "
+                        "varies: before MPTP each session uses one of three levels (about 46, 91 and 183 units above "
+                        "rest); after MPTP it varies from trial to trial and is often followed by a command in the "
+                        f"opposite direction. {no_newton_metres} Note: Pasquereau and Turner (2013) describe the "
+                        "perturbations as 0.1 Nm, 50 ms torque impulses delivered 1 to 2 s after center target capture."
+                    )
+                else:
+                    torque_description = (
+                        "Command sent to the torque motor controller, in arbitrary units. The monkey L source files "
+                        "contain no torque perturbation times. The command is NaN in every file before MPTP; after "
+                        f"MPTP it is a continuous trace without distinct pulses. {no_newton_metres}"
+                    )
                 torque_series = TimeSeries(
                     name=f"{self.joint.capitalize()}Torque",
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="arbitrary",
-                    description="Commands sent to torque controller during visuomotor task",
+                    description=torque_description,
                 )
 
                 nwbfile.add_acquisition(torque_series)
