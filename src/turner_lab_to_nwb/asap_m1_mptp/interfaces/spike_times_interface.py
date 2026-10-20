@@ -380,8 +380,8 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 # Construct session_id using same format as conversion_script.py
                 from datetime import datetime
 
-                # Get metadata for constructing session_id
-                animal = unit_meta.get("Animal", "V")
+                # Get metadata for constructing session_id (subject name as in conversion_script.py)
+                animal = {"V": "Venus", "L": "Leu"}[unit_meta.get("Animal", "V")]
                 mptp_condition = unit_meta.get("MPTP", "Pre")
                 date_str = unit_meta.get("DateCollected", "")
                 depth_mm = unit_meta.get("Depth", 0.0)
