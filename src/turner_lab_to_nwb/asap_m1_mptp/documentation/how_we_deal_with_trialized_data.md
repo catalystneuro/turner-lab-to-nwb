@@ -139,21 +139,21 @@ def get_valid_signal_segments(timestamps, signal, invalid_times_df):
 
 ### Trial Duration: Two Data Sources
 
-The source MATLAB files contain two measures of trial duration that differ by ~5ms:
+The source MATLAB files contain two measures of trial duration that differ by a few milliseconds (5 to 6 ms in monkey V, 15 to 24 ms in monkey L, whose analog data are sampled every 10 ms):
 
 | Source | Value | Used By |
 |--------|-------|---------|
 | `Events.end` | Official trial end timestamp from behavioral software | Trials table, spike times, obs_intervals, invalid_times |
-| `len(Analog.x) / 1000` | When analog recording stopped | LFP, EMG, manipulandum timestamps |
+| `len(Analog.x) / analog_fs` | When analog recording stopped | Not used for timing |
 
-**Why they differ**: The analog recording system may stop sampling slightly before the behavioral software marks the trial as complete. This creates a ~5ms gap where spikes can still occur but no analog data exists.
+**Why they differ**: The analog recording system may stop sampling slightly before the behavioral software marks the trial as complete. This creates a gap of a few milliseconds where spikes can still occur but no analog data exists.
 
 **Design decision**: We use `Events.end` for all trial boundary definitions (trials table, `invalid_times`, `obs_intervals`) because:
 1. It is the authoritative trial boundary from the experiment
 2. Some spikes occur after analog recording stops but before trial end
 3. Using analog length would incorrectly exclude valid spikes from `obs_intervals`
 
-The analog interfaces (LFP, EMG, manipulandum) use their actual sample counts for timestamps, which is correct - they only have data for the samples they recorded.
+The analog interfaces (LFP, EMG, manipulandum) place each trial's samples at that trial's `start_time`, the same start times the trials table and spikes use (`get_trial_timeline` in `trial_sources.py`), spaced by 1/`analog_fs`. A trial's analog data therefore end a few milliseconds before its `stop_time`. An earlier version placed each trial's analog data after the previous trial's analog length, which let the analog streams fall about 5 ms further behind the trials on every trial.
 
 ### Where Gaps Are Created
 
@@ -161,18 +161,18 @@ The analog interfaces (LFP, EMG, manipulandum) use their actual sample counts fo
 |-----------|------|--------------|
 | `TrialsInterface` | trials_interface.py | Creates trial boundaries (using `Events.end`), adds `invalid_times` |
 | `SpikeTimesInterface` | spike_times_interface.py | Concatenates spikes (using `Events.end`), adds `obs_intervals` |
-| `LFPInterface` | lfp_interface.py | Concatenates LFP with timestamp gaps (using analog sample count) |
-| `EMGInterface` | emg_interface.py | Concatenates EMG with timestamp gaps (using analog sample count) |
-| `ManipulandumInterface` | manipulandum_interface.py | Concatenates kinematics with timestamp gaps (using analog sample count) |
+| `LFPInterface` | lfp_interface.py | Concatenates LFP with timestamp gaps (each trial at its `start_time`) |
+| `EMGInterface` | emg_interface.py | Concatenates EMG with timestamp gaps (each trial at its `start_time`) |
+| `ManipulandumInterface` | manipulandum_interface.py | Concatenates kinematics with timestamp gaps (each trial at its `start_time`) |
 
 ### Relationship Between Annotations
 
 The `invalid_times` entries and `obs_intervals` are complementary:
 - `invalid_times` gaps + trial intervals = complete session timeline
-- `obs_intervals` for each unit = all trial intervals (same for all units in a session)
+- `obs_intervals` for each unit = the trial intervals of the files the unit was recorded in (all trials, except for some units in sessions merged from several files)
 - Spikes should ONLY occur within `obs_intervals`
 - Continuous data timestamps skip over `invalid_times` gaps
-- Analog data ends ~5ms before `obs_intervals` end (this is expected)
+- Analog data end a few milliseconds before `obs_intervals` end (this is expected)
 
 ## Summary
 

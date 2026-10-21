@@ -207,7 +207,7 @@ for asset in tqdm(nwb_assets, desc="Collecting metadata"):
 
     # Perturbation information
     perturbation_types = trials_df["torque_perturbation_type"]
-    perturbation_mask = perturbation_types != "none"
+    perturbation_mask = perturbation_types.isin(["flexion", "extension"])
     has_perturbation_trials = bool(perturbation_mask.any())
     perturbation_trial_count = int(perturbation_mask.sum())
 
