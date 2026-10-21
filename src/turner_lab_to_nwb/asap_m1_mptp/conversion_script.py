@@ -105,7 +105,6 @@ def convert_session_to_nwbfile(
         units=session_plan["units"],
         animal=session_info["Animal"],
         antidromic_exploration_offset=4000.0,  # Place antidromic data 4000s after trial start
-        inter_sweep_interval=0.1,  # 100ms between sweeps
         verbose=verbose,
     )
 

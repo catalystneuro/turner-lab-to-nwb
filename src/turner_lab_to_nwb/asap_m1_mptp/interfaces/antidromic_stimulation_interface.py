@@ -34,7 +34,6 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         units: list[dict],
         animal: str,
         antidromic_exploration_offset: float = 4000.0,
-        inter_sweep_interval: float = 0.1,
         verbose: bool = False,
     ):
         """
@@ -50,15 +49,12 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         antidromic_exploration_offset : float, optional
             Time offset in seconds to place antidromic stimulation data after behavioral trials
             to avoid timeline overlap, by default 4000.0 seconds
-        inter_sweep_interval : float, optional
-            Time interval in seconds between consecutive sweeps, by default 0.1 seconds
         verbose : bool, optional
             Whether to print verbose output, by default False
         """
         super().__init__(verbose=verbose)
         self.animal = animal
         self.antidromic_exploration_offset = antidromic_exploration_offset
-        self.inter_sweep_interval = inter_sweep_interval
 
         # Collect the stimulation data of every unit, from its own file, the file it continues in and any dropped copy
         self.unit_files_data = []  # List of (unit, file_label, electrode_index, mat_data, available_stim_types)
@@ -373,7 +369,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             sampling_rate = (n_samples_per_sweep - 1) / duration_seconds  # Hz
 
             # Calculate starting time for this unit/stim_type combination
-            # Space different stim types 1000s apart, sweeps within by inter_sweep_interval
+            # Space different stim types 1000s apart
             stim_type_offset = stim_idx * 1000.0
             series_start_time = base_start_time + stim_type_offset
 
@@ -438,14 +434,10 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 index_start = sweep_index * n_samples_per_sweep
                 count = n_samples_per_sweep
 
-                # Calculate timing for this sweep
-                sweep_offset = sweep_index * self.inter_sweep_interval
-                sweep_start_time = series_start_time + sweep_offset
-                stimulation_onset_time = sweep_start_time  # t=0 for this sweep
-
-                # The actual start_time for the interval (25ms before stim onset)
-                interval_start_time = stimulation_onset_time + time_seconds[0]
-                interval_stop_time = stimulation_onset_time + time_seconds[-1]
+                # The sweeps are stored back to back, so each sweep's times follow from its first sample
+                interval_start_time = first_sweep_starting_time + index_start / sampling_rate
+                interval_stop_time = interval_start_time + duration_seconds
+                stimulation_onset_time = interval_start_time - time_seconds[0]  # t=0 for this sweep
 
                 # Create TimeSeriesReference tuples
                 response_ref = TimeSeriesReference(
