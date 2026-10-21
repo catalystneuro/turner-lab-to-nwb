@@ -22,6 +22,10 @@ DUPLICATE_UNITS = {
 }
 ANTIDROMIC_LABEL_COLUMNS = ("Antidrom", "StimData", "Latency", "Threshold", "LAT2", "Thresh2")
 
+# v3205.1 stores the striatum sweeps of v3205.2 a second time, sample for sample, labelled as peduncle sweeps.
+# Only the table row of v3205.2 has antidromic test results, so the copy is not written.
+COPIED_SWEEP_FILES = {"v3205.1": "v3205.2"}
+
 
 def get_trial_keys(events: dict) -> list[tuple]:
     """
@@ -193,12 +197,22 @@ def plan_sessions(metadata_df: pd.DataFrame, data_path: Path) -> list[dict]:
                     "antidromic_files": [
                         (data_path / f"{source_label}.mat", electrode_of_file[source_label.split(".")[0]])
                         for source_label in recorded_labels + extra_antidromic_labels.get(label, [])
+                        if source_label not in COPIED_SWEEP_FILES
                     ],
                     "electrode_indices": sorted(
                         {electrode_of_file[source_label.split(".")[0]] for source_label in contributing_labels}
                     ),
                 }
             )
+
+        for copy_label, original_label in COPIED_SWEEP_FILES.items():
+            if copy_label.split(".")[0] in fnames:
+                notes.append(
+                    f"COPIED ANTIDROMIC SWEEPS: the source file {copy_label} stores the antidromic sweeps of "
+                    f"{original_label} a second time, sample for sample, labelled as peduncle sweeps where "
+                    f"{original_label} labels them striatum sweeps. Only the metadata table row of {original_label} "
+                    f"has antidromic test results, so the sweeps are written once, for {original_label}."
+                )
 
         contributing_files = list(dict.fromkeys(trial_files))
         if len(fnames) > 1:
