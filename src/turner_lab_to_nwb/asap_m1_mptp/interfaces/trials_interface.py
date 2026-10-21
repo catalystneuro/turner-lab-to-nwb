@@ -12,6 +12,10 @@ from pynwb import NWBFile
 
 from .trial_sources import gather_trial_fields, read_trial_source_files
 
+# Leu files whose Events.targ_amp list does not line up with the recorded trials: the target sizes it
+# gives disagree with the measured movement amplitudes (Mvt.mvt_amp), so they are written as NaN
+TARGET_AMPLITUDE_MISMATCH_FILES = ("l14802", "l16301")
+
 
 class M1MPTPTrialsInterface(BaseDataInterface):
     """
@@ -41,6 +45,9 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         super().__init__(verbose=verbose)
         self.trial_sources = trial_sources
         self.trial_files = trial_files
+        self.target_amplitude_mismatch_files = [
+            name for name in dict.fromkeys(trial_files) if name in TARGET_AMPLITUDE_MISMATCH_FILES
+        ]
         self.joint = joint
         self.inter_trial_time_interval = inter_trial_time_interval
 
@@ -113,6 +120,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             ],
             dtype=float,
         )
+        target_amplitudes[np.isin(self.trial_files, TARGET_AMPLITUDE_MISMATCH_FILES)] = np.nan
         n_trials = len(target_directions)
 
         # STEP 2: Add trial columns for Events data (using sidecar for HED definitions)

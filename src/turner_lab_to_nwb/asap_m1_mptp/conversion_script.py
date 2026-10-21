@@ -195,6 +195,15 @@ def convert_session_to_nwbfile(
             "antidromic stimulation data (if any) are unaffected."
         )
 
+    if trials_interface.target_amplitude_mismatch_files:
+        notes_parts.append(
+            "TARGET AMPLITUDE NOT AVAILABLE: target_amplitude_degrees is NaN for the trials of "
+            f"{', '.join(trials_interface.target_amplitude_mismatch_files)}. The target list in the source file "
+            "does not line up with the recorded trials: the target sizes it gives disagree with the measured "
+            "movement amplitudes (derived_movement_amplitude), so they are left out. The movement amplitudes "
+            "and all other trial values are unaffected."
+        )
+
     # Session-specific notes from planning (merged files, duplicated units)
     notes_parts.extend(session_plan["notes"])
 
