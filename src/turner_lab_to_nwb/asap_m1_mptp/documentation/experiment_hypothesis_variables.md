@@ -162,7 +162,7 @@ This document maps the scientific hypotheses from Turner Lab papers to the varia
 | Variable | NWB Location | Description | Paper Relevance |
 |----------|--------------|-------------|-----------------|
 | `has_emg` | Check acquisition for EMG* keys | EMG data present | **Stretch paper (critical)** |
-| `has_lfp` | Check acquisition for LFP key | LFP data present | Beta oscillation analysis |
+| `has_lfp` | Check the ecephys processing module for LFP | LFP data present | Beta oscillation analysis |
 
 ---
 
