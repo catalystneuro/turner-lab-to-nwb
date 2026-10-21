@@ -43,8 +43,8 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         Parameters
         ----------
         units : list of dict
-            One entry per unit, with "name", "electrode_indices" and "antidromic_files" (the unit's .mat
-            file, plus the file of any dropped copy of the unit)
+            One entry per unit, with "name" and "antidromic_files": (.mat file, recording electrode index)
+            pairs for the unit's own file, the file it continues in, and the file of any dropped copy of the unit
         animal : str
             "V" (Venus) or "L" (Leu), which sets the stimulation electrode complement
         antidromic_exploration_offset : float, optional
@@ -60,10 +60,10 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         self.antidromic_exploration_offset = antidromic_exploration_offset
         self.inter_sweep_interval = inter_sweep_interval
 
-        # Collect the stimulation data of every unit, from its own file and from any dropped copy of it
-        self.unit_files_data = []  # List of (unit, file_label, mat_data, available_stim_types)
+        # Collect the stimulation data of every unit, from its own file, the file it continues in and any dropped copy
+        self.unit_files_data = []  # List of (unit, file_label, electrode_index, mat_data, available_stim_types)
         for unit in units:
-            for unit_file_path in unit["antidromic_files"]:
+            for unit_file_path, electrode_index in unit["antidromic_files"]:
                 mat_data = read_mat(str(unit_file_path))
 
                 # Check which stimulation types are available
@@ -73,7 +73,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 # Only add if this file has stimulation data
                 if available_stim_types:
                     file_label = Path(unit_file_path).name.removesuffix(".mat")  # e.g. "v1001.1"
-                    self.unit_files_data.append((unit, file_label, mat_data, available_stim_types))
+                    self.unit_files_data.append((unit, file_label, electrode_index, mat_data, available_stim_types))
                     if self.verbose:
                         print(f"Found antidromic data for unit {unit['name']} in {file_label}: {available_stim_types}")
 
@@ -289,13 +289,12 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         collected_data = {}
         stim_type_index = {}  # Track global ordering for time offsets (ensures ascending start_times)
         global_stim_counter = 0
+        # A file that continues a unit can store copies of sweeps already in an earlier file of the unit
+        seen_sweeps = {}  # (unit name, stim_type) -> set of sweep bytes
 
-        for unit, file_label, mat_data, available_stim_types in self.unit_files_data:
+        for unit, file_label, electrode_index, mat_data, available_stim_types in self.unit_files_data:
             for stim_idx, stim_type in enumerate(available_stim_types):
                 key = (file_label, stim_type)
-                stim_type_index[key] = global_stim_counter
-                global_stim_counter += 1
-
                 stim_data = mat_data[stim_type]
 
                 # Extract data components
@@ -311,9 +310,23 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
                 n_samples, n_sweeps = unit_data.shape
 
+                seen = seen_sweeps.setdefault((unit["name"], stim_type), set())
+                new_sweep_indices = []
+                for sweep_idx in range(n_sweeps):
+                    sweep_bytes = unit_data[:, sweep_idx].tobytes() + current_data[:, sweep_idx].tobytes()
+                    if sweep_bytes not in seen:
+                        seen.add(sweep_bytes)
+                        new_sweep_indices.append(sweep_idx)
+                if not new_sweep_indices:
+                    continue
+
+                stim_type_index[key] = global_stim_counter
+                global_stim_counter += 1
+
                 # Initialize collection for this key
                 collected_data[key] = {
                     'unit': unit,
+                    'electrode_index': electrode_index,
                     'responses': [],
                     'stimuli': [],
                     'metadata': [],
@@ -322,7 +335,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 }
 
                 # Collect each sweep's data and metadata
-                for sweep_idx in range(n_sweeps):
+                for sweep_idx in new_sweep_indices:
                     trace_name = trace_names[sweep_idx]
                     test_type = self._parse_test_type_name(trace_name)
 
@@ -370,7 +383,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
 
             # Create electrode table region for recording
             recording_electrode_region = nwbfile.create_electrode_table_region(
-                region=[data['unit']['electrode_indices'][0]],
+                region=[data['electrode_index']],
                 description="Recording electrode in M1",
             )
 

@@ -193,8 +193,8 @@ def plan_sessions(metadata_df: pd.DataFrame, data_path: Path) -> list[dict]:
                     "metadata": row,
                     "spike_sources": spike_sources,
                     "antidromic_files": [
-                        data_path / f"{source_label}.mat"
-                        for source_label in [label] + extra_antidromic_labels.get(label, [])
+                        (data_path / f"{source_label}.mat", electrode_of_file[source_label.split(".")[0]])
+                        for source_label in recorded_labels + extra_antidromic_labels.get(label, [])
                     ],
                     "electrode_indices": sorted(
                         {electrode_of_file[source_label.split(".")[0]] for source_label in contributing_labels}
