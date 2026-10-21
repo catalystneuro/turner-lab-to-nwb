@@ -24,12 +24,17 @@ ANTIDROMIC_LABEL_COLUMNS = ("Antidrom", "StimData", "Latency", "Threshold", "LAT
 
 
 def get_trial_keys(events: dict) -> list[tuple]:
-    """One key per trial built from every per-trial Events field, to find trials shared by two files."""
+    """
+    One key per trial built from every per-trial Events field, to find trials shared by two files.
+
+    The stimulation fields are left out: some files store a copy of a trial with stimulation times
+    that the other copy lacks (v4401b), or without the stim field at all (v5101b, v5203b).
+    """
     n_trials = len(np.atleast_1d(events["end"]))
     fields = [
         np.atleast_1d(np.asarray(events[name], dtype=float))
         for name in sorted(events)
-        if name != "stim_site" and np.size(events[name]) == n_trials
+        if name not in ("stim", "stim_site") and np.size(events[name]) == n_trials
     ]
     return [
         tuple("nan" if np.isnan(field[trial_index]) else float(field[trial_index]) for field in fields)
