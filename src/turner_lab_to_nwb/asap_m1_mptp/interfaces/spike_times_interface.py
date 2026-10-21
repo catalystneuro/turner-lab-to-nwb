@@ -101,7 +101,8 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
                 "| 'cerebral_peduncle_and_posterolateral_striatum': Both stimulation sites were tested "
                 "| 'subthalamic_nucleus': Stimulation of subthalamic nucleus (STN) "
                 "| 'cerebral_peduncle_and_subthalamic_nucleus': Both peduncle and STN sites were tested "
-                "| '': Empty string indicates antidromic testing was not attempted for this neuron",
+                "| '': The lab's metadata table does not list the stimulation sites for this neuron. This includes "
+                "neurons that were tested; neuron_projection_type gives the test result",
             )
             nwbfile.add_unit_column(
                 "antidromic_latency_ms",

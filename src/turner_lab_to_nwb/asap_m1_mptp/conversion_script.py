@@ -215,8 +215,8 @@ def convert_session_to_nwbfile(
     notes_parts.append(
         "SESSION TIMING: Recording dates are accurate from experimental logs, but precise "
         "session start times within each day are not available. session_start_time is set to "
-        "midnight (Pittsburgh timezone) with 2-hour systematic offsets for multiple sessions "
-        "recorded on the same date, ordered by file sequence."
+        "midnight (Pittsburgh timezone) for every session, including sessions recorded on the same "
+        "date."
     )
     notes_parts.append(
         "ARTIFICIAL GAPS: Trials are separated by fixed 3-second gaps for temporal organization. "
@@ -230,8 +230,9 @@ def convert_session_to_nwbfile(
         "Spikes only occurred during these intervals; gaps represent 'not observable', not 'silent'."
     )
     notes_parts.append(
-        "ANALOG vs TRIAL TIMING: Analog data (manipulandum, EMG, LFP) ends approximately 5ms before "
-        "the trial stop_time because the analog recorder stopped slightly before the behavioral "
+        "ANALOG vs TRIAL TIMING: Analog data (manipulandum, EMG, LFP) end a few milliseconds before "
+        "the trial stop_time (5 to 6 ms in monkey V, 15 to 24 ms in monkey L, whose analog data are "
+        "sampled every 10 ms) because the analog recorder stopped slightly before the behavioral "
         "software marked the trial as ended. Some spikes can occur in this gap. Trial boundaries "
         "(start_time, stop_time, obs_intervals, invalid_times) use the authoritative Events.end "
         "timestamp, not analog data length."

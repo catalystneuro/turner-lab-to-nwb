@@ -162,7 +162,9 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
                 if self.joint == "elbow":
                     torque_description = (
                         "Command sent to the torque motor controller, in arbitrary units. Perturbations appear as "
-                        "50 ms pulses starting about 8 ms after torque_perturbation_onset_time. The pulse size "
+                        "50 ms pulses that leave rest about 5 ms after torque_perturbation_onset_time and reach half "
+                        "their peak at about 8 ms (sessions v1401, v1402 and v1501 have perturbation times but no "
+                        "pulses in the command). The pulse size "
                         "varies: before MPTP each session uses one of three levels (about 46, 91 and 183 units above "
                         "rest); after MPTP it varies from trial to trial and is often followed by a command in the "
                         f"opposite direction. {no_newton_metres} Note: Pasquereau and Turner (2013) describe the "

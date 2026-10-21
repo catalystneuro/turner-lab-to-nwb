@@ -142,16 +142,14 @@ def plan_sessions(metadata_df: pd.DataFrame, data_path: Path) -> list[dict]:
                     f"DUPLICATED UNIT: unit {kept_label} is stored a second time as {label}, in a file whose "
                     f"trials all repeat {kept['FName1']}, with identical spikes. The copy is not a separate unit. "
                     f"The metadata table lists {kept_label} as not tested for antidromic activation and {label} "
-                    f"as {row['Antidrom']}; the tested label and its antidromic values are used, and the "
-                    f"stimulation sweeps of {label} are included."
+                    f"as {row['Antidrom']}; the tested label and its antidromic values are used."
                 )
             elif kept["Antidrom"] != row["Antidrom"]:
                 notes.append(
                     f"DUPLICATED UNIT: unit {kept_label} is stored a second time as {label}, in a file whose "
                     f"trials all repeat {kept['FName1']}, with identical spikes. The copy is not a separate unit. "
                     f"The metadata table labels the two copies differently ({kept['Antidrom']} for {kept_label}, "
-                    f"{row['Antidrom']} for {label}); the label of {kept_label} is used, and the stimulation "
-                    f"sweeps of both copies are included."
+                    f"{row['Antidrom']} for {label}); the label of {kept_label} is used."
                 )
 
         # Electrodes: one per distinct file location
@@ -204,15 +202,24 @@ def plan_sessions(metadata_df: pd.DataFrame, data_path: Path) -> list[dict]:
 
         contributing_files = list(dict.fromkeys(trial_files))
         if len(fnames) > 1:
+            if len(contributing_files) > 1:
+                trials_text = (
+                    f"Trials come from {', '.join(contributing_files)} in that order, separated like all trials by "
+                    "the artificial inter-trial gap; the trials column source_file names each trial's file, and the "
+                    "gap between two files is tagged file_boundary in invalid_times. Trials that repeat a trial of an "
+                    "earlier file were left out."
+                )
+            else:
+                trials_text = (
+                    f"Every trial of the later files repeats a trial of {contributing_files[0]}, so all trials come "
+                    f"from {contributing_files[0]} and the repeats were left out."
+                )
             notes.insert(
                 0,
                 f"MERGED FILES: this session combines the source files {', '.join(fnames)}, recorded on the "
                 "same day and linked in the lab's metadata table because at least one neuron was recorded "
-                f"across them. Trials come from {', '.join(contributing_files)} in that order, separated like all "
-                "trials by the artificial inter-trial gap; the trials column source_file names each trial's file, "
-                "and the gap between two files is tagged file_boundary in invalid_times. Trials that repeat a "
-                "trial of an earlier file were left out. Each unit is observed (obs_intervals) only during the "
-                "trials of the files it was recorded in, which its unit_name lists.",
+                f"across them. {trials_text} Each unit is observed (obs_intervals) only during the trials of the "
+                "files it was recorded in, which its unit_name lists.",
             )
 
         first_file_rows = [row for row in kept_rows if row["FName1"] == fnames[0]]
