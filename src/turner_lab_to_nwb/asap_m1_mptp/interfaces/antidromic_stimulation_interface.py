@@ -208,6 +208,11 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 description="unit_name of the unit (units table) whose antidromic test this sweep belongs to",
             )
             antidromic_sweeps.add_column(
+                name="unit",
+                description="Row of the units table for the unit whose antidromic test this sweep belongs to",
+                table=nwbfile.units,
+            )
+            antidromic_sweeps.add_column(
                 name="location",
                 description="Anatomical location of stimulation electrode: 'Striatum', 'Peduncle', 'Thalamus', or 'STN'",
             )
@@ -348,6 +353,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         # =====================================================================
         total_sweeps_added = 0
         series_count = 0
+        units_table_row = {unit_name: row for row, unit_name in enumerate(nwbfile.units["unit_name"][:])}
 
         for (file_label, stim_type), data in collected_data.items():
             unit_name = data['unit']['name']
@@ -456,6 +462,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     stop_time=interval_stop_time,
                     stimulation_onset_time=stimulation_onset_time,
                     unit_name=unit_name,
+                    unit=units_table_row[unit_name],
                     location=location,
                     stimulation_protocol=sweep_metadata['test_type'],
                     sweep_number=sweep_index,

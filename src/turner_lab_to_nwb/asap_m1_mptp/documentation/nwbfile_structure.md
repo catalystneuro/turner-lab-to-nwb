@@ -49,7 +49,7 @@ Overview of how the conversion writes the Turner Lab M1 MPTP sessions into an NW
 - `AntidromicSweepsIntervals` (TimeIntervals) rows reference:
   - `AntidromicStimulation{Unit}{Location}{TestType}SweepNN` (`TimeSeries`, amperes, estimated conversion)
   - `AntidromicResponse{Unit}{Location}{TestType}SweepNN` (`ElectricalSeries`, volts, estimated conversion, electrode region pointing to recording electrode)
-  - Columns: stimulation_onset_time, unit_name, location, stimulation_protocol (Collision/FrequencyFollowing/Orthodromic), sweep_number, stimulation/response references, stimulation_electrode index.
+  - Columns: stimulation_onset_time, unit_name, unit (link to the units table row), location, stimulation_protocol (Collision/FrequencyFollowing/Orthodromic), sweep_number, stimulation/response references, stimulation_electrode index.
 - Antidromic sweeps are placed after behavioral trials (buffer + per-site spacing); sampling rate derived from sweep timebase.
 
 ## Alignment and timing
