@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 from typing import Optional
 
@@ -20,6 +21,29 @@ class TimeSeriesReferenceVectorDataMap(VectorDataMap):
     def build(self, *args, **kwargs):
         kwargs.pop("matched_spec", None)
         return super().build(*args, **kwargs)
+
+
+# Every sweep label (TraceName) in the source files, without its trailing sweep number, mapped to the
+# stimulation protocol. Labels that name the stimulation site instead of the test are "unspecified".
+STIMULATION_PROTOCOL_BY_LABEL = {
+    "coll": "Collision",
+    "COLL": "Collision",
+    "col": "Collision",
+    "coll]": "Collision",
+    "ff": "FrequencyFollowing",
+    "FF": "FrequencyFollowing",
+    "FREQ": "FrequencyFollowing",
+    "freqf": "FrequencyFollowing",
+    "ortho": "Orthodromic",
+    "thalstim": "unspecified",
+    "thstin": "unspecified",
+    "thal": "unspecified",
+    "pedstim": "unspecified",
+    "cpstim": "unspecified",
+    "ped": "unspecified",
+    "putstim": "unspecified",
+    "stim": "unspecified",
+}
 
 
 class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
@@ -80,68 +104,24 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         """Get metadata for the NWB file."""
         return super().get_metadata()
 
-    def _parse_test_types(self, trace_names: list) -> str:
-        """
-        Parse cryptic test type names into human-readable descriptions.
-
-        Parameters
-        ----------
-        trace_names : list
-            List of trace names like ['coll_1', 'ff_2', 'thal']
-
-        Returns
-        -------
-        str
-            Human-readable description of test types performed
-        """
-        if not trace_names:
-            return "Test types: unknown"
-
-        collision_tests = [name for name in trace_names if name.startswith('coll_')]
-        frequency_tests = [name for name in trace_names if name.startswith('ff_')]
-        orthodromic_tests = [name for name in trace_names if name in ['thal', 'orthodromic']]
-
-        test_descriptions = []
-
-        if collision_tests:
-            test_descriptions.append(f"collision tests ({len(collision_tests)} sweeps)")
-
-        if frequency_tests:
-            test_descriptions.append(f"frequency-following tests ({len(frequency_tests)} sweeps)")
-
-        if orthodromic_tests:
-            test_descriptions.append(f"orthodromic activation tests ({len(orthodromic_tests)} sweeps)")
-
-        if test_descriptions:
-            return f"Tests performed: {', '.join(test_descriptions)}. " \
-                   f"Collision tests verify antidromic spike collision with spontaneous spikes. " \
-                   f"Frequency-following tests verify consistent latency at high stimulation rates."
-        else:
-            return f"Test types: {set(trace_names)}"
-
     def _parse_test_type_name(self, trace_name: str) -> str:
         """
-        Convert trace name to CamelCase test type.
+        Map a sweep label to its stimulation protocol with STIMULATION_PROTOCOL_BY_LABEL.
 
         Parameters
         ----------
         trace_name : str
-            Original trace name like 'coll_5', 'ff_2', 'thal'
+            Sweep label in the source file, like 'coll_5', 'FF_2', 'thalstim_0'
 
         Returns
         -------
         str
-            CamelCase test type like 'Collision', 'FrequencyFollowing', 'Orthodromic'
+            'Collision', 'FrequencyFollowing', 'Orthodromic' or 'unspecified'
         """
-        if trace_name.startswith('coll_'):
-            return 'Collision'
-        elif trace_name.startswith('ff_'):
-            return 'FrequencyFollowing'
-        elif trace_name in ['thal', 'orthodromic']:
-            return 'Orthodromic'
-        else:
-            # Unknown test type - use the raw name capitalized
-            return trace_name.capitalize()
+        label = re.fullmatch(r"(.+)_\d+", trace_name)
+        if label is None or label.group(1) not in STIMULATION_PROTOCOL_BY_LABEL:
+            raise ValueError(f"Unknown antidromic sweep label {trace_name!r}")
+        return STIMULATION_PROTOCOL_BY_LABEL[label.group(1)]
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """
@@ -218,8 +198,14 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             )
             antidromic_sweeps.add_column(
                 name="stimulation_protocol",
-                description="Antidromic stimulation protocol used: 'Collision' (paired spontaneous and antidromic spikes), "
-                "'FrequencyFollowing' (high-frequency train), or 'Orthodromic' (sub-threshold control)",
+                description="Antidromic stimulation protocol used, from the sweep's label in the source (source_label): "
+                "'Collision' (paired spontaneous and antidromic spikes), 'FrequencyFollowing' (high-frequency train), "
+                "'Orthodromic' (sub-threshold control), or 'unspecified' where the label names the stimulation site "
+                "instead of the test",
+            )
+            antidromic_sweeps.add_column(
+                name="source_label",
+                description="Label of the sweep in the source MATLAB file (TraceName), e.g. 'COLL_3'",
             )
             antidromic_sweeps.add_column(
                 name="sweep_number",
@@ -465,6 +451,7 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     unit=units_table_row[unit_name],
                     location=location,
                     stimulation_protocol=sweep_metadata['test_type'],
+                    source_label=sweep_metadata['trace_name'],
                     sweep_number=sweep_index,
                     response=response_ref,
                     stimulation=stim_ref,

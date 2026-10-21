@@ -267,7 +267,8 @@ In converted NWB files, antidromic data appears in:
 
 **Intervals table:**
 - `nwbfile.intervals["AntidromicSweepsIntervals"]`: Sweep-level data including:
-  - `stimulation_protocol`: `'FrequencyFollowing'` or `'Collision'`
+  - `stimulation_protocol`: `'Collision'`, `'FrequencyFollowing'`, `'Orthodromic'` or `'unspecified'` (the source label names only the stimulation site)
+  - `source_label`: The sweep's label in the source file (e.g. `'COLL_3'`)
   - `sweep_number`: Sequential sweep identifier
   - `unit_name`: Associated unit
   - `location`: Stimulation site
