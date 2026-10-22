@@ -2,11 +2,11 @@ from pathlib import Path
 from typing import Optional, List
 
 import numpy as np
-from pydantic import FilePath
 from pynwb import NWBFile, TimeSeries
-from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
+
+from .trial_sources import get_trial_timeline, read_trial_source_files
 
 
 class M1MPTPEMGInterface(BaseDataInterface):
@@ -69,7 +69,7 @@ class M1MPTPEMGInterface(BaseDataInterface):
 
     def __init__(
         self,
-        file_path: FilePath,
+        trial_sources: list[tuple[Path, int]],
         inter_trial_time_interval: float = 3.0,
         muscle_names: Optional[List[str]] = None,
         verbose: bool = False,
@@ -79,8 +79,8 @@ class M1MPTPEMGInterface(BaseDataInterface):
 
         Parameters
         ----------
-        file_path : FilePath
-            Path to the Turner Lab .mat file containing analog data
+        trial_sources : list of (Path, int)
+            The session's trials in order, as (Turner Lab .mat file, trial index in that file)
         inter_trial_time_interval : float, optional
             Time interval between trials in seconds, by default 3.0
         muscle_names : list of str, optional
@@ -90,7 +90,7 @@ class M1MPTPEMGInterface(BaseDataInterface):
             Whether to print verbose output, by default False
         """
         super().__init__(verbose=verbose)
-        self.file_path = Path(file_path)
+        self.trial_sources = trial_sources
         self.inter_trial_time_interval = inter_trial_time_interval
         self.muscle_names = muscle_names
 
@@ -106,41 +106,37 @@ class M1MPTPEMGInterface(BaseDataInterface):
             Metadata dictionary
         """
         # Load MATLAB data
-        mat_data = read_mat(str(self.file_path))
-        
-        # Check if EMG data exists
-        if "Analog" not in mat_data or not isinstance(mat_data["Analog"], dict) or "emg" not in mat_data["Analog"]:
+        mat_data_by_file = read_trial_source_files(self.trial_sources)
+        has_signal = [
+            isinstance(mat_data.get("Analog"), dict) and "emg" in mat_data["Analog"]
+            for mat_data in mat_data_by_file.values()
+        ]
+        if not any(has_signal):
             if self.verbose:
                 print("No EMG data found in file, skipping EMG interface")
             return
+        if not all(has_signal):
+            raise ValueError(f"Only some source files of this session have EMG data: {list(mat_data_by_file)}")
 
-        analog_data = mat_data["Analog"]
-        file_info = mat_data["file_info"]
-        analog_sampling_rate = file_info["analog_fs"]
-
-        signal_data_list = analog_data["emg"]
-        n_trials = len(signal_data_list)
+        first_file = self.trial_sources[0][0]
+        analog_sampling_rate = mat_data_by_file[first_file]["file_info"]["analog_fs"]
+        n_trials = len(self.trial_sources)
 
         if self.verbose:
             print(f"Processing EMG data: {n_trials} trials")
 
-        # Build concatenated timeline
+        # Place each trial's samples from that trial's start time, on the same timeline as the
+        # trials table and the spike times
+        trial_start_times, _ = get_trial_timeline(mat_data_by_file, self.trial_sources, self.inter_trial_time_interval)
+
         trial_data_list = []
         timestamps = []
-        current_time = 0.0
-        
-        for trial_index in range(n_trials):
-            trial_data = signal_data_list[trial_index]
-            trial_start_time = current_time
-
+        for trial_index, (path, file_trial) in enumerate(self.trial_sources):
+            trial_data = mat_data_by_file[path]["Analog"]["emg"][file_trial]
             n_samples = trial_data.shape[0]
-            trial_duration = n_samples / analog_sampling_rate
-            trial_timestamps = np.linspace(trial_start_time, trial_start_time + trial_duration, n_samples)
-            
+            trial_timestamps = trial_start_times[trial_index] + np.arange(n_samples) / analog_sampling_rate
             trial_data_list.append(trial_data)
             timestamps.extend(trial_timestamps)
-            
-            current_time = trial_start_time + trial_duration + self.inter_trial_time_interval
         
         continuous_data = np.concatenate(trial_data_list, axis=0)
         timestamps = np.array(timestamps)
@@ -206,13 +202,14 @@ class M1MPTPEMGInterface(BaseDataInterface):
             description = (
                 f"Preprocessed EMG from {muscle_description}.{duplicate_note}{inferred_compartment_note} "
                 "Recording: chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
-                "Signal processing: differentially amplified (gain=10,000), bandpass filtered (20 Hz - 5 kHz), "
-                "full-wave rectified, sample-hold integrated (10 ms integration interval), then digitized."
+                "Signal processing (Pasquereau and Turner 2013): differentially amplified (gain = 10,000), "
+                "band-pass filtered (20 Hz to 5 kHz), rectified and then low-pass filtered (100 Hz), then digitized."
             )
 
             comments = (
                 "Data are uncalibrated A/D converter values (centered ~2048, consistent with 12-bit digitization). "
-                "No voltage calibration factor is available. Values represent relative muscle activation magnitude."
+                "The lab confirmed that no voltage calibration is available for the EMG. "
+                "Values represent relative muscle activation magnitude."
             )
 
             # Create EMG time series for this channel

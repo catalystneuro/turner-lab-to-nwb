@@ -20,7 +20,7 @@
     "HED": "Sensory-event, Experimental-stimulus, Gustatory-presentation, Feedback, Reward, Time-value/# s"
   },
   "torque_perturbation_onset_time": {
-    "Description": "Time (in seconds) of unpredictable torque impulse onset (0.1 Nm, 50 ms) applied to manipulandum 1-2 s after center target capture",
+    "Description": "Time (in seconds) of torque perturbation onset, from the lab's event markers (Events.tq_flex and Events.tq_ext). NaN on trials without a perturbation, and in every monkey L trial, where the perturbation times are not available. Note: Pasquereau and Turner (2013) describe the perturbations as 0.1 Nm, 50 ms torque impulses delivered 1 to 2 s after center target capture",
     "HED": "Sensory-event, Experimental-stimulus, Tactile-presentation, Time-value/# s"
   },
   "derived_movement_onset_time": {
@@ -52,7 +52,7 @@
     "HED": "Experiment-procedure, Somatic-presentation, Time-value/# s"
   },
   "isolation_monitoring_stim_site": {
-    "Description": "Anatomical target of antidromic stimulation for isolation monitoring. Values: 'Str' (striatum), 'Thal' (thalamus), 'Ped' (cerebral peduncle), or empty string if no stimulation was delivered in that trial"
+    "Description": "Anatomical target of antidromic stimulation for isolation monitoring. Values: 'posterolateral striatum', 'ventrolateral thalamus', 'cerebral peduncle', 'subthalamic nucleus', or empty string if no stimulation was delivered in that trial"
   },
   "target_amplitude_degrees": {
     "Description": "Distance from center (home) position to target center in degrees of joint angle (10, 20, or 30). Determines required movement amplitude for target capture. During individual sessions, target amplitude is either always 20 degrees or varies randomly among 10, 20, and 30 degrees.",

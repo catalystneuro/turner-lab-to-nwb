@@ -207,7 +207,7 @@ for asset in tqdm(nwb_assets, desc="Collecting metadata"):
 
     # Perturbation information
     perturbation_types = trials_df["torque_perturbation_type"]
-    perturbation_mask = perturbation_types != "none"
+    perturbation_mask = perturbation_types.isin(["flexion", "extension"])
     has_perturbation_trials = bool(perturbation_mask.any())
     perturbation_trial_count = int(perturbation_mask.sum())
 
@@ -229,9 +229,7 @@ for asset in tqdm(nwb_assets, desc="Collecting metadata"):
     # Data Availability Flags
     # -------------------------------------------------------------------------
     has_emg = any(name.startswith("EMG") for name in nwbfile.acquisition.keys())
-    has_lfp = any(
-        name == "LFP" or "LFP" in name for name in nwbfile.acquisition.keys()
-    )
+    has_lfp = "ecephys" in nwbfile.processing and "LFP" in nwbfile.processing["ecephys"].data_interfaces
 
     # Isolation monitoring stimulation
     has_isolation_monitoring_stim = trials_df["isolation_monitoring_stim_time"].notna().any()
