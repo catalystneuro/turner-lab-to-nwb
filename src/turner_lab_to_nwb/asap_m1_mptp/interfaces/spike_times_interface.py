@@ -4,12 +4,20 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from pynwb import NWBFile
+from pynwb.misc import Units
 from pymatreader import read_mat
 
 from neuroconv.basedatainterface import BaseDataInterface
 from neuroconv.utils import DeepDict
 
 from .trial_sources import get_trial_timeline, read_trial_source_files
+
+UNITS_DESCRIPTION = (
+    "Single units isolated online, during each recording session, by template-matching spike sorting hardware "
+    "(MultiSpike Detector, Alpha Omega Engineering). The lab confirmed that spike waveforms were not saved, so "
+    "unit isolation cannot be reassessed from these files. The antidromic stimulation sweeps hold the only "
+    "recorded samples of the units' waveforms."
+)
 
 
 class M1MPTPSpikeTimesInterface(BaseDataInterface):
@@ -70,6 +78,7 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
 
         # Initialize units table if needed
         if nwbfile.units is None:
+            nwbfile.units = Units(name="units", description=UNITS_DESCRIPTION)
             nwbfile.add_unit_column(
                 "neuron_projection_type",
                 "Classification of layer 5 M1 neurons based on axonal projection target, determined through "

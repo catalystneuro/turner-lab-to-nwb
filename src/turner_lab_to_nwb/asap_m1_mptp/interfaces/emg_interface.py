@@ -208,7 +208,8 @@ class M1MPTPEMGInterface(BaseDataInterface):
 
             comments = (
                 "Data are uncalibrated A/D converter values (centered ~2048, consistent with 12-bit digitization). "
-                "No voltage calibration factor is available. Values represent relative muscle activation magnitude."
+                "The lab confirmed that no voltage calibration is available for the EMG. "
+                "Values represent relative muscle activation magnitude."
             )
 
             # Create EMG time series for this channel

@@ -100,7 +100,8 @@ class M1MPTPLFPInterface(BaseDataInterface):
             "Recorded simultaneously with single-unit activity during visuomotor task. "
             "Signal processing: 10k gain, 1-100 Hz bandpass filtered.",
             comments="Raw 12-bit unsigned A/D counts (centered ~2048). No voltage "
-            "calibration applied: the LFP digitizer's ADC range is undocumented. "
+            "calibration applied: the LFP digitizer's ADC range is undocumented, and the lab confirmed that no "
+            "voltage calibration is available. "
             "LFP from same electrode as spike recordings (electrode metadata available "
             "in nwbfile.electrodes). Trials concatenated with inter-trial gaps.",
         )
