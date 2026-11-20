@@ -10,7 +10,6 @@ import numpy as np
 from scipy.spatial import cKDTree
 import pandas as pd
 from ndx_anatomical_localization import AnatomicalCoordinatesTable, D99v2Space, Localization, MEBRAINSSpace, NMTv2Space
-from pydantic import FilePath
 from pynwb import NWBFile
 
 from neuroconv.basedatainterface import BaseDataInterface
@@ -814,8 +813,7 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
 
     def __init__(
         self,
-        file_path: FilePath,
-        session_metadata: dict,
+        electrode_locations: list[dict],
         verbose: bool = False,
     ):
         """
@@ -823,33 +821,106 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
 
         Parameters
         ----------
-        file_path : FilePath
-            Path to the first Turner Lab .mat file (used for session metadata extraction)
-        session_metadata : dict
-            Metadata for all units in this session (each unit contains session-level info)
+        electrode_locations : list of dict
+            Metadata-table row of each recording location in this session, in electrode order. Each source
+            file's location is its first unit's row; files at the same location share one electrode.
         verbose : bool, optional
             Whether to print verbose output, by default False
         """
         super().__init__(verbose=verbose)
-        self.base_file_path = Path(file_path)
-        self.session_metadata = session_metadata
-        
-        # Extract session-level info from first unit (all units have same session info)
-        if self.session_metadata:
-            first_unit = self.session_metadata[0]
-            self.session_info = {
-                "Animal": first_unit["Animal"],
-                "MPTP": first_unit["MPTP"],
-                "DateCollected": first_unit["DateCollected"],
-                "A_P": first_unit["A_P"],
-                "M_L": first_unit["M_L"],
-                "Depth": first_unit["Depth"],
-                "A_P_acx": first_unit.get("A_P_acx", float("nan")),
-                "M_L_acx": first_unit.get("M_L_acx", float("nan")),
-                "Depth_acx": first_unit.get("Depth_acx", float("nan")),
-                "Microstim_Effect": first_unit.get("Microstim_Effect", first_unit.get("Microtim_Effect", "")),
-                "Microstim_Threshold": first_unit.get("Microstim_Threshold", float("nan")),
-            }
+        self.electrode_locations = electrode_locations
+        self.session_info = {"Animal": electrode_locations[0]["Animal"]}
+
+    @staticmethod
+    def _get_location_values(location: dict) -> dict:
+        """Chamber, ICMS and atlas values of one recording location (a metadata-table row)."""
+        values = {
+            "A_P": location["A_P"],
+            "M_L": location["M_L"],
+            "Depth": location["Depth"],
+            "Microstim_Effect": location.get("Microstim_Effect", location.get("Microtim_Effect", "")),
+            "Microstim_Threshold": location.get("Microstim_Threshold", float("nan")),
+        }
+        # Use D99 atlas ACx coordinates when available
+        # ACx convention: A_P_acx (+anterior), M_L_acx (+lateral, left hemisphere), Depth_acx (+superior/dorsal)
+        ap_acx = location.get("A_P_acx", float("nan"))
+        ml_acx = location.get("M_L_acx", float("nan"))
+        depth_acx = location.get("Depth_acx", float("nan"))
+        has_acx = not (math.isnan(ap_acx) or math.isnan(ml_acx) or math.isnan(depth_acx))
+        values["has_acx"] = has_acx
+
+        if has_acx:
+            # Convert ACx convention to D99 RAS:
+            # R = -M_L (left hemisphere lateral is negative R)
+            # A = A_P (source A_P is +anterior, same as RAS)
+            # S = Depth (both +superior/dorsal)
+            d99_r_raw = -ml_acx
+            d99_a_raw = ap_acx
+            d99_s_raw = depth_acx
+
+            # Look up precomputed NMT and MEBRAINS coordinates (avoids calling ANTs at runtime).
+            # Returns both raw and curated sets: curated D99 is the nearest F1_(4) voxel center
+            # (within 5 mm); curated NMT / MEBRAINS are the RheMAP warps of that curated D99 point.
+            (
+                nmt_r_raw, nmt_a_raw, nmt_s_raw,
+                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw,
+                d99_r, d99_a, d99_s,
+                nmt_r, nmt_a, nmt_s,
+                mebrains_r, mebrains_a, mebrains_s,
+            ) = lookup_warped_coordinates(d99_r_raw, d99_a_raw, d99_s_raw)
+
+            # Curated M1-constrained labels (what goes in brain_region_id, displayed on the map).
+            # The label curation uses the RAW coord (same policy we used in round 5); the position
+            # in x/y/z is the curated coord (new in round 7).
+            d99_region, d99_region_id, d99_method, d99_distance = lookup_d99_m1(ap_acx, ml_acx, depth_acx)
+            charm_region, charm_region_id, charm_method, charm_distance = lookup_charm_m1(
+                nmt_r_raw, nmt_a_raw, nmt_s_raw
+            )
+            mebrains_region, mebrains_region_id, mebrains_method, mebrains_distance = lookup_mebrains_m1(
+                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw
+            )
+
+            # Raw atlas voxel lookups (what goes in voxel_label_id, honest atlas answer).
+            # Lookup is performed at the RAW coordinate so voxel_label_id reflects what the atlas
+            # physically says at the electrode's warp output, not at the snapped M1 voxel center.
+            d99_voxel_label, d99_voxel_label_id = lookup_d99_region(ap_acx, ml_acx, depth_acx)
+            nmt_voxel_label, nmt_voxel_label_id = lookup_nmt_voxel(nmt_r_raw, nmt_a_raw, nmt_s_raw)
+            mebrains_voxel_label, mebrains_voxel_label_id = lookup_mebrains_region(
+                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw
+            )
+
+            values.update(
+                d99_r_raw=d99_r_raw, d99_a_raw=d99_a_raw, d99_s_raw=d99_s_raw,
+                nmt_r_raw=nmt_r_raw, nmt_a_raw=nmt_a_raw, nmt_s_raw=nmt_s_raw,
+                mebrains_r_raw=mebrains_r_raw, mebrains_a_raw=mebrains_a_raw, mebrains_s_raw=mebrains_s_raw,
+                d99_r=d99_r, d99_a=d99_a, d99_s=d99_s,
+                nmt_r=nmt_r, nmt_a=nmt_a, nmt_s=nmt_s,
+                mebrains_r=mebrains_r, mebrains_a=mebrains_a, mebrains_s=mebrains_s,
+                d99_region=d99_region, d99_region_id=d99_region_id, d99_method=d99_method, d99_distance=d99_distance,
+                charm_region=charm_region, charm_region_id=charm_region_id, charm_method=charm_method,
+                charm_distance=charm_distance,
+                mebrains_region=mebrains_region, mebrains_region_id=mebrains_region_id,
+                mebrains_method=mebrains_method, mebrains_distance=mebrains_distance,
+                d99_voxel_label=d99_voxel_label, d99_voxel_label_id=d99_voxel_label_id,
+                nmt_voxel_label=nmt_voxel_label, nmt_voxel_label_id=nmt_voxel_label_id,
+                mebrains_voxel_label=mebrains_voxel_label, mebrains_voxel_label_id=mebrains_voxel_label_id,
+            )
+
+            # electrode.location uses the curated D99 label so Leu sessions (whose raw D99 voxel
+            # often reads S1 due to the sulcal-gap warp artifact) still display as M1, matching
+            # the ICMS-verified identity.
+            values["electrode_location"] = d99_region
+
+            # Standard NWB x/y/z: NMT v2.0-sym coordinates in PIR convention (microns).
+            values["x_pir"] = -nmt_a * 1000.0  # +anterior -> +posterior, mm -> um
+            values["y_pir"] = -nmt_s * 1000.0  # +superior -> +inferior, mm -> um
+            values["z_pir"] = nmt_r * 1000.0  # +right stays +right, mm -> um
+        else:
+            values["electrode_location"] = "Primary motor cortex (M1), area 4, arm area"
+            values["x_pir"] = float("nan")
+            values["y_pir"] = float("nan")
+            values["z_pir"] = float("nan")
+        return values
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """
@@ -971,85 +1042,24 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
                 "NaN if not tested or no response."
             ),
         )
-        # Use D99 atlas ACx coordinates when available
-        # ACx convention: A_P_acx (+anterior), M_L_acx (+lateral, left hemisphere), Depth_acx (+superior/dorsal)
-        ap_acx = self.session_info["A_P_acx"]
-        ml_acx = self.session_info["M_L_acx"]
-        depth_acx = self.session_info["Depth_acx"]
-        has_acx = not (math.isnan(ap_acx) or math.isnan(ml_acx) or math.isnan(depth_acx))
-
-        if has_acx:
-            # Convert ACx convention to D99 RAS:
-            # R = -M_L (left hemisphere lateral is negative R)
-            # A = A_P (source A_P is +anterior, same as RAS)
-            # S = Depth (both +superior/dorsal)
-            d99_r_raw = -ml_acx
-            d99_a_raw = ap_acx
-            d99_s_raw = depth_acx
-
-            # Look up precomputed NMT and MEBRAINS coordinates (avoids calling ANTs at runtime).
-            # Returns both raw and curated sets: curated D99 is the nearest F1_(4) voxel center
-            # (within 5 mm); curated NMT / MEBRAINS are the RheMAP warps of that curated D99 point.
-            (
-                nmt_r_raw, nmt_a_raw, nmt_s_raw,
-                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw,
-                d99_r, d99_a, d99_s,
-                nmt_r, nmt_a, nmt_s,
-                mebrains_r, mebrains_a, mebrains_s,
-            ) = lookup_warped_coordinates(d99_r_raw, d99_a_raw, d99_s_raw)
-
-            # Curated M1-constrained labels (what goes in brain_region_id, displayed on the map).
-            # The label curation uses the RAW coord (same policy we used in round 5); the position
-            # in x/y/z is the curated coord (new in round 7).
-            d99_region, d99_region_id, d99_method, d99_distance = lookup_d99_m1(ap_acx, ml_acx, depth_acx)
-            charm_region, charm_region_id, charm_method, charm_distance = lookup_charm_m1(
-                nmt_r_raw, nmt_a_raw, nmt_s_raw
+        # One recording electrode per recording location, with chamber grid coordinates
+        location_values = [self._get_location_values(location) for location in self.electrode_locations]
+        for values in location_values:
+            nwbfile.add_electrode(
+                x=values["x_pir"],
+                y=values["y_pir"],
+                z=values["z_pir"],
+                imp=float("nan"),  # Electrode impedance not recorded
+                location=values["electrode_location"],
+                filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
+                group=recording_electrode_group,
+                chamber_grid_ap_mm=-values["A_P"],
+                chamber_grid_ml_mm=values["M_L"],
+                chamber_insertion_depth_mm=values["Depth"],
+                icms_effect=_normalize_icms_effect(values["Microstim_Effect"]),
+                icms_threshold_uA=_to_float_or_nan(values["Microstim_Threshold"]),
             )
-            mebrains_region, mebrains_region_id, mebrains_method, mebrains_distance = lookup_mebrains_m1(
-                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw
-            )
-
-            # Raw atlas voxel lookups (what goes in voxel_label_id, honest atlas answer).
-            # Lookup is performed at the RAW coordinate so voxel_label_id reflects what the atlas
-            # physically says at the electrode's warp output, not at the snapped M1 voxel center.
-            d99_voxel_label, d99_voxel_label_id = lookup_d99_region(ap_acx, ml_acx, depth_acx)
-            nmt_voxel_label, nmt_voxel_label_id = lookup_nmt_voxel(nmt_r_raw, nmt_a_raw, nmt_s_raw)
-            mebrains_voxel_label, mebrains_voxel_label_id = lookup_mebrains_region(
-                mebrains_r_raw, mebrains_a_raw, mebrains_s_raw
-            )
-
-            # electrode.location uses the curated D99 label so Leu sessions (whose raw D99 voxel
-            # often reads S1 due to the sulcal-gap warp artifact) still display as M1, matching
-            # the ICMS-verified identity.
-            electrode_location = d99_region
-        else:
-            electrode_location = "Primary motor cortex (M1), area 4, arm area"
-
-        # Standard NWB x/y/z: NMT v2.0-sym coordinates in PIR convention (microns).
-        if has_acx:
-            x_pir = -nmt_a * 1000.0  # +anterior -> +posterior, mm -> um
-            y_pir = -nmt_s * 1000.0  # +superior -> +inferior, mm -> um
-            z_pir = nmt_r * 1000.0   # +right stays +right, mm -> um
-        else:
-            x_pir = float("nan")
-            y_pir = float("nan")
-            z_pir = float("nan")
-
-        # Add recording electrode with chamber grid coordinates
-        nwbfile.add_electrode(
-            x=x_pir,
-            y=y_pir,
-            z=z_pir,
-            imp=float("nan"),  # Electrode impedance not recorded
-            location=electrode_location,
-            filtering="0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available",
-            group=recording_electrode_group,
-            chamber_grid_ap_mm=-self.session_info["A_P"],
-            chamber_grid_ml_mm=self.session_info["M_L"],
-            chamber_insertion_depth_mm=self.session_info["Depth"],
-            icms_effect=_normalize_icms_effect(self.session_info.get("Microstim_Effect", "")),
-            icms_threshold_uA=_to_float_or_nan(self.session_info.get("Microstim_Threshold")),
-        )
+        atlas_rows = [(electrode_index, values) for electrode_index, values in enumerate(location_values) if values["has_acx"]]
 
         # Add atlas coordinates via ndx-anatomical-localization if available.
         #
@@ -1064,7 +1074,7 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
         # 001636 (every recording site is ICMS-verified M1, <30 uA threshold); it should not
         # be interpreted as atlas authority. See table-level method strings and the
         # documentation at documentation/nearest_neighbor_region_labeling.md for details.
-        if has_acx:
+        if atlas_rows:
             method_column_description = (
                 "How the curated brain_region_id was determined: "
                 "'exact' = the raw atlas voxel at this coordinate is already the atlas's native "
@@ -1166,21 +1176,22 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             d99_coordinates_table.add_column(name="y_raw", description=raw_coord_column_description)
             d99_coordinates_table.add_column(name="z_raw", description=raw_coord_column_description)
 
-            d99_coordinates_table.add_row(
-                x=d99_r,
-                y=d99_a,
-                z=d99_s,
-                localized_entity=0,  # Index into electrode table (single recording electrode).
-                brain_region=d99_region,
-                brain_region_id=d99_region_id,
-                brain_region_lookup_method=d99_method,
-                brain_region_distance_mm=d99_distance,
-                voxel_label=d99_voxel_label,
-                voxel_label_id=d99_voxel_label_id,
-                x_raw=d99_r_raw,
-                y_raw=d99_a_raw,
-                z_raw=d99_s_raw,
-            )
+            for electrode_index, values in atlas_rows:
+                d99_coordinates_table.add_row(
+                    x=values["d99_r"],
+                    y=values["d99_a"],
+                    z=values["d99_s"],
+                    localized_entity=electrode_index,  # Index into the electrodes table
+                    brain_region=values["d99_region"],
+                    brain_region_id=values["d99_region_id"],
+                    brain_region_lookup_method=values["d99_method"],
+                    brain_region_distance_mm=values["d99_distance"],
+                    voxel_label=values["d99_voxel_label"],
+                    voxel_label_id=values["d99_voxel_label_id"],
+                    x_raw=values["d99_r_raw"],
+                    y_raw=values["d99_a_raw"],
+                    z_raw=values["d99_s_raw"],
+                )
 
             localization = Localization()
             spaces_to_add = [d99_space]
@@ -1260,21 +1271,22 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             nmt_coordinates_table.add_column(name="y_raw", description=raw_coord_column_description)
             nmt_coordinates_table.add_column(name="z_raw", description=raw_coord_column_description)
 
-            nmt_coordinates_table.add_row(
-                x=nmt_r,
-                y=nmt_a,
-                z=nmt_s,
-                localized_entity=0,
-                brain_region=charm_region,
-                brain_region_id=charm_region_id,
-                brain_region_lookup_method=charm_method,
-                brain_region_distance_mm=charm_distance,
-                voxel_label=nmt_voxel_label,
-                voxel_label_id=nmt_voxel_label_id,
-                x_raw=nmt_r_raw,
-                y_raw=nmt_a_raw,
-                z_raw=nmt_s_raw,
-            )
+            for electrode_index, values in atlas_rows:
+                nmt_coordinates_table.add_row(
+                    x=values["nmt_r"],
+                    y=values["nmt_a"],
+                    z=values["nmt_s"],
+                    localized_entity=electrode_index,
+                    brain_region=values["charm_region"],
+                    brain_region_id=values["charm_region_id"],
+                    brain_region_lookup_method=values["charm_method"],
+                    brain_region_distance_mm=values["charm_distance"],
+                    voxel_label=values["nmt_voxel_label"],
+                    voxel_label_id=values["nmt_voxel_label_id"],
+                    x_raw=values["nmt_r_raw"],
+                    y_raw=values["nmt_a_raw"],
+                    z_raw=values["nmt_s_raw"],
+                )
 
             spaces_to_add.append(nmt_space)
             tables_to_add.append(nmt_coordinates_table)
@@ -1353,21 +1365,22 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             mebrains_coordinates_table.add_column(name="y_raw", description=raw_coord_column_description)
             mebrains_coordinates_table.add_column(name="z_raw", description=raw_coord_column_description)
 
-            mebrains_coordinates_table.add_row(
-                x=mebrains_r,
-                y=mebrains_a,
-                z=mebrains_s,
-                localized_entity=0,
-                brain_region=mebrains_region,
-                brain_region_id=mebrains_region_id,
-                brain_region_lookup_method=mebrains_method,
-                brain_region_distance_mm=mebrains_distance,
-                voxel_label=mebrains_voxel_label,
-                voxel_label_id=mebrains_voxel_label_id,
-                x_raw=mebrains_r_raw,
-                y_raw=mebrains_a_raw,
-                z_raw=mebrains_s_raw,
-            )
+            for electrode_index, values in atlas_rows:
+                mebrains_coordinates_table.add_row(
+                    x=values["mebrains_r"],
+                    y=values["mebrains_a"],
+                    z=values["mebrains_s"],
+                    localized_entity=electrode_index,
+                    brain_region=values["mebrains_region"],
+                    brain_region_id=values["mebrains_region_id"],
+                    brain_region_lookup_method=values["mebrains_method"],
+                    brain_region_distance_mm=values["mebrains_distance"],
+                    voxel_label=values["mebrains_voxel_label"],
+                    voxel_label_id=values["mebrains_voxel_label_id"],
+                    x_raw=values["mebrains_r_raw"],
+                    y_raw=values["mebrains_a_raw"],
+                    z_raw=values["mebrains_s_raw"],
+                )
 
             spaces_to_add.append(mebrains_space)
             tables_to_add.append(mebrains_coordinates_table)
@@ -1380,20 +1393,4 @@ class M1MPTPElectrodesInterface(BaseDataInterface):
             localization.add_anatomical_coordinates_tables(tables_to_add)
 
         if self.verbose:
-            print(f"Added electrode configuration: 1 recording electrode in electrodes table")
-            if has_acx:
-                print(f"Added D99 atlas coordinates (RAS mm): R={d99_r:.2f}, A={d99_a:.2f}, S={d99_s:.2f}")
-                print(
-                    f"D99 curated: {d99_region_id} ({d99_method}, {d99_distance:.2f} mm); "
-                    f"raw voxel: {d99_voxel_label_id}"
-                )
-                print(f"Added NMT v2.0-sym coordinates (RAS mm): R={nmt_r:.2f}, A={nmt_a:.2f}, S={nmt_s:.2f}")
-                print(
-                    f"NMT curated: {charm_region_id} ({charm_method}, {charm_distance:.2f} mm); "
-                    f"raw voxel: {nmt_voxel_label_id}"
-                )
-                print(f"Added MEBRAINS coordinates (RAS mm): R={mebrains_r:.2f}, A={mebrains_a:.2f}, S={mebrains_s:.2f}")
-                print(
-                    f"MEBRAINS curated: {mebrains_region_id} ({mebrains_method}, {mebrains_distance:.2f} mm); "
-                    f"raw voxel: {mebrains_voxel_label_id}"
-                )
+            print(f"Added electrode configuration: {len(location_values)} recording electrode(s) in electrodes table")

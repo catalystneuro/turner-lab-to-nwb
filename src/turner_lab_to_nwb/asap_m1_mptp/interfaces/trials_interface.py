@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 import numpy as np
 
 from hed import load_schema_version
@@ -9,7 +9,12 @@ from neuroconv.basedatainterface import BaseDataInterface
 from ndx_hed import HedLabMetaData, HedValueVector
 from pydantic import FilePath
 from pynwb import NWBFile
-from pymatreader import read_mat
+
+from .trial_sources import gather_trial_fields, read_trial_source_files
+
+# Leu files whose Events.targ_amp list does not line up with the recorded trials: the target sizes it
+# gives disagree with the measured movement amplitudes (Mvt.mvt_amp), so they are written as NaN
+TARGET_AMPLITUDE_MISMATCH_FILES = ("l14802", "l16301")
 
 
 class M1MPTPTrialsInterface(BaseDataInterface):
@@ -30,13 +35,20 @@ class M1MPTPTrialsInterface(BaseDataInterface):
 
     def __init__(
         self,
-        file_path: FilePath,
+        trial_sources: list[tuple[Path, int]],
+        trial_files: list[str],
+        joint: Literal["elbow", "wrist"],
         inter_trial_time_interval: float = 3.0,
         hed_sidecar_path: Optional[FilePath] = None,
         verbose: bool = False,
     ):
         super().__init__(verbose=verbose)
-        self.file_path = Path(file_path)
+        self.trial_sources = trial_sources
+        self.trial_files = trial_files
+        self.target_amplitude_mismatch_files = [
+            name for name in dict.fromkeys(trial_files) if name in TARGET_AMPLITUDE_MISMATCH_FILES
+        ]
+        self.joint = joint
         self.inter_trial_time_interval = inter_trial_time_interval
 
         # Default to assets/trials_hed_sidecar.json if not provided
@@ -76,16 +88,19 @@ class M1MPTPTrialsInterface(BaseDataInterface):
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None):
         # Load and validate HED sidecar (BIDS-compliant flat structure)
         columns, schema_version = self._load_and_validate_hed_sidecar()
+        # The sidecar describes the elbow task of monkey V; monkey L moved the wrist
+        if self.joint == "wrist":
+            columns = json.loads(json.dumps(columns).replace("Elbow", "Wrist").replace("elbow", "wrist"))
 
         # Add HED schema metadata if not already present
         if "hed_schema" not in nwbfile.lab_meta_data:
             hed_metadata = HedLabMetaData(hed_schema_version=schema_version)
             nwbfile.add_lab_meta_data(hed_metadata)
 
-        mat_data = read_mat(str(self.file_path))
+        mat_data_by_file = read_trial_source_files(self.trial_sources)
 
         # STEP 1: Extract all Events data first
-        events = mat_data["Events"]
+        events = gather_trial_fields(mat_data_by_file, self.trial_sources, "Events")
         center_target_appearance_times = np.array(events["home_cue_on"]) / 1000.0
         lateral_target_appearance_times = np.array(events["targ_cue_on"]) / 1000.0
         target_directions = np.array(events["targ_dir"])
@@ -94,9 +109,18 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         # Venus source files do not carry an Events.targ_amp field; R. Turner (2026-05-04)
         # confirmed every Venus trial used a 20 deg target. Leu source files supply per-trial
         # amplitudes (10/20/30 deg).
-        is_venus = self.file_path.stem.lower().startswith("v")
+        is_venus = Path(self.trial_sources[0][0]).stem.lower().startswith("v")
         default_amplitude = 20.0 if is_venus else np.nan
-        target_amplitudes = np.array(events.get("targ_amp", [default_amplitude] * len(target_directions)))
+        # Most Leu files store more amplitudes than trials (a trailing buffer); the first values belong to the
+        # trials, which matches the measured movement amplitudes trial by trial
+        target_amplitudes = np.array(
+            [
+                np.atleast_1d(mat_data_by_file[path]["Events"].get("targ_amp", [default_amplitude] * (trial + 1)))[trial]
+                for path, trial in self.trial_sources
+            ],
+            dtype=float,
+        )
+        target_amplitudes[np.isin(self.trial_files, TARGET_AMPLITUDE_MISMATCH_FILES)] = np.nan
         n_trials = len(target_directions)
 
         # STEP 2: Add trial columns for Events data (using sidecar for HED definitions)
@@ -144,14 +168,17 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             from turner_lab_to_nwb.asap_m1_mptp.assets.matlab_utilities import (
                 extract_stim_site_from_workspace,
             )
-            isolation_stim_sites, extraction_error = extract_stim_site_from_workspace(
-                self.file_path, n_trials
-            )
-            if extraction_error:
-                # Fall back to empty strings if extraction fails
-                isolation_stim_sites = [""] * n_trials
-                if self.verbose:
-                    print(f"Warning: Could not extract stim_site: {extraction_error}")
+            stim_sites_by_file = {}
+            for path, mat_data in mat_data_by_file.items():
+                n_file_trials = len(np.atleast_1d(mat_data["Events"]["end"]))
+                file_stim_sites, extraction_error = extract_stim_site_from_workspace(path, n_file_trials)
+                if extraction_error:
+                    # Fall back to empty strings if extraction fails
+                    file_stim_sites = [""] * n_file_trials
+                    if self.verbose:
+                        print(f"Warning: Could not extract stim_site from {path}: {extraction_error}")
+                stim_sites_by_file[path] = file_stim_sites
+            isolation_stim_sites = [stim_sites_by_file[path][trial] for path, trial in self.trial_sources]
         else:
             # No stimulation in this session
             isolation_stim_sites = [""] * n_trials
@@ -199,6 +226,10 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             elif not np.isnan(extension_perturbations[i]):
                 torque_perturbation_type.append("extension")
                 torque_perturbation_onset_times.append(extension_perturbations[i] / 1000.0)
+            # Monkey L source files carry no perturbation times in any trial, so they are not "none"
+            elif not is_venus:
+                torque_perturbation_type.append("not_available")
+                torque_perturbation_onset_times.append(np.nan)
             # No perturbation
             else:
                 torque_perturbation_type.append("none")
@@ -210,8 +241,18 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             description="flexion or extension",
         )
         nwbfile.add_trial_column(
+            name="source_file",
+            description=(
+                "Source MATLAB file of this trial, without the unit number (e.g. 'v1501' for v1501.1.mat). "
+                "Sessions merged from several files of the same day list each trial's own file."
+            ),
+        )
+        nwbfile.add_trial_column(
             name="torque_perturbation_type",
-            description="direction of torque perturbation causing muscle stretch (flexion/extension/none)",
+            description=(
+                "direction of torque perturbation causing muscle stretch (flexion/extension/none). "
+                "'not_available' in monkey L files, whose source data contain no perturbation times."
+            ),
         )
         nwbfile.add_trial_column(
             name="torque_perturbation_onset_time",
@@ -225,7 +266,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         # post-MPTP sessions, an A/D converter malfunction corrupted the analog channel, so both
         # Analog and Mvt are stored as NaN in the source .mat files. NWB requires uniform columns
         # across all trials, so these sessions get NaN values for all movement-derived fields.
-        movement_data = mat_data.get("Mvt")
+        movement_data = gather_trial_fields(mat_data_by_file, self.trial_sources, "Mvt")
         if isinstance(movement_data, dict):
             derived_movement_onset_times = np.array(movement_data["onset_t"]) / 1000.0
             derived_movement_end_times = np.array(movement_data["end_t"]) / 1000.0
@@ -318,6 +359,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 start_time=trial_start,
                 stop_time=trial_stop_times[trial_index],
                 movement_type=movement_type[trial_index],
+                source_file=self.trial_files[trial_index],
                 target_amplitude_degrees=float(target_amplitudes[trial_index]),
                 center_target_appearance_time=trial_start + center_target_appearance_times[trial_index],
                 lateral_target_appearance_time=trial_start + lateral_target_appearance_times[trial_index],
@@ -353,11 +395,10 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             for trial_index in range(n_trials - 1):
                 gap_start = trial_stop_times[trial_index]
                 gap_stop = gap_start + self.inter_trial_time_interval
-                nwbfile.add_invalid_time_interval(
-                    start_time=gap_start,
-                    stop_time=gap_stop,
-                    tags=["artificial_inter_trial_gap", "not_recorded"],
-                )
+                tags = ["artificial_inter_trial_gap", "not_recorded"]
+                if self.trial_files[trial_index] != self.trial_files[trial_index + 1]:
+                    tags.append("file_boundary")
+                nwbfile.add_invalid_time_interval(start_time=gap_start, stop_time=gap_stop, tags=tags)
 
             if self.verbose:
                 print(f"Added {n_trials - 1} invalid_times entries for inter-trial gaps")
