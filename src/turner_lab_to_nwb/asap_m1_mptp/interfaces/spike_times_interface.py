@@ -12,14 +12,6 @@ from neuroconv.utils import DeepDict
 
 from .trial_sources import get_trial_timeline, read_trial_source_files
 
-UNITS_DESCRIPTION = (
-    "Single units isolated online, during each recording session, by template-matching spike sorting hardware "
-    "(MultiSpike Detector, Alpha Omega Engineering). The lab confirmed that spike waveforms were not saved, so "
-    "unit isolation cannot be reassessed from these files. The antidromic stimulation sweeps hold the only "
-    "recorded samples of the units' waveforms."
-)
-
-
 class M1MPTPSpikeTimesInterface(BaseDataInterface):
     """Data interface for Turner Lab M1 MPTP spike time data."""
 
@@ -63,11 +55,9 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
         ----------
         nwbfile : NWBFile
             The NWB file object to add data to
-        metadata : dict, optional
-            Metadata dictionary
+        metadata : dict
+            Metadata with the units table description and column descriptions in metadata["Units"]
         """
-        if metadata is None:
-            metadata = self.get_metadata()
 
         # Electrode table should already be created by electrodes interface
 
@@ -76,125 +66,11 @@ class M1MPTPSpikeTimesInterface(BaseDataInterface):
             read_trial_source_files(self.trial_sources), self.trial_sources, self.inter_trial_time_interval
         )
 
-        # Initialize units table if needed
+        units_metadata = metadata["Units"]
         if nwbfile.units is None:
-            nwbfile.units = Units(name="units", description=UNITS_DESCRIPTION)
-            nwbfile.add_unit_column(
-                "neuron_projection_type",
-                "Classification of layer 5 M1 neurons based on axonal projection target, determined through "
-                "antidromic activation (electrical stimulation at target sites evoking backward-traveling spikes). "
-                "Values: "
-                "| 'pyramidal_tract_neuron': Large layer 5b neurons projecting to spinal cord via corticospinal "
-                "tract, identified by cerebral peduncle stimulation (latency 0.6-2.5 ms) "
-                "| 'corticostriatal_neuron': Intratelencephalic-type neurons projecting to posterolateral putamen, "
-                "identified by striatal stimulation (latency 2.0-20 ms) "
-                "| 'no_response': Antidromic stimulation attempted at one or both sites but neuron did not respond "
-                "| 'not_tested': Antidromic identification was not performed for this neuron "
-                "| 'pyramidal_tract_and_corticostriatal_neuron': Dual-projecting neuron responding to both sites "
-                "| 'pyramidal_tract_and_thalamic_neuron': Neuron projecting to both pyramidal tract and thalamus "
-                "| 'thalamic_projection_neuron': Neuron projecting to thalamus "
-                "| 'subthalamic_projection_neuron': Neuron projecting to subthalamic nucleus "
-                "| 'subthalamic_and_corticostriatal_neuron': Neuron projecting to both STN and striatum "
-                "| 'subthalamic_and_thalamic_neuron': Neuron projecting to both STN and thalamus "
-                "| 'pyramidal_tract_and_subthalamic_neuron': Neuron projecting to both pyramidal tract and STN",
-            )
-            nwbfile.add_unit_column(
-                "antidromic_stimulation_sites",
-                "Anatomical sites where antidromic stimulation was delivered via chronically implanted electrodes "
-                "to identify neuron projection targets. "
-                "Values: "
-                "| 'cerebral_peduncle': Stimulation of corticospinal tract fibers to identify pyramidal tract "
-                "neurons (100-400 uA, 0.2 ms biphasic pulses) "
-                "| 'posterolateral_striatum': Stimulation of putamen to identify corticostriatal neurons "
-                "(100-600 uA, 0.2 ms biphasic pulses) "
-                "| 'cerebral_peduncle_and_posterolateral_striatum': Both stimulation sites were tested "
-                "| 'subthalamic_nucleus': Stimulation of subthalamic nucleus (STN) "
-                "| 'cerebral_peduncle_and_subthalamic_nucleus': Both peduncle and STN sites were tested "
-                "| '': The lab's metadata table does not list the stimulation sites for this neuron. This includes "
-                "neurons that were tested; neuron_projection_type gives the test result",
-            )
-            nwbfile.add_unit_column(
-                "antidromic_latency_ms",
-                "Latency from stimulation to antidromic spike arrival at the recording electrode (in milliseconds) "
-                "for the primary stimulation site. Reflects axon conduction velocity: PTNs have shorter latencies "
-                "(0.6-2.5 ms) due to large, fast-conducting axons; CSNs have longer latencies (2.0-20 ms) due to "
-                "smaller axons. Classification required fixed latency, high-frequency following (>200 Hz), and "
-                "collision test confirmation.",
-            )
-            nwbfile.add_unit_column(
-                "antidromic_threshold",
-                "Minimum stimulation current (in microamps) required to reliably evoke antidromic activation at "
-                "the primary stimulation site. Lower thresholds indicate electrode proximity to the axon or larger "
-                "axon diameter. Typical ranges: 100-400 uA for cerebral peduncle, 100-600 uA for striatum.",
-            )
-            nwbfile.add_unit_column(
-                "antidromic_latency_2_ms",
-                "Antidromic response latency (in milliseconds) from secondary stimulation site, for neurons with "
-                "dual projections (e.g., pyramidal_tract_and_corticostriatal_neuron). NaN if not applicable.",
-            )
-            nwbfile.add_unit_column(
-                "antidromic_threshold_2",
-                "Minimum stimulation current (in microamps) for antidromic activation at the secondary stimulation "
-                "site. NaN if neuron does not have dual projections or secondary site was not tested.",
-            )
-            nwbfile.add_unit_column(
-                "receptive_field_location",
-                "Body region comprising this neuron's somatosensory receptive field, determined through qualitative "
-                "sensorimotor examination. The experimenter manually manipulated the monkey's contralateral arm "
-                "(passive joint movement, skin contact) while monitoring neural activity on an audio speaker. "
-                "Values: "
-                "| 'hand': Receptive field on the hand "
-                "| 'wrist': Receptive field at the wrist joint "
-                "| 'elbow': Receptive field at the elbow joint "
-                "| 'forearm': Receptive field on the forearm "
-                "| 'shoulder': Receptive field at the shoulder "
-                "| 'finger': Receptive field on digit(s) "
-                "| Combinations (e.g., 'hand / wrist'): Neuron responds to multiple body regions "
-                "| 'no_response': Sensory testing performed but no response detected "
-                "| 'not_tested': Sensory mapping not performed (limited recording time)",
-            )
-            nwbfile.add_unit_column(
-                "receptive_field_stimulus",
-                "Specific sensory stimulus or manipulation that activated this neuron during qualitative receptive "
-                "field mapping (qualitative observer assessment, not quantified). "
-                "Values: "
-                "| 'ext': Joint extension (proprioceptive) "
-                "| 'flex': Joint flexion (proprioceptive) "
-                "| 'pron': Forearm pronation (proprioceptive) "
-                "| 'sup': Forearm supination (proprioceptive) "
-                "| 'light touch': Light tactile stimulation "
-                "| 'palm probe': Pressure on palm "
-                "| 'finger tap': Tapping on digit(s) "
-                "| 'cut stim': Cutaneous (skin) stimulation "
-                "| 'active': Firing during voluntary movement "
-                "| 'active grip': Firing during voluntary grip "
-                "| 'active hand': Firing during voluntary hand movement "
-                "| Combinations (e.g., 'finger ext & elbow ext'): Multi-joint responses "
-                "| 'NR': No response to any stimulus tested "
-                "| 'NT': Sensory testing not performed "
-                "| '': Testing data not recorded",
-            )
-            nwbfile.add_unit_column(
-                "unit_name",
-                "Source of this unit in the lab's MATLAB files, as '{file}.{unit}': the file name and the unit "
-                "number within it, matching FName1/UnitNum1 of the lab's metadata table (e.g. 'v0502.1' is unit 1 "
-                "of file v0502). A neuron recorded across several files of the same day lists those files in "
-                "recording order joined by '+' (e.g. 'v2701.1+v2702.2'); only files that contribute trials are "
-                "listed.",
-            )
-            nwbfile.add_unit_column(
-                "is_post_mptp",
-                "Boolean indicating parkinsonian state at time of recording. MPTP "
-                "(1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine) was administered once via unilateral left internal "
-                "carotid artery injection (0.5 mg/kg), inducing selective dopaminergic cell death in the ipsilateral "
-                "substantia nigra and producing stable contralateral hemiparkinsonian symptoms. Comparing pre/post "
-                "recordings reveals how parkinsonism affects cortical motor encoding, particularly in pyramidal "
-                "tract neurons. "
-                "Values: "
-                "| False: Pre-MPTP baseline recording (healthy motor control) "
-                "| True: Post-MPTP recording after parkinsonian symptoms stabilized (bradykinesia, rigidity, "
-                "movement initiation deficits)",
-            )
+            nwbfile.units = Units(name="units", description=units_metadata["description"])
+            for name, description in units_metadata["columns"].items():
+                nwbfile.add_unit_column(name, description)
 
         # Process each unit
         unit_mat_data = {}

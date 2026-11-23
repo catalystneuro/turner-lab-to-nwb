@@ -10,7 +10,7 @@ from ndx_hed import HedLabMetaData, HedValueVector
 from pydantic import FilePath
 from pynwb import NWBFile
 
-from .trial_sources import gather_trial_fields, read_trial_source_files
+from .trial_sources import gather_trial_fields, get_trial_timeline, read_trial_source_files
 
 # Leu files whose Events.targ_amp list does not line up with the recorded trials: the target sizes it
 # gives disagree with the measured movement amplitudes (Mvt.mvt_amp), so they are written as NaN
@@ -56,6 +56,12 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             self.hed_sidecar_path = Path(__file__).parent.parent / "assets" / "trials_hed_sidecar.json"
         else:
             self.hed_sidecar_path = Path(hed_sidecar_path)
+
+    def get_trial_timeline(self) -> tuple[np.ndarray, np.ndarray]:
+        """Start times and durations of the session's trials, in seconds, as the trials table holds them."""
+        return get_trial_timeline(
+            read_trial_source_files(self.trial_sources), self.trial_sources, self.inter_trial_time_interval
+        )
 
     def _load_and_validate_hed_sidecar(self) -> tuple[dict, str]:
         """
@@ -236,24 +242,9 @@ class M1MPTPTrialsInterface(BaseDataInterface):
                 torque_perturbation_onset_times.append(np.nan)
 
         # Add trial columns for transformed Events variables (no HED for categorical labels)
-        nwbfile.add_trial_column(
-            name="movement_type",
-            description="flexion or extension",
-        )
-        nwbfile.add_trial_column(
-            name="source_file",
-            description=(
-                "Source MATLAB file of this trial, without the unit number (e.g. 'v1501' for v1501.1.mat). "
-                "Sessions merged from several files of the same day list each trial's own file."
-            ),
-        )
-        nwbfile.add_trial_column(
-            name="torque_perturbation_type",
-            description=(
-                "direction of torque perturbation causing muscle stretch (flexion/extension/none). "
-                "'not_available' in monkey L files, whose source data contain no perturbation times."
-            ),
-        )
+        # Columns without HED tags, described in metadata
+        for name in ("movement_type", "source_file", "torque_perturbation_type"):
+            nwbfile.add_trial_column(name=name, description=metadata["Trials"]["columns"][name])
         nwbfile.add_trial_column(
             name="torque_perturbation_onset_time",
             description=columns["torque_perturbation_onset_time"]["Description"],
@@ -321,29 +312,12 @@ class M1MPTPTrialsInterface(BaseDataInterface):
             hed=columns["derived_end_position"]["HED"]
         )
 
-        # STEP 7: Extract trial end times from Events['end'] field
-        # The 'end' field contains experimental trial end timestamps (in ms)
-        # This is more accurate than calculating from analog data length
-        trial_end_times_relative = np.array(events.get("end", [])) / 1000.0  # Convert ms to seconds
-
-        # Calculate trial start and stop times
-        trial_start_times = []
-        trial_stop_times = []
-        current_time = 0.0
-
-        for trial_index in range(n_trials):
-            trial_start = current_time
-            trial_duration = trial_end_times_relative[trial_index]
-            trial_stop = trial_start + trial_duration
-
-            trial_start_times.append(trial_start)
-            trial_stop_times.append(trial_stop)
-
-            # Next trial starts after inter-trial interval
-            current_time = trial_stop + self.inter_trial_time_interval
-
-        trial_start_times = np.array(trial_start_times)
-        trial_stop_times = np.array(trial_stop_times)
+        # STEP 7: Trial start and stop times on the session timeline that the units and analog streams share: each
+        # trial lasts Events['end'], the trials separated by the inter-trial gap
+        trial_start_times, trial_durations = get_trial_timeline(
+            mat_data_by_file, self.trial_sources, self.inter_trial_time_interval
+        )
+        trial_stop_times = trial_start_times + trial_durations
 
         # Add trials to NWB file using processed arrays
         # CRITICAL: All event times must be offset by trial start time to align with session timeline
@@ -394,7 +368,7 @@ class M1MPTPTrialsInterface(BaseDataInterface):
         if n_trials > 1:
             for trial_index in range(n_trials - 1):
                 gap_start = trial_stop_times[trial_index]
-                gap_stop = gap_start + self.inter_trial_time_interval
+                gap_stop = trial_start_times[trial_index + 1]
                 tags = ["artificial_inter_trial_gap", "not_recorded"]
                 if self.trial_files[trial_index] != self.trial_files[trial_index + 1]:
                     tags.append("file_boundary")

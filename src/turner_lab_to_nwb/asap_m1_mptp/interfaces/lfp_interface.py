@@ -45,8 +45,9 @@ class M1MPTPLFPInterface(BaseDataInterface):
         ----------
         nwbfile : NWBFile
             The NWB file object to add data to
-        metadata : dict, optional
-            Metadata dictionary
+        metadata : dict
+            Metadata with the series name and descriptions in metadata["Ecephys"]["LFP"] and the processing module
+            in metadata["Ecephys"]["ProcessingModule"]
         """
         # Load MATLAB data
         mat_data_by_file = read_trial_source_files(self.trial_sources)
@@ -84,38 +85,23 @@ class M1MPTPLFPInterface(BaseDataInterface):
         continuous_data = np.concatenate(trial_data_list, axis=0)
         timestamps = np.array(timestamps)
 
-        # Stored as plain TimeSeries with unit="a.u." rather than ElectricalSeries
-        # (which would imply volts). The voltage calibration cannot be confirmed:
-        # the LFP digitizer's ADC range is undocumented, and even by parallel
-        # reasoning to the antidromic factor it would rest on an unverified
-        # assumption about the ADC range. Mirrors the EMG approach. Counts are
-        # 12-bit unsigned, centered on the midpoint 2048; subtract 2048 for
-        # zero-baseline analyses.
+        # Stored as a plain TimeSeries in a.u.: no voltage calibration is available (see its comments). Counts are
+        # 12-bit unsigned, centered on the midpoint 2048; subtract 2048 for zero-baseline analyses.
+        lfp_metadata = metadata["Ecephys"]["LFP"]
         lfp_series = TimeSeries(
-            name="LFP",
+            name=lfp_metadata["name"],
             data=continuous_data,
             timestamps=timestamps,
             unit="a.u.",
-            description="Local field potential from M1 microelectrode. "
-            "Recorded simultaneously with single-unit activity during visuomotor task. "
-            "Signal processing: 10k gain, 1-100 Hz bandpass filtered.",
-            comments="Raw 12-bit unsigned A/D counts (centered ~2048). No voltage "
-            "calibration applied: the LFP digitizer's ADC range is undocumented, and the lab confirmed that no "
-            "voltage calibration is available. "
-            "LFP from same electrode as spike recordings (electrode metadata available "
-            "in nwbfile.electrodes). Trials concatenated with inter-trial gaps.",
+            description=lfp_metadata["description"],
+            comments=lfp_metadata["comments"],
         )
 
-        # Get or create ecephys processing module
-        if "ecephys" in nwbfile.processing:
-            ecephys_module = nwbfile.processing["ecephys"]
+        module_metadata = metadata["Ecephys"]["ProcessingModule"]
+        if module_metadata["name"] in nwbfile.processing:
+            ecephys_module = nwbfile.processing[module_metadata["name"]]
         else:
-            ecephys_module = nwbfile.create_processing_module(
-                name="ecephys",
-                description="Processed extracellular electrophysiology data"
-            )
-
-        # Add the LFP TimeSeries directly to the processing module
+            ecephys_module = nwbfile.create_processing_module(**module_metadata)
         ecephys_module.add(lfp_series)
 
         if self.verbose:

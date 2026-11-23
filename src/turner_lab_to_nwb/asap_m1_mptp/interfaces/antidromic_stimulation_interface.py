@@ -10,8 +10,8 @@ from pynwb.base import TimeSeriesReferenceVectorData, TimeSeriesReference
 from pynwb.io.core import VectorDataMap
 from pymatreader import read_mat
 
+from neuroconv._temporal_alignment import _TemporalAlignment
 from neuroconv.basedatainterface import BaseDataInterface
-from neuroconv.utils import DeepDict
 
 
 # Workaround for hdmf >= 6.0: columns added with add_column are built with the
@@ -45,6 +45,12 @@ STIMULATION_PROTOCOL_BY_LABEL = {
     "stim": "unspecified",
 }
 
+# The stimulation site of each kind of sweep in the source files, as named in the series and the sweeps table
+SWEEP_LOCATION_BY_STIM_TYPE = {"PedStim": "Peduncle", "StrStim": "Striatum", "ThalStim": "Thalamus", "STNStim": "STN"}
+
+# The source has no clock time for the sweeps: each series is placed this many seconds after the previous one
+SERIES_SPACING = 1000.0
+
 
 class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
     """Data interface for Turner Lab M1 MPTP antidromic stimulation data."""
@@ -56,8 +62,6 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
     def __init__(
         self,
         units: list[dict],
-        animal: str,
-        antidromic_exploration_offset: float = 4000.0,
         verbose: bool = False,
     ):
         """
@@ -68,17 +72,10 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         units : list of dict
             One entry per unit, with "name" and "antidromic_files": (.mat file, recording electrode index)
             pairs for the unit's own file, the file it continues in, and the file of any dropped copy of the unit
-        animal : str
-            "V" (Venus) or "L" (Leu), which sets the stimulation electrode complement
-        antidromic_exploration_offset : float, optional
-            Time offset in seconds to place antidromic stimulation data after behavioral trials
-            to avoid timeline overlap, by default 4000.0 seconds
         verbose : bool, optional
             Whether to print verbose output, by default False
         """
         super().__init__(verbose=verbose)
-        self.animal = animal
-        self.antidromic_exploration_offset = antidromic_exploration_offset
 
         # Collect the stimulation data of every unit, from its own file, the file it continues in and any dropped copy
         self.unit_files_data = []  # List of (unit, file_label, electrode_index, mat_data, available_stim_types)
@@ -100,181 +97,10 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
         if self.verbose:
             print(f"Total files with antidromic data: {len(self.unit_files_data)}")
 
-    def get_metadata(self) -> DeepDict:
-        """Get metadata for the NWB file."""
-        return super().get_metadata()
-
-    def _parse_test_type_name(self, trace_name: str) -> str:
-        """
-        Map a sweep label to its stimulation protocol with STIMULATION_PROTOCOL_BY_LABEL.
-
-        Parameters
-        ----------
-        trace_name : str
-            Sweep label in the source file, like 'coll_5', 'FF_2', 'thalstim_0'
-
-        Returns
-        -------
-        str
-            'Collision', 'FrequencyFollowing', 'Orthodromic' or 'unspecified'
-        """
-        label = re.fullmatch(r"(.+)_\d+", trace_name)
-        if label is None or label.group(1) not in STIMULATION_PROTOCOL_BY_LABEL:
-            raise ValueError(f"Unknown antidromic sweep label {trace_name!r}")
-        return STIMULATION_PROTOCOL_BY_LABEL[label.group(1)]
-
-    def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
-        """
-        Add antidromic stimulation data to the NWB file.
-
-        Uses consolidated series approach: one response series and one stimulation series
-        per unit/location combination, with TimeSeriesReferenceVectorData in the intervals
-        table to reference specific sweep segments within each series.
-
-        Parameters
-        ----------
-        nwbfile : NWBFile
-            The NWB file object to add stimulation data to
-        metadata : dict, optional
-            Metadata dictionary
-        """
-        if not self.unit_files_data:
-            if self.verbose:
-                print("No antidromic stimulation data found in this session")
-            return
-
-        # Get or create processing module for antidromic identification
-        if "antidromic_identification" in nwbfile.processing:
-            antidromic_module = nwbfile.processing["antidromic_identification"]
-            if self.verbose:
-                print("Adding to existing antidromic_identification module (multi-unit session)")
-        else:
-            antidromic_module = nwbfile.create_processing_module(
-                name="antidromic_identification",
-                description="Antidromic stimulation tests for neuron classification. "
-                "Contains consolidated electrical stimulation and neural response recordings "
-                "(50ms sweeps at 20kHz) from chronically implanted electrodes used to identify "
-                "pyramidal tract neurons (PTNs) and corticostriatal neurons (CSNs) via collision "
-                "tests and frequency-following tests. Data is organized as one response series "
-                "and one stimulation series per unit/location combination, with the intervals "
-                "table (AntidromicSweepsIntervals) providing TimeSeriesReference columns to "
-                "access individual sweeps within the consolidated series.",
-            )
-
-        # Add stimulation electrodes table (only when antidromic data exists)
-        self._add_stimulation_electrodes_table(antidromic_module)
-
-        # Get or create intervals table for antidromic sweeps
-        if "AntidromicSweepsIntervals" not in nwbfile.intervals:
-            antidromic_sweeps = TimeIntervals(
-                name="AntidromicSweepsIntervals",
-                description="Intervals table for antidromic stimulation sweeps. Each row represents one sweep "
-                "with TimeSeriesReference columns linking to specific sample ranges within the consolidated "
-                "response and stimulation series. Use the 'response' and 'stimulation' columns to extract "
-                "data for individual sweeps. Filter by 'stimulation_protocol', 'location', or 'unit_name' "
-                "to select specific sweep types. The 50ms sweeps are centered at t=0 (pulse_time), with "
-                "25ms pre-stimulation and 25ms post-stimulation windows.",
-            )
-
-            # Add custom columns
-            antidromic_sweeps.add_column(
-                name="stimulation_onset_time",
-                description="Time of electrical stimulation pulse delivery (t=0 in the original MATLAB sweep). "
-                "The 50ms sweep extends from stimulation_onset_time-0.025s to stimulation_onset_time+0.025s. "
-                "Corresponds to the center point of the sweep where the stimulation current is injected.",
-            )
-            antidromic_sweeps.add_column(
-                name="unit_name",
-                description="unit_name of the unit (units table) whose antidromic test this sweep belongs to",
-            )
-            antidromic_sweeps.add_column(
-                name="unit",
-                description="Row of the units table for the unit whose antidromic test this sweep belongs to",
-                table=nwbfile.units,
-            )
-            antidromic_sweeps.add_column(
-                name="location",
-                description="Anatomical location of stimulation electrode: 'Striatum', 'Peduncle', 'Thalamus', or 'STN'",
-            )
-            antidromic_sweeps.add_column(
-                name="stimulation_protocol",
-                description="Antidromic stimulation protocol used, from the sweep's label in the source (source_label): "
-                "'Collision' (paired spontaneous and antidromic spikes), 'FrequencyFollowing' (high-frequency train), "
-                "'Orthodromic' (sub-threshold control), or 'unspecified' where the label names the stimulation site "
-                "instead of the test",
-            )
-            antidromic_sweeps.add_column(
-                name="source_label",
-                description="Label of the sweep in the source MATLAB file (TraceName), e.g. 'COLL_3'",
-            )
-            antidromic_sweeps.add_column(
-                name="sweep_number",
-                description="Sweep index number within the series for this unit/location combination (0-based)",
-            )
-            # TimeSeriesReferenceVectorData columns for response and stimulation
-            antidromic_sweeps.add_column(
-                name="response",
-                description="Reference to neural voltage response segment for this sweep. Contains (idx_start, count, timeseries) "
-                "tuple pointing to the specific sample range within the consolidated response ElectricalSeries. "
-                "Access data with: series.data[idx_start:idx_start+count] * series.conversion",
-                col_cls=TimeSeriesReferenceVectorData,
-            )
-            antidromic_sweeps.add_column(
-                name="stimulation",
-                description="Reference to stimulation current segment for this sweep. Contains (idx_start, count, timeseries) "
-                "tuple pointing to the specific sample range within the consolidated stimulation TimeSeries. "
-                "Access data with: series.data[idx_start:idx_start+count] * series.conversion",
-                col_cls=TimeSeriesReferenceVectorData,
-            )
-            antidromic_sweeps.add_column(
-                name="stimulation_electrode",
-                description="Index into StimulationElectrodesTable indicating which electrode delivered the stimulation",
-            )
-
-            nwbfile.add_time_intervals(antidromic_sweeps)
-            if self.verbose:
-                print("Created AntidromicSweepsIntervals intervals table with TimeSeriesReferenceVectorData columns")
-        else:
-            antidromic_sweeps = nwbfile.intervals["AntidromicSweepsIntervals"]
-            if self.verbose:
-                print("Adding to existing AntidromicSweepsIntervals table (multi-unit session)")
-
-        # Calculate start time for antidromic data based on actual trial end times
-        if len(nwbfile.trials) > 0:
-            max_trial_stop_time = max(nwbfile.trials['stop_time'][:])
-            buffer_after_trials = 10.0  # seconds
-            base_start_time = max_trial_stop_time + buffer_after_trials
-            if self.verbose:
-                print(f"Antidromic data start time: {base_start_time:.1f}s (last trial ended at {max_trial_stop_time:.1f}s)")
-        else:
-            base_start_time = self.antidromic_exploration_offset
-            if self.verbose:
-                print(f"No trials found, using configured offset: {base_start_time:.1f}s")
-
-        location_map = {
-            "PedStim": "Peduncle",
-            "StrStim": "Striatum",
-            "ThalStim": "Thalamus",
-            "STNStim": "STN"
-        }
-
-        # Stimulation electrode index map matches the per-monkey StimulationElectrodesTable layout.
-        # Both monkeys: row 0 peduncle, rows 1-2 the two posterior-putamen electrodes (StrStim uses
-        # the first as representative since the source data does not distinguish them), row 3
-        # VL thalamus. Leu only: row 4 STN.
-        stim_electrode_index_map = {
-            "PedStim": 0,
-            "StrStim": 1,
-            "ThalStim": 3,
-            "STNStim": 4,  # only valid for Leu sessions
-        }
-
-        # =====================================================================
-        # FIRST PASS: Collect all sweep data per (file_label, stim_type) combination
-        # =====================================================================
+        # Collect all sweep data per (file_label, stim_type) combination
         # Data structure: {(file_label, stim_type): {'unit': dict, 'responses': [], 'stimuli': [], 'metadata': [], 'time_data': array}}
-        collected_data = {}
-        stim_type_index = {}  # Track global ordering for time offsets (ensures ascending start_times)
+        self._collected_data = {}
+        self._series_index = {}  # Track global ordering for time offsets (ensures ascending start_times)
         global_stim_counter = 0
         # A file that continues a unit can store copies of sweeps already in an earlier file of the unit
         seen_sweeps = {}  # (unit name, stim_type) -> set of sweep bytes
@@ -307,11 +133,11 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                 if not new_sweep_indices:
                     continue
 
-                stim_type_index[key] = global_stim_counter
+                self._series_index[key] = global_stim_counter
                 global_stim_counter += 1
 
                 # Initialize collection for this key
-                collected_data[key] = {
+                self._collected_data[key] = {
                     'unit': unit,
                     'electrode_index': electrode_index,
                     'responses': [],
@@ -326,26 +152,124 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
                     trace_name = trace_names[sweep_idx]
                     test_type = self._parse_test_type_name(trace_name)
 
-                    collected_data[key]['responses'].append(unit_data[:, sweep_idx])
-                    collected_data[key]['stimuli'].append(current_data[:, sweep_idx])
-                    collected_data[key]['metadata'].append({
+                    self._collected_data[key]['responses'].append(unit_data[:, sweep_idx])
+                    self._collected_data[key]['stimuli'].append(current_data[:, sweep_idx])
+                    self._collected_data[key]['metadata'].append({
                         'sweep_index': sweep_idx,
                         'trace_name': trace_name,
                         'test_type': test_type,
                     })
 
-        # =====================================================================
-        # SECOND PASS: Create consolidated series and intervals
-        # =====================================================================
+        # Alignment by composition (see neuroconv/_temporal_alignment.py), one time-bearing object per series, named
+        # like the series. Native times run from 0, each series SERIES_SPACING after the previous one; the converter
+        # shifts them all to after the trials.
+        self.temporal_alignment = _TemporalAlignment()
+        for (file_label, stim_type), data in self._collected_data.items():
+            time_seconds = data["time_data"] / 1000.0
+            sampling_rate = (data["n_samples_per_sweep"] - 1) / (time_seconds[-1] - time_seconds[0])
+            number_of_samples = data["n_samples_per_sweep"] * len(data["metadata"])
+            # The first sweep's first sample, time_seconds[0] from its stimulation onset
+            start_time = self._series_index[(file_label, stim_type)] * SERIES_SPACING + time_seconds[0]
+            self.temporal_alignment._add_time_bearing_object(
+                key=f"{file_label}_{SWEEP_LOCATION_BY_STIM_TYPE[stim_type]}",
+                get_native_times=lambda start_time=start_time, rate=sampling_rate, n=number_of_samples: (
+                    start_time + np.arange(n) / rate
+                ),
+                default_start_time=start_time,
+                get_number_of_samples=lambda n=number_of_samples: n,
+            )
+
+    def _parse_test_type_name(self, trace_name: str) -> str:
+        """
+        Map a sweep label to its stimulation protocol with STIMULATION_PROTOCOL_BY_LABEL.
+
+        Parameters
+        ----------
+        trace_name : str
+            Sweep label in the source file, like 'coll_5', 'FF_2', 'thalstim_0'
+
+        Returns
+        -------
+        str
+            'Collision', 'FrequencyFollowing', 'Orthodromic' or 'unspecified'
+        """
+        label = re.fullmatch(r"(.+)_\d+", trace_name)
+        if label is None or label.group(1) not in STIMULATION_PROTOCOL_BY_LABEL:
+            raise ValueError(f"Unknown antidromic sweep label {trace_name!r}")
+        return STIMULATION_PROTOCOL_BY_LABEL[label.group(1)]
+
+    def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
+        """
+        Add antidromic stimulation data to the NWB file.
+
+        Uses consolidated series approach: one response series and one stimulation series
+        per unit/location combination, with TimeSeriesReferenceVectorData in the intervals
+        table to reference specific sweep segments within each series.
+
+        Parameters
+        ----------
+        nwbfile : NWBFile
+            The NWB file object to add stimulation data to
+        metadata : dict
+            Metadata with the module, table and series text in "AntidromicIdentification" and the monkey's
+            stimulation electrodes in "StimulationElectrodes"
+        """
+        if not self.unit_files_data:
+            if self.verbose:
+                print("No antidromic stimulation data found in this session")
+            return
+
+        antidromic_metadata = metadata["AntidromicIdentification"]
+        module_metadata = antidromic_metadata["ProcessingModule"]
+        if module_metadata["name"] in nwbfile.processing:
+            antidromic_module = nwbfile.processing[module_metadata["name"]]
+        else:
+            antidromic_module = nwbfile.create_processing_module(**module_metadata)
+
+        # Add stimulation electrodes table (only when antidromic data exists)
+        self._add_stimulation_electrodes_table(antidromic_module, metadata=metadata)
+
+        sweeps_metadata = antidromic_metadata["SweepsTable"]
+        if sweeps_metadata["name"] not in nwbfile.intervals:
+            antidromic_sweeps = TimeIntervals(name=sweeps_metadata["name"], description=sweeps_metadata["description"])
+            columns = sweeps_metadata["columns"]
+            for name in ("stimulation_onset_time", "unit_name"):
+                antidromic_sweeps.add_column(name=name, description=columns[name])
+            antidromic_sweeps.add_column(name="unit", description=columns["unit"], table=nwbfile.units)
+            for name in ("location", "stimulation_protocol", "source_label", "sweep_number"):
+                antidromic_sweeps.add_column(name=name, description=columns[name])
+            # TimeSeriesReferenceVectorData columns for response and stimulation
+            for name in ("response", "stimulation"):
+                antidromic_sweeps.add_column(
+                    name=name, description=columns[name], col_cls=TimeSeriesReferenceVectorData
+                )
+            antidromic_sweeps.add_column(
+                name="stimulation_electrode", description=columns["stimulation_electrode"]
+            )
+
+            nwbfile.add_time_intervals(antidromic_sweeps)
+            if self.verbose:
+                print("Created AntidromicSweepsIntervals intervals table with TimeSeriesReferenceVectorData columns")
+        else:
+            antidromic_sweeps = nwbfile.intervals[sweeps_metadata["name"]]
+            if self.verbose:
+                print("Adding to existing AntidromicSweepsIntervals table (multi-unit session)")
+
+        # Each stimulation type's row in the StimulationElectrodesTable
+        stimulation_electrodes = metadata["StimulationElectrodes"]["electrodes"]
+        stim_electrode_index_map = {
+            electrode["stim_type"]: row for row, electrode in enumerate(stimulation_electrodes) if electrode["stim_type"]
+        }
+
+        # Create consolidated series and intervals
         total_sweeps_added = 0
         series_count = 0
         units_table_row = {unit_name: row for row, unit_name in enumerate(nwbfile.units["unit_name"][:])}
 
-        for (file_label, stim_type), data in collected_data.items():
+        for (file_label, stim_type), data in self._collected_data.items():
             unit_name = data['unit']['name']
-            location = location_map[stim_type]
+            location = SWEEP_LOCATION_BY_STIM_TYPE[stim_type]
             stim_electrode_index = stim_electrode_index_map[stim_type]
-            stim_idx = stim_type_index[(file_label, stim_type)]
 
             # Concatenate all sweeps into single arrays
             # Note: ElectricalSeries needs 2D data (n_samples, n_channels) for neuroconv compatibility
@@ -360,59 +284,51 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             duration_seconds = time_seconds[-1] - time_seconds[0]
             sampling_rate = (n_samples_per_sweep - 1) / duration_seconds  # Hz
 
-            # Calculate starting time for this unit/stim_type combination
-            # Space different stim types 1000s apart
-            stim_type_offset = stim_idx * 1000.0
-            series_start_time = base_start_time + stim_type_offset
-
-            # The sweep data starts at time_seconds[0] relative to stimulation onset
-            # For rate-based series, we set starting_time to the first sample's absolute time
-            first_sweep_starting_time = series_start_time + time_seconds[0]
+            # The first sample of the series, as the converter placed it
+            first_sweep_starting_time = self.temporal_alignment[f"{file_label}_{location}"].get_times()[0]
 
             # Create electrode table region for recording
+            response_metadata = antidromic_metadata["ResponseSeries"]
             recording_electrode_region = nwbfile.create_electrode_table_region(
                 region=[data['electrode_index']],
-                description="Recording electrode in M1",
+                description=response_metadata["electrodes_description"],
             )
+
+            text_fields = dict(
+                file_label=file_label,
+                location=location,
+                location_lower=location.lower(),
+                unit_name=unit_name,
+                n_sweeps=n_sweeps,
+                n_samples_per_sweep=n_samples_per_sweep,
+            )
+            comments = antidromic_metadata["series_comments"].format(**text_fields)
 
             # Create consolidated response series.
             # conversion = 10 V / 2**16 / 10000 = 1.526e-8 V/count (range / bits / amp gain).
             # The signed int16 data are already centered at 0, so no offset is needed.
             response_series = ElectricalSeries(
-                name=f"AntidromicResponse_{file_label}_{location}",
-                description=f"Consolidated neural responses from M1 to {location.lower()} stimulation for unit {unit_name} "
-                f"(sweeps from {file_label}.mat). "
-                f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
-                f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
-                f"Data in volts. Original device calibration from the source data was not available; "
-                f"the conversion factor was derived to accurately display antidromic responses in the "
-                f"tutorial plots and confirmed with the original authors.",
+                name=response_metadata["name"].format(**text_fields),
+                description=response_metadata["description"].format(**text_fields),
                 data=all_responses,
                 starting_time=first_sweep_starting_time,
                 rate=sampling_rate,
                 electrodes=recording_electrode_region,
                 conversion=1.526e-08,
-                comments=f"Concatenated sweeps for unit {unit_name}, {location} stimulation. "
-                f"Sweep boundaries every {n_samples_per_sweep} samples.",
+                comments=comments,
             )
 
             # Create consolidated stimulation series
+            stimulation_metadata = antidromic_metadata["StimulationSeries"]
             stim_series = TimeSeries(
-                name=f"AntidromicStimulation_{file_label}_{location}",
-                description=f"Consolidated stimulation currents delivered to {location.lower()} for unit {unit_name} "
-                f"(sweeps from {file_label}.mat). "
-                f"Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep} samples. "
-                f"Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. "
-                f"Data in amperes. Original device calibration from the source data was not available; "
-                f"the conversion factor was derived to accurately display antidromic stimulation currents in the "
-                f"tutorial plots and confirmed with the original authors.",
+                name=stimulation_metadata["name"].format(**text_fields),
+                description=stimulation_metadata["description"].format(**text_fields),
                 data=all_stimuli,
                 starting_time=first_sweep_starting_time,
                 rate=sampling_rate,
                 unit="amperes",
                 conversion=1.526e-08,
-                comments=f"Concatenated sweeps for unit {unit_name}, {location} stimulation. "
-                f"Sweep boundaries every {n_samples_per_sweep} samples.",
+                comments=comments,
             )
 
             # Add series to processing module
@@ -473,120 +389,31 @@ class M1MPTPAntidromicStimulationInterface(BaseDataInterface):
             print(f"\nTotal: {total_sweeps_added} sweeps indexed in {series_count} consolidated series")
             print(f"(Previously would have created {total_sweeps_added * 2} separate series)")
 
-    def _add_stimulation_electrodes_table(self, antidromic_module) -> None:
+    def _add_stimulation_electrodes_table(self, antidromic_module, metadata: dict) -> None:
         """
-        Add stimulation electrodes table to the antidromic_identification processing module.
-
-        This table documents the chronically implanted multi-contact macroelectrodes used
-        for antidromic neuron identification. Per-animal complement and contact counts were
-        confirmed by R. Turner (personal communication, 2026-05-04):
-
-        - Venus: peduncle (2c), 2x posterior putamen (3c, 2c), VL thalamus (1c)        -> 4 rows
-        - Leu:   peduncle (2c), 2x posterior putamen (2c, 2c), VL thalamus (2c), STN (2c) -> 5 rows
-
-        Row layout (matches stim_electrode_index_map): 0=peduncle, 1-2=putamen (2 electrodes,
-        first used as the representative for StrStim because the source data does not
-        distinguish them), 3=VL thalamus, 4=STN (Leu only).
-
-        Parameters
-        ----------
-        antidromic_module : ProcessingModule
-            The antidromic_identification processing module
+        Add the table of the monkey's chronically implanted stimulation electrodes, metadata["StimulationElectrodes"],
+        to the antidromic_identification processing module. Its rows are in the order of that list.
         """
-        from pathlib import Path
-
         from hdmf.common import DynamicTable, VectorData
 
-        # Only add the table once (check if it already exists)
-        if "StimulationElectrodesTable" in antidromic_module.data_interfaces:
+        table_metadata = metadata["AntidromicIdentification"]["StimulationElectrodesTable"]
+        if table_metadata["name"] in antidromic_module.data_interfaces:
             return
 
-        animal_letter = self.animal.lower()
-        if animal_letter == "v":
-            putamen_contact_counts = (3, 2)
-            thalamus_contacts = 1
-            has_stn = False
-            row_summary = "Row indices: 0=peduncle, 1-2=putamen (2 electrodes), 3=thalamus."
-        elif animal_letter == "l":
-            putamen_contact_counts = (2, 2)
-            thalamus_contacts = 2
-            has_stn = True
-            row_summary = "Row indices: 0=peduncle, 1-2=putamen (2 electrodes), 3=thalamus, 4=STN."
-        else:
-            raise ValueError(
-                f"Unknown animal {self.animal!r}; expected 'V' (Venus) or 'L' (Leu)."
-            )
-
-        locations = ["Cerebral peduncle (pre-pontine)"]
-        device_names = ["DeviceMicrowirePeduncleStimulation"]
-        n_contacts = [2]
-        notes = [
-            "Pre-pontine peduncle (2 contacts). For PTN identification."
-        ]
-
-        n_putamen = len(putamen_contact_counts)
-        for i, contact_count in enumerate(putamen_contact_counts, start=1):
-            locations.append("Putamen (posterolateral)")
-            device_names.append(f"DeviceMicrowirePutamenStimulation{i}")
-            n_contacts.append(contact_count)
-            representative_note = (
-                " Used as representative electrode reference for all StrStim data; "
-                "the two physical putamen electrodes are documented but not distinguished in source data."
-                if i == 1
-                else " Physical electrode documented but not distinguished in source data."
-            )
-            notes.append(
-                f"Electrode {i} of {n_putamen}, posterolateral putamen ({contact_count} contacts), "
-                f"for M1 CSN projections.{representative_note}"
-            )
-
-        locations.append("Ventrolateral thalamus")
-        device_names.append("DeviceMicrowireThalamicStimulation")
-        n_contacts.append(thalamus_contacts)
-        notes.append(
-            f"VL thalamus ({thalamus_contacts} contact{'s' if thalamus_contacts != 1 else ''}) "
-            f"for thalamocortical projection identification."
-        )
-
-        if has_stn:
-            locations.append("Subthalamic nucleus (STN)")
-            device_names.append("DeviceMicrowireSTNStimulation")
-            n_contacts.append(2)
-            notes.append("Subthalamic nucleus (2 contacts) for STN projection identification.")
-
+        stimulation_electrodes = metadata["StimulationElectrodes"]
+        electrodes = stimulation_electrodes["electrodes"]
+        columns = {
+            "location": [electrode["location"] for electrode in electrodes],
+            "device_name": [electrode["name"] for electrode in electrodes],
+            "n_contacts": [electrode["n_contacts"] for electrode in electrodes],
+            "notes": [electrode["notes"] for electrode in electrodes],
+        }
         stim_electrodes_table = DynamicTable(
-            name="StimulationElectrodesTable",
-            description=(
-                "Chronically implanted multi-contact macroelectrodes (custom-built PtIr microwires) "
-                "for antidromic neuron identification. These electrodes were surgically implanted and "
-                "present for all recording sessions, though antidromic testing was not performed for "
-                "every recorded neuron. Used to classify M1 neurons as PTNs (peduncle), CSNs (putamen), "
-                "thalamocortical neurons (thalamus), or STN-projecting neurons (subthalamic nucleus). "
-                "Per-animal complement confirmed by R. Turner (personal communication, 2026-05-04). "
-                f"{row_summary}"
-            ),
+            name=table_metadata["name"],
+            description=table_metadata["description"].format(row_summary=stimulation_electrodes["row_summary"]),
             columns=[
-                VectorData(
-                    name="location",
-                    description="Anatomical location of stimulation site",
-                    data=locations,
-                ),
-                VectorData(
-                    name="device_name",
-                    description="Name of the device in nwbfile.devices",
-                    data=device_names,
-                ),
-                VectorData(
-                    name="n_contacts",
-                    description="Number of stimulation contacts on this multi-contact electrode.",
-                    data=n_contacts,
-                ),
-                VectorData(
-                    name="notes",
-                    description="Additional electrode-specific notes",
-                    data=notes,
-                ),
+                VectorData(name=name, description=table_metadata["columns"][name], data=data)
+                for name, data in columns.items()
             ],
         )
-
         antidromic_module.add(stim_electrodes_table)

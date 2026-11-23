@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Literal, Optional
+from typing import Optional
 
 import numpy as np
 from pynwb import NWBFile, TimeSeries
@@ -21,7 +21,6 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
     def __init__(
         self,
         trial_sources: list[tuple[Path, int]],
-        joint: Literal["elbow", "wrist"],
         inter_trial_time_interval: float = 3.0,
         verbose: bool = False,
     ):
@@ -32,8 +31,6 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         ----------
         trial_sources : list of (Path, int)
             The session's trials in order, as (Turner Lab .mat file, trial index in that file)
-        joint : {"elbow", "wrist"}
-            Joint moved in the task: elbow for monkey V, wrist for monkey L
         inter_trial_time_interval : float, optional
             Time interval between trials in seconds, by default 3.0
         verbose : bool, optional
@@ -41,8 +38,13 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         """
         super().__init__(verbose=verbose)
         self.trial_sources = trial_sources
-        self.joint = joint
         self.inter_trial_time_interval = inter_trial_time_interval
+        self._mat_data_by_file = read_trial_source_files(trial_sources)
+        has_analog = [isinstance(mat_data.get("Analog"), dict) for mat_data in self._mat_data_by_file.values()]
+        if any(has_analog) and not all(has_analog):
+            raise ValueError(f"Only some source files of this session have analog data: {list(self._mat_data_by_file)}")
+        # In 14 monkey L sessions an A/D converter malfunction left the analog channels flat, stored as NaN
+        self.analog_data_missing = not any(has_analog)
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict] = None) -> None:
         """
@@ -52,42 +54,23 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
         ----------
         nwbfile : NWBFile
             The NWB file object to add data to
-        metadata : dict, optional
-            Metadata dictionary
+        metadata : dict
+            Metadata with the device in "Devices" ("TorqueMotor") and the series names and descriptions in
+            "Behavior" ("Manipulandum" and "ProcessingModule")
         """
-        # Load MATLAB data
-        mat_data_by_file = read_trial_source_files(self.trial_sources)
-        analog_data_by_file = {path: mat_data.get("Analog") for path, mat_data in mat_data_by_file.items()}
-        has_analog = [isinstance(analog_data, dict) for analog_data in analog_data_by_file.values()]
-        if not any(has_analog):
+        if self.analog_data_missing:
             if self.verbose:
                 print("No analog data found in file (Analog is missing or NaN), skipping manipulandum interface")
-            self.analog_data_missing = True
             return
-        if not all(has_analog):
-            raise ValueError(f"Only some source files of this session have analog data: {list(analog_data_by_file)}")
-        self.analog_data_missing = False
+        mat_data_by_file = self._mat_data_by_file
+        analog_data_by_file = {path: mat_data["Analog"] for path, mat_data in mat_data_by_file.items()}
         first_file = self.trial_sources[0][0]
         analog_data = analog_data_by_file[first_file]
         analog_sampling_rate = mat_data_by_file[first_file]["file_info"]["analog_fs"]
 
-        # Add torque motor device if not already present
         if "TorqueMotor" not in nwbfile.devices:
-            nwbfile.add_device(
-                Device(
-                    name="TorqueMotor",
-                    description=(
-                        "TQ40W torque motor (Aerotech Inc.) used in the manipulandum system to provide resistance "
-                        "and position control during the visuomotor step-tracking task. The monkey's arm was held in "
-                        f"a padded manipulandum with the {self.joint} joint aligned with the torque motor axis of "
-                        "rotation. See the torque series description for what the recorded command shows. "
-                        "Note: Pasquereau and Turner (2013) describe a second use, brief, temporally unpredictable "
-                        "torque perturbations (0.1 Nm, 50 ms impulse) on randomly selected trials to evoke stretch "
-                        "reflexes."
-                    ),
-                    manufacturer="Aerotech Inc.",
-                )
-            )
+            nwbfile.add_device(Device(**metadata["Devices"]["TorqueMotor"]))
+        series_metadata = metadata["Behavior"]["Manipulandum"]
 
         # Expected manipulandum signals
         manipulandum_signals = ["x", "vel", "torq"]
@@ -124,12 +107,12 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             if signal_name == "x":
                 # Joint angle data - raw manipulandum angle sensor data
                 angle_series = SpatialSeries(
-                    name=f"{self.joint.capitalize()}Angle",
+                    name=series_metadata["angle"]["name"],
                     data=continuous_data.reshape(-1, 1),  # Make 2D
                     timestamps=timestamps,
                     unit="degrees",
-                    description="Raw manipulandum angle from sensor during visuomotor flexion/extension task",
-                    reference_frame="Anatomical flexion/extension axis, 0 degrees = neutral position, positive = flexion",
+                    description=series_metadata["angle"]["description"],
+                    reference_frame=series_metadata["angle"]["reference_frame"],
                 )
 
                 nwbfile.add_acquisition(angle_series)
@@ -137,51 +120,30 @@ class M1MPTPManipulandumInterface(BaseDataInterface):
             elif signal_name == "vel":
                 # Velocity data
                 velocity_series = TimeSeries(
-                    name=f"{self.joint.capitalize()}Velocity",
+                    name=series_metadata["velocity"]["name"],
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="degrees/s",
-                    description=f"{self.joint.capitalize()} joint velocity during visuomotor task",
+                    description=series_metadata["velocity"]["description"],
                 )
 
                 # Add to behavior processing module
-                if "behavior" not in nwbfile.processing:
-                    behavior_module = nwbfile.create_processing_module("behavior", "Behavioral data")
+                module_metadata = metadata["Behavior"]["ProcessingModule"]
+                if module_metadata["name"] not in nwbfile.processing:
+                    behavior_module = nwbfile.create_processing_module(**module_metadata)
                 else:
-                    behavior_module = nwbfile.processing["behavior"]
+                    behavior_module = nwbfile.processing[module_metadata["name"]]
 
                 behavior_module.add(velocity_series)
 
             elif signal_name == "torq":
-                # Torque data - raw commands sent to torque controller. What the command shows differs
-                # between the monkeys: monkey V (elbow) has perturbation pulses, monkey L (wrist) has none.
-                no_newton_metres = (
-                    "No conversion to newton-metres is available: the amplifier and controller gains are not in "
-                    "these MATLAB files, and the original recordings they were exported from were not provided."
-                )
-                if self.joint == "elbow":
-                    torque_description = (
-                        "Command sent to the torque motor controller, in arbitrary units. Perturbations appear as "
-                        "50 ms pulses that leave rest about 5 ms after torque_perturbation_onset_time and reach half "
-                        "their peak at about 8 ms (sessions v1401, v1402 and v1501 have perturbation times but no "
-                        "pulses in the command). The pulse size "
-                        "varies: before MPTP each session uses one of three levels (about 46, 91 and 183 units above "
-                        "rest); after MPTP it varies from trial to trial and is often followed by a command in the "
-                        f"opposite direction. {no_newton_metres} Note: Pasquereau and Turner (2013) describe the "
-                        "perturbations as 0.1 Nm, 50 ms torque impulses delivered 1 to 2 s after center target capture."
-                    )
-                else:
-                    torque_description = (
-                        "Command sent to the torque motor controller, in arbitrary units. The monkey L source files "
-                        "contain no torque perturbation times. The command is NaN in every file before MPTP; after "
-                        f"MPTP it is a continuous trace without distinct pulses. {no_newton_metres}"
-                    )
+                # Commands sent to the torque controller, which show something different in each monkey
                 torque_series = TimeSeries(
-                    name=f"{self.joint.capitalize()}Torque",
+                    name=series_metadata["torque"]["name"],
                     data=continuous_data,
                     timestamps=timestamps,
                     unit="arbitrary",
-                    description=torque_description,
+                    description=series_metadata["torque"]["description"],
                 )
 
                 nwbfile.add_acquisition(torque_series)

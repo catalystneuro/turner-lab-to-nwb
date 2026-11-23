@@ -16,57 +16,6 @@ class M1MPTPEMGInterface(BaseDataInterface):
     associated_suffixes = (".mat",)
     info = "Interface for Turner Lab M1 MPTP EMG recordings from arm muscles"
 
-    # Map abbreviated muscle names from metadata to full anatomical names
-    MUSCLE_NAME_MAP = {
-        # Monkey V (elbow task)
-        "triceps long.": "TricepsLongus",
-        "triceps lat.": "TricepsLateralis",
-        "brachioradialis": "Brachioradialis",
-        "trapezius": "Trapezius",
-        "deltoid post.": "DeltoidPosterior",
-        # Monkey L (wrist task)
-        "flexor carpi ulnaris": "FlexorCarpiUlnaris",
-        "flexor carpi radialis": "FlexorCarpiRadialis",
-        "biceps longus": "BicepsLongus",
-    }
-
-    # Muscle descriptions including anatomical function
-    MUSCLE_DESCRIPTIONS = {
-        "triceps long.": "Triceps longus (long head) - elbow extensor",
-        "triceps lat.": "Triceps lateralis (lateral head) - elbow extensor",
-        "brachioradialis": "Brachioradialis - elbow flexor and forearm supinator/pronator",
-        "trapezius": "Trapezius - shoulder and scapula stabilizer",
-        "deltoid post.": "Posterior deltoid - shoulder extensor and external rotator",
-        "flexor carpi ulnaris": "Flexor carpi ulnaris - wrist flexor and ulnar deviator",
-        "flexor carpi radialis": "Flexor carpi radialis - wrist flexor and radial deviator",
-        "biceps longus": "Biceps brachii (long head) - elbow flexor and forearm supinator",
-    }
-
-    # Inferred-compartment notes for muscles where we have empirical evidence
-    # about the anatomical role of a specific channel but no confirmation from
-    # the original investigators. The series name itself is intentionally NOT
-    # changed; the inference is recorded in the description so it is discoverable
-    # without being claimed as fact in the channel name. See
-    # scripts/triceps_compartment_analysis/ and meeting_notes/ for the analysis.
-    INFERRED_COMPARTMENT_NOTES = {
-        "EMGTricepsLongus1": (
-            " Inferred compartment: distal (provisional). Empirical analysis across "
-            "~280 Venus sessions, using cross-correlation lead-lag and posterior-deltoid "
-            "correlation between the two triceps longus channels (see "
-            "scripts/triceps_compartment_analysis/), suggests this channel is the more "
-            "distal of the two compartments. The assignment is not confirmed by the "
-            "original investigators and is intentionally not encoded in the channel name."
-        ),
-        "EMGTricepsLongus2": (
-            " Inferred compartment: proximal (provisional). Empirical analysis across "
-            "~280 Venus sessions, using cross-correlation lead-lag and posterior-deltoid "
-            "correlation between the two triceps longus channels (see "
-            "scripts/triceps_compartment_analysis/), suggests this channel is the more "
-            "proximal of the two compartments. The assignment is not confirmed by the "
-            "original investigators and is intentionally not encoded in the channel name."
-        ),
-    }
-
     def __init__(
         self,
         trial_sources: list[tuple[Path, int]],
@@ -102,9 +51,12 @@ class M1MPTPEMGInterface(BaseDataInterface):
         ----------
         nwbfile : NWBFile
             The NWB file object to add data to
-        metadata : dict, optional
-            Metadata dictionary
+        metadata : dict
+            Metadata with the muscles and the series descriptions in metadata["Behavior"]["EMG"]
         """
+        emg_metadata = metadata["Behavior"]["EMG"]
+        muscles = emg_metadata["muscles"]
+
         # Load MATLAB data
         mat_data_by_file = read_trial_source_files(self.trial_sources)
         has_signal = [
@@ -143,85 +95,39 @@ class M1MPTPEMGInterface(BaseDataInterface):
 
         n_channels = continuous_data.shape[1]
 
-        # Pre-compute all series names to handle duplicates (e.g., "triceps long." appears twice)
-        # First pass: count occurrences of each base name
-        base_name_counts = {}
+        # A muscle recorded on several channels (monkey V's triceps longus) gets numbered series, 1, 2, ...
+        base_names = [f"EMG{muscles[muscle_name]['name']}" for muscle_name in self.muscle_names[:n_channels]]
+        base_name_counts = {base_name: base_names.count(base_name) for base_name in base_names}
+        channel_numbers = {}
         for channel_index in range(n_channels):
             muscle_name = self.muscle_names[channel_index]
-            # Use mapping for full anatomical name, fall back to camelCase of original
-            full_name = self.MUSCLE_NAME_MAP.get(
-                muscle_name,
-                "".join(word.capitalize() for word in muscle_name.replace(".", "").split())
-            )
-            base_name = f"EMG{full_name}"
-            base_name_counts[base_name] = base_name_counts.get(base_name, 0) + 1
-
-        # Second pass: assign names with numeric suffixes for duplicates
-        base_name_indices = {}
-        series_names = []
-        for channel_index in range(n_channels):
-            muscle_name = self.muscle_names[channel_index]
-            # Use mapping for full anatomical name, fall back to camelCase of original
-            full_name = self.MUSCLE_NAME_MAP.get(
-                muscle_name,
-                "".join(word.capitalize() for word in muscle_name.replace(".", "").split())
-            )
-            base_name = f"EMG{full_name}"
-
-            if base_name_counts[base_name] > 1:
-                # Multiple channels with same name: use 1, 2, 3...
-                base_name_indices[base_name] = base_name_indices.get(base_name, 0) + 1
-                series_names.append(f"{base_name}{base_name_indices[base_name]}")
-            else:
-                series_names.append(base_name)
-
-        # Create one TimeSeries per EMG channel/muscle
-        for channel_index in range(n_channels):
-            channel_data = continuous_data[:, channel_index]
-            muscle_name = self.muscle_names[channel_index]
-            series_name = series_names[channel_index]
-
-            # Get muscle description with anatomical function
-            muscle_description = self.MUSCLE_DESCRIPTIONS.get(muscle_name, muscle_name)
-
-            # For muscles recorded on more than one channel (Venus has two triceps longus
-            # channels in different muscle compartments), surface that this is intentional
-            # and that the numeric suffix does not encode anatomy.
-            base_name = f"EMG{self.MUSCLE_NAME_MAP.get(muscle_name, muscle_name)}"
+            base_name = base_names[channel_index]
+            muscle_description = muscles[muscle_name]["description"]
             duplicate_note = ""
-            if base_name_counts.get(base_name, 0) > 1:
-                channel_index_within_muscle = int(series_name.replace(base_name, ""))
-                duplicate_note = (
-                    f" Channel {channel_index_within_muscle} of {base_name_counts[base_name]} separate "
-                    f"electrodes placed in different compartments of {muscle_description.split(' - ')[0].lower()}. "
-                    f"The numeric suffix reflects channel order in the source mapping, not a known anatomical position."
+            series_name = base_name
+            if base_name_counts[base_name] > 1:
+                channel_numbers[base_name] = channel_numbers.get(base_name, 0) + 1
+                series_name = f"{base_name}{channel_numbers[base_name]}"
+                duplicate_note = " " + emg_metadata["duplicate_note"].format(
+                    channel=channel_numbers[base_name],
+                    n_channels=base_name_counts[base_name],
+                    muscle=muscle_description.split(" - ")[0].lower(),
                 )
+            inferred_compartment_note = emg_metadata["inferred_compartment_notes"].get(series_name)
+            inferred_compartment_note = " " + inferred_compartment_note if inferred_compartment_note else ""
 
-            inferred_compartment_note = self.INFERRED_COMPARTMENT_NOTES.get(series_name, "")
-
-            description = (
-                f"Preprocessed EMG from {muscle_description}.{duplicate_note}{inferred_compartment_note} "
-                "Recording: chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. "
-                "Signal processing (Pasquereau and Turner 2013): differentially amplified (gain = 10,000), "
-                "band-pass filtered (20 Hz to 5 kHz), rectified and then low-pass filtered (100 Hz), then digitized."
-            )
-
-            comments = (
-                "Data are uncalibrated A/D converter values (centered ~2048, consistent with 12-bit digitization). "
-                "The lab confirmed that no voltage calibration is available for the EMG. "
-                "Values represent relative muscle activation magnitude."
-            )
-
-            # Create EMG time series for this channel
             emg_series = TimeSeries(
                 name=series_name,
-                data=channel_data,
+                data=continuous_data[:, channel_index],
                 timestamps=timestamps,
                 unit="a.u.",
-                description=description,
-                comments=comments,
+                description=emg_metadata["description"].format(
+                    muscle_description=muscle_description,
+                    duplicate_note=duplicate_note,
+                    inferred_compartment_note=inferred_compartment_note,
+                ),
+                comments=emg_metadata["comments"],
             )
-
             nwbfile.add_acquisition(emg_series)
 
         if self.verbose:
