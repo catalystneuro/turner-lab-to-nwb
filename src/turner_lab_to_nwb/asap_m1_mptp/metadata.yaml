@@ -1,3 +1,5 @@
+# The metadata of the converted files of dandiset 001636 (Turner lab, M1 MPTP dataset). The conversion
+# reads every text it writes from here. Monkeys holds what differs between the two monkeys.
 NWBFile:
   related_publications:
     - "https://doi.org/10.1093/cercor/bhq217"
@@ -27,16 +29,6 @@ NWBFile:
     - pyramidal tract neurons
     - corticostriatal neurons
     - visuomotor task
-  surgery: |
-    Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
-    chamber implanted with stereotaxic guidance over left primary motor cortex (M1) and posterior
-    putamen, oriented 35° to the coronal plane. Multi-contact stimulating electrodes (Teflon-coated
-    PtIr microwires, 50-μm diameter) implanted for antidromic identification of corticostriatal
-    neurons and pyramidal tract neurons: posterior putamen (3-contact electrode), posterior putamen
-    (2-contact electrode), prepontine cerebral peduncle (2-contact electrode), and VL thalamus
-    (1-contact electrode). Orthodromic and antidromic responses elicited through these electrodes
-    are reported in the recorded data. Prophylactic antibiotics and analgesics administered
-    perioperatively.
   pharmacology: |
     MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine) administered at 0.5 mg/kg via unilateral
     left internal carotid artery under general anesthesia to induce hemiparkinsonian syndrome.
@@ -46,9 +38,641 @@ NWBFile:
     dopaminergic neuron counts.
 Subject:
   species: Macaca mulatta  # rhesus macaque
-  age: P3Y/P5Y  # Approximately 4 years at time of recording (R. Turner, personal communication, 2026-05-04); ISO 8601 interval encodes uncertainty
   sex: F  # Female (Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312)
-  weight: 4.8 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
-  description: |
-    MPTP-treated parkinsonian female rhesus macaque (Monkey V / Venus) used for motor cortex
-    electrophysiology during a step-tracking task performed with the elbow joint.
+
+# Ontology terms for the values the files carry, written into each file as HERD references by NeuroConv when it
+# writes the file. Each map is keyed by the exact value it annotates.
+ExternalResources:
+  species:
+    Macaca mulatta:
+      id: "NCBITaxon:9544"
+      uri: "http://purl.obolibrary.org/obo/NCBITaxon_9544"
+  experimenter:
+    "Turner, Robert S.":
+      id: "orcid:0000-0002-6074-4365"
+      uri: "https://orcid.org/0000-0002-6074-4365"
+    "Pasquereau, Benjamin":
+      id: "orcid:0000-0003-2855-0672"
+      uri: "https://orcid.org/0000-0003-2855-0672"
+  institution:
+    University of Pittsburgh:
+      id: "ror:01an3r305"
+      uri: "https://ror.org/01an3r305"
+  # The electrode group's location, and the electrodes' location (the D99 label of the recording site)
+  anatomical_structures:
+    "Primary motor cortex (M1), area 4, arm area":
+      id: "UBERON:0001384"
+      uri: "http://purl.obolibrary.org/obo/UBERON_0001384"
+    "agranular frontal area F1 (or area 4)":
+      id: "UBERON:0001384"
+      uri: "http://purl.obolibrary.org/obo/UBERON_0001384"
+
+# What differs between the two monkeys. The section of the session's monkey is merged over the rest of this file.
+Monkeys:
+  V:
+    joint: elbow
+    NWBFile:
+      surgery: |
+        Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
+        chamber implanted with stereotaxic guidance over left primary motor cortex (M1) and posterior
+        putamen, oriented 35° to the coronal plane. Multi-contact stimulating electrodes (Teflon-coated
+        PtIr microwires, 50-μm diameter) implanted for antidromic identification of corticostriatal
+        neurons and pyramidal tract neurons: posterior putamen (3-contact electrode), posterior putamen
+        (2-contact electrode), prepontine cerebral peduncle (2-contact electrode), and VL thalamus
+        (1-contact electrode). Orthodromic and antidromic responses elicited through these electrodes
+        are reported in the recorded data. Prophylactic antibiotics and analgesics administered
+        perioperatively.
+    Subject:
+      subject_id: Venus
+      age: P3Y/P5Y  # Approximately 4 years at time of recording (R. Turner, personal communication, 2026-05-04); ISO 8601 interval encodes uncertainty
+      weight: 4.8 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
+      description: |
+        MPTP-treated parkinsonian female rhesus macaque (Monkey V / Venus) used for motor cortex
+        electrophysiology during a step-tracking task performed with the elbow joint.
+    Devices:
+      TorqueMotor:
+        description: >-
+          TQ40W torque motor (Aerotech Inc.) used in the manipulandum system to provide resistance and position control
+          during the visuomotor step-tracking task. The monkey's arm was held in a padded manipulandum with the elbow
+          joint aligned with the torque motor axis of rotation. See the torque series description for what the
+          recorded command shows. Note: Pasquereau and Turner (2013) describe a second use, brief, temporally
+          unpredictable torque perturbations (0.1 Nm, 50 ms impulse) on randomly selected trials to evoke stretch
+          reflexes.
+    Behavior:
+      Manipulandum:
+        angle:
+          name: ElbowAngle
+        velocity:
+          name: ElbowVelocity
+          description: Elbow joint velocity during visuomotor task
+        torque:
+          name: ElbowTorque
+          description: >-
+            Command sent to the torque motor controller, in arbitrary units. Perturbations appear as 50 ms pulses that
+            leave rest about 5 ms after torque_perturbation_onset_time and reach half their peak at about 8 ms
+            (sessions v1401, v1402 and v1501 have perturbation times but no pulses in the command). The pulse size
+            varies: before MPTP each session uses one of three levels (about 46, 91 and 183 units above rest); after
+            MPTP it varies from trial to trial and is often followed by a command in the opposite direction. No
+            conversion to newton-metres is available: the amplifier and controller gains are not in these MATLAB
+            files, and the original recordings they were exported from were not provided. Note: Pasquereau and Turner
+            (2013) describe the perturbations as 0.1 Nm, 50 ms torque impulses delivered 1 to 2 s after center target
+            capture.
+    # Chronically implanted stimulation electrodes, in the row order of the StimulationElectrodesTable. stim_type is
+    # the source field of the sweeps each electrode delivered (only the first putamen electrode stands for StrStim,
+    # as the source data does not distinguish the two). Complement confirmed by R. Turner, 2026-05-04.
+    StimulationElectrodes:
+      row_summary: "Row indices: 0=peduncle, 1-2=putamen (2 electrodes), 3=thalamus."
+      electrodes:
+        - stim_type: PedStim
+          name: DeviceMicrowirePeduncleStimulation
+          device_description: >-
+            Custom-built PtIr multi-contact microwire electrode (2 contacts) for antidromic stimulation in pre-pontine
+            cerebral peduncle. Chronically implanted for PTN identification.
+          location: Cerebral peduncle (pre-pontine)
+          n_contacts: 2
+          notes: Pre-pontine peduncle (2 contacts). For PTN identification.
+        - stim_type: StrStim
+          name: DeviceMicrowirePutamenStimulation1
+          device_description: >-
+            Custom-built PtIr multi-contact microwire electrode (3 contacts), 1 of 2 chronically implanted in
+            posterolateral putamen for CSN identification.
+          location: Putamen (posterolateral)
+          n_contacts: 3
+          notes: >-
+            Electrode 1 of 2, posterolateral putamen (3 contacts), for M1 CSN projections. Used as representative
+            electrode reference for all StrStim data; the two physical putamen electrodes are documented but not
+            distinguished in source data.
+        - stim_type: null
+          name: DeviceMicrowirePutamenStimulation2
+          device_description: >-
+            Custom-built PtIr multi-contact microwire electrode (2 contacts), 2 of 2 chronically implanted in
+            posterolateral putamen for CSN identification.
+          location: Putamen (posterolateral)
+          n_contacts: 2
+          notes: >-
+            Electrode 2 of 2, posterolateral putamen (2 contacts), for M1 CSN projections. Physical electrode
+            documented but not distinguished in source data.
+        - stim_type: ThalStim
+          name: DeviceMicrowireThalamicStimulation
+          device_description: >-
+            Custom-built PtIr microwire electrode (1 contact) for antidromic stimulation in VL thalamus. Chronically
+            implanted for thalamocortical projection identification.
+          location: Ventrolateral thalamus
+          n_contacts: 1
+          notes: VL thalamus (1 contact) for thalamocortical projection identification.
+  L:
+    joint: wrist
+    NWBFile:
+      surgery: |
+        Aseptic surgery under Isoflurane inhalation anesthesia. Cylindrical stainless steel recording
+        chamber implanted with stereotaxic guidance over left primary motor cortex (M1), oriented 35°
+        to the coronal plane. Multi-contact stimulating electrodes (Teflon-coated PtIr microwires,
+        50-um diameter) implanted for antidromic identification of projection neuron types: posterior
+        putamen (2-contact electrode), posterior putamen (2-contact electrode), prepontine cerebral
+        peduncle (2-contact electrode), VL thalamus (2-contact electrode), and subthalamic nucleus
+        (2-contact electrode). Prophylactic antibiotics and analgesics administered perioperatively.
+    Subject:
+      subject_id: Leu
+      age: P2Y/P4Y  # Approximately 3 years at time of recording (R. Turner, personal communication, 2026-05-04); ISO 8601 interval encodes uncertainty
+      weight: 6 kg  # From Pasquereau & Turner, Brain 2016, doi:10.1093/brain/awv312
+      description: |
+        MPTP-treated parkinsonian female rhesus macaque (Monkey L / Leu) used for motor cortex
+        electrophysiology during a step-tracking task performed with the wrist joint.
+    Devices:
+      TorqueMotor:
+        description: >-
+          TQ40W torque motor (Aerotech Inc.) used in the manipulandum system to provide resistance and position control
+          during the visuomotor step-tracking task. The monkey's arm was held in a padded manipulandum with the wrist
+          joint aligned with the torque motor axis of rotation. See the torque series description for what the
+          recorded command shows. Note: Pasquereau and Turner (2013) describe a second use, brief, temporally
+          unpredictable torque perturbations (0.1 Nm, 50 ms impulse) on randomly selected trials to evoke stretch
+          reflexes.
+    Behavior:
+      Manipulandum:
+        angle:
+          name: WristAngle
+        velocity:
+          name: WristVelocity
+          description: Wrist joint velocity during visuomotor task
+        torque:
+          name: WristTorque
+          description: >-
+            Command sent to the torque motor controller, in arbitrary units. The monkey L source files contain no
+            torque perturbation times. The command is NaN in every file before MPTP; after MPTP it is a continuous
+            trace without distinct pulses. No conversion to newton-metres is available: the amplifier and controller
+            gains are not in these MATLAB files, and the original recordings they were exported from were not
+            provided.
+    StimulationElectrodes:
+      row_summary: "Row indices: 0=peduncle, 1-2=putamen (2 electrodes), 3=thalamus, 4=STN."
+      electrodes:
+        - stim_type: PedStim
+          name: DeviceMicrowirePeduncleStimulation
+          device_description: >-
+            Custom-built PtIr multi-contact microwire electrode (2 contacts) for antidromic stimulation in pre-pontine
+            cerebral peduncle. Chronically implanted for PTN identification.
+          location: Cerebral peduncle (pre-pontine)
+          n_contacts: 2
+          notes: Pre-pontine peduncle (2 contacts). For PTN identification.
+        - stim_type: StrStim
+          name: DeviceMicrowirePutamenStimulation1
+          device_description: >-
+            Custom-built PtIr multi-contact microwire electrode (2 contacts), 1 of 2 chronically implanted in
+            posterolateral putamen for CSN identification.
+          location: Putamen (posterolateral)
+          n_contacts: 2
+          notes: >-
+            Electrode 1 of 2, posterolateral putamen (2 contacts), for M1 CSN projections. Used as representative
+            electrode reference for all StrStim data; the two physical putamen electrodes are documented but not
+            distinguished in source data.
+        - stim_type: null
+          name: DeviceMicrowirePutamenStimulation2
+          device_description: >-
+            Custom-built PtIr multi-contact microwire electrode (2 contacts), 2 of 2 chronically implanted in
+            posterolateral putamen for CSN identification.
+          location: Putamen (posterolateral)
+          n_contacts: 2
+          notes: >-
+            Electrode 2 of 2, posterolateral putamen (2 contacts), for M1 CSN projections. Physical electrode
+            documented but not distinguished in source data.
+        - stim_type: ThalStim
+          name: DeviceMicrowireThalamicStimulation
+          device_description: >-
+            Custom-built PtIr microwire electrode (2 contacts) for antidromic stimulation in VL thalamus. Chronically
+            implanted for thalamocortical projection identification.
+          location: Ventrolateral thalamus
+          n_contacts: 2
+          notes: VL thalamus (2 contacts) for thalamocortical projection identification.
+        - stim_type: STNStim
+          name: DeviceMicrowireSTNStimulation
+          device_description: >-
+            Custom-built PtIr multi-contact microwire electrode (2 contacts) for antidromic stimulation in subthalamic
+            nucleus (STN). Chronically implanted for STN projection identification.
+          location: Subthalamic nucleus (STN)
+          n_contacts: 2
+          notes: Subthalamic nucleus (2 contacts) for STN projection identification.
+
+# Text that depends on the session, filled in by conversion_script.py
+Session:
+  session_description_suffix: " MPTP condition: {mptp}. Cell types: {cell_types}."
+  pharmacology_suffix:
+    Pre: "\n\nSession-specific information: This recording was obtained BEFORE MPTP administration (baseline control condition)."
+    Post: "\n\nSession-specific information: This recording was obtained AFTER MPTP administration (parkinsonian condition)."
+  notes:
+    missing_analog_data: >-
+      MISSING ANALOG DATA: This session has no manipulandum angle, velocity, or torque data due to an A/D converter
+      malfunction that corrupted the analog recording channel. The malfunction produced a completely flat signal.
+      Spike times, trial events, and antidromic stimulation data (if any) are unaffected.
+    target_amplitude_not_available: >-
+      TARGET AMPLITUDE NOT AVAILABLE: target_amplitude_degrees is NaN for the trials of {files}. The target list in
+      the source file does not line up with the recorded trials: the target sizes it gives disagree with the measured
+      movement amplitudes (derived_movement_amplitude), so they are left out. The movement amplitudes and all other
+      trial values are unaffected.
+    # Every session ends with these, after the notes from session planning (merged files, duplicated units)
+    always:
+      - >-
+        TEMPORAL DATA STRUCTURE: This dataset was converted from trialized MATLAB files where all timestamps were
+        relative to individual trial starts. Inter-trial intervals were NOT recorded in the source data.
+      - >-
+        SESSION TIMING: Recording dates are accurate from experimental logs, but precise session start times within
+        each day are not available. session_start_time is set to midnight (Pittsburgh timezone) for every session,
+        including sessions recorded on the same date.
+      - >-
+        ARTIFICIAL GAPS: Trials are separated by fixed 3-second gaps for temporal organization. These gaps are
+        placeholders and should NOT be interpreted as actual behavioral timing.
+      - |-
+        DATA VALIDITY ANNOTATIONS:
+        1. invalid_times table: Lists all inter-trial gaps (tagged 'artificial_inter_trial_gap'). Use this to exclude gap periods from continuous data analysis (LFP, EMG, kinematics).
+        2. Units obs_intervals: Each unit has observation intervals specifying when it was recorded. Spikes only occurred during these intervals; gaps represent 'not observable', not 'silent'.
+      - >-
+        ANALOG vs TRIAL TIMING: Analog data (manipulandum, EMG, LFP) end a few milliseconds before the trial stop_time
+        (5 to 6 ms in monkey V, 15 to 24 ms in monkey L, whose analog data are sampled every 10 ms) because the analog
+        recorder stopped slightly before the behavioral software marked the trial as ended. Some spikes can occur in
+        this gap. Trial boundaries (start_time, stop_time, obs_intervals, invalid_times) use the authoritative
+        Events.end timestamp, not analog data length.
+
+Devices:
+  DeviceMicroelectrodeRecording:
+    name: DeviceMicroelectrodeRecording
+    description: >-
+      Glass-coated PtIr microelectrode mounted in hydraulic microdrive (MO-95, Narishige Intl., Tokyo). Signal
+      amplified 10^4, bandpass filtered 0.3-10kHz. Sampling: 20kHz for unit discrimination.
+  TorqueMotor:
+    name: TorqueMotor
+    manufacturer: Aerotech Inc.
+
+Ecephys:
+  ElectrodeGroups:
+    MicroelectrodeRecording:
+      name: ElectrodeGroupMicroelectrodeRecording
+      description: >-
+        Left primary motor cortex recording within chamber-relative coordinate system. Chamber surgically positioned
+        over left M1. Daily positions relative to chamber center. Functional verification via microstimulation
+        (≤40μA, 10 pulses at 300Hz).
+      location: Primary motor cortex (M1), area 4, arm area
+      device_metadata_key: DeviceMicroelectrodeRecording
+  # Location of electrodes without atlas coordinates; the others take their curated D99 label
+  electrode_location: Primary motor cortex (M1), area 4, arm area
+  electrode_filtering: 0.3-10kHz bandpass for spikes, 1-100Hz for LFP when available
+  electrode_columns:
+    chamber_grid_ap_mm: >-
+      Chamber grid position along the anterior-posterior axis, relative to chamber center (mm, positive = posterior).
+      Recordings span -7 to 0 mm (all anterior to chamber center). NaN for stimulation electrodes.
+    chamber_grid_ml_mm: >-
+      Chamber grid position along the medial-lateral axis, relative to chamber center (mm, positive = right).
+      Recordings span -6 to -2 mm (all in left hemisphere). NaN for stimulation electrodes.
+    chamber_insertion_depth_mm: >-
+      Electrode insertion depth from chamber reference point (mm, positive = deeper, range: 8.4-27.6mm). NaN for
+      stimulation electrodes.
+    icms_effect: >-
+      Movement evoked by intracortical microstimulation (ICMS) at recording site (10 biphasic pulses at 300 Hz,
+      typically at or below 20 uA). Microexcitability at low currents is a hallmark of primary motor cortex. Values:
+      movement description (e.g. 'wrist ext.', 'finger flex'), 'NT' (not tested), 'NR'/'nr' (no response).
+    icms_threshold_uA: >-
+      Minimum current (microamps) at which ICMS evoked movement at the recording site. Low thresholds (<30 uA) confirm
+      primary motor cortex (M1) recording location. NaN if not tested or no response.
+  # The three atlas coordinate tables share their column descriptions
+  AtlasCoordinatesColumns:
+    brain_region_lookup_method: >-
+      How the curated brain_region_id was determined: 'exact' = the raw atlas voxel at this coordinate is already the
+      atlas's native primary motor cortex (M1) label, so the raw voxel answer is used; 'nearest_neighbor' = the raw
+      voxel was non-M1 or unlabeled, so the label was set to the nearest M1 voxel within 5 mm (distance in
+      brain_region_distance_mm); 'no_m1_within_5mm' = no M1 voxel within the 5 mm cap, brain_region_id is 'outside'.
+    brain_region_distance_mm: >-
+      Euclidean distance in mm from the electrode coordinate to the nearest atlas-native M1 voxel. 0.0 when
+      brain_region_lookup_method is 'exact'; positive float for 'nearest_neighbor'; NaN for 'no_m1_within_5mm'.
+    voxel_label_id: >-
+      Raw atlas voxel label ID at this coordinate (no interpolation). Distinct from brain_region_id, which is curated
+      to the atlas's native M1 label; voxel_label_id is whatever the atlas says at that voxel. Special values:
+      'unlabeled' when the voxel is inside the template but carries label=0 (sulcal-gap artifact or simply
+      unparcellated tissue); 'outside_volume' when the coordinate falls outside the template's bounding box.
+    voxel_label: >-
+      Full-name form of voxel_label_id. Special values: 'unlabeled voxel (label=0)' and 'outside template volume'.
+    raw_coordinate: >-
+      Raw (uncurated) atlas-space coordinate component (mm). For D99 this is the output of the author's chamber-to-D99
+      geometric transform (no MRI registration). For NMT and MEBRAINS this is the RheMAP warp of that raw D99 point.
+      Distinct from the curated x / y / z columns, which hold the RheMAP warp of the nearest F1_(4) voxel center to the
+      raw D99 coordinate (within a 5 mm cap); the curated values are what the dandi-atlas viewer renders on the map.
+      Equal to the curated value when the raw D99 coord lies exactly on an F1 voxel center.
+  AtlasCoordinates:
+    D99:
+      name: D99v2AtlasCoordinates
+      description: >-
+        Recording electrode coordinates in D99 macaque atlas space (RAS orientation, mm; origin at the anterior
+        commissure). D99 is the author's canonical coordinate frame for this dataset. See
+        https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/nonhuman/macaque_tempatl/atlas_d99v2.html
+      method: >-
+        COORDINATE ORIGIN (per-electrode x/y/z). Computed by Dr. Robert Turner (data author) from chamber-relative
+        positions using a geometric transform: constant AP offset (-8.2 mm, chamber center to anterior commissure)
+        and 35-degree coronal-plane rotation coupling ML and Depth to the D99 R and S axes. No individual MRI
+        registration was used; coordinate accuracy is limited by the geometric approximation (no subject-specific
+        warping). REGION ANNOTATION (brain_region_id and voxel_label_id columns). Computed by the conversion
+        pipeline, not provided by the data author. 'voxel_label_id' is the raw D99 atlas voxel label at the coordinate
+        (honest atlas answer). 'brain_region_id' is a curated M1-constrained label: if the raw voxel is F1_(4) (D99
+        label id 359, primary motor cortex), it is preserved; otherwise the nearest F1_(4) voxel within 5 mm is
+        chosen, with the distance recorded in 'brain_region_distance_mm' and flagged in 'brain_region_lookup_method'.
+        AUTHORITY. The curated label reflects the ICMS-verified motor identity of the recording site (every electrode
+        in this dataset has icms_threshold_uA < 30 uA on the electrodes table, which is cytoarchitectonically specific
+        to primary motor cortex). The curation is a dataset-specific convenience for dandiset 001636 and is not
+        authoritative atlas output; it should not be used as a substitute for the ICMS evidence or extended to
+        datasets with non-motor recordings.
+      brain_region_id: >-
+        Curated D99 M1 label (viewer-facing). Always 'F1_(4)' unless the electrode coordinate is > 5 mm from any D99
+        F1 voxel, in which case 'outside'.
+    NMT:
+      name: NMTv2AtlasCoordinates
+      description: >-
+        Recording electrode coordinates in NMT v2.0-sym (NIMH Macaque Template, symmetric) atlas space (RAS
+        orientation, mm; origin at ear bar zero). Coordinates are derived by nonlinear warping of the author's D99
+        coordinate into NMT space. See
+        https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/nonhuman/macaque_tempatl/template_nmtv2.html
+      method: >-
+        COORDINATE ORIGIN (per-electrode x/y/z). The author-provided D99 coordinate (geometric transform by Dr. Robert
+        Turner, no MRI registration) is warped into NMT v2.0-sym space using the RheMAP pre-computed nonlinear
+        composite warp (NMTv2.0-sym_to_D99_CompositeWarp.nii.gz, applied in reverse for point transforms; RAS<->LPS
+        conversion around the ANTs call; Sirmpilatze & Klink 2020, DOI:10.5281/zenodo.4748589). The NMT coordinate
+        inherits the uncertainty of the source D99 geometric transform and adds the RheMAP warp uncertainty on top.
+        REGION ANNOTATION (brain_region_id and voxel_label_id columns). Computed by the conversion pipeline, not
+        provided by the data author. 'voxel_label_id' is the raw CHARM level-4 voxel label at the coordinate (honest
+        atlas answer). 'brain_region_id' is a curated M1-constrained label: if the raw voxel is M1 (CHARM level-4
+        index 79, primary motor cortex), it is preserved; otherwise the nearest M1 voxel within 5 mm is chosen, with
+        the distance in 'brain_region_distance_mm' and the flag in 'brain_region_lookup_method'. The CHARM level-4
+        parcellation does not subdivide M1 (M1 remains a single label at every CHARM level 4-6), so
+        'brain_region_id' always reads 'M1' on this dataset. Many electrodes land in the central sulcus fundus, where
+        post-mortem tissue shrinkage opens unlabeled gaps in the template that do not exist in vivo; the curation
+        absorbs this artifact. AUTHORITY. The curated label reflects the ICMS-verified motor identity of the recording
+        site (see 'icms_threshold_uA' on the electrodes table). Unconstrained nearest-neighbor (snapping to any labeled
+        region) was tested and rejected: it mislabeled 100% of Leu electrodes as somatosensory cortex, because the S1
+        bank of the sulcal gap is geometrically closer in the template but functionally wrong for these ICMS-confirmed
+        M1 recordings. The M1-constrained curation is a dataset-specific convenience for dandiset 001636.
+      brain_region_id: >-
+        Curated CHARM M1 label (viewer-facing). Always 'M1' unless the electrode coordinate is > 5 mm from any CHARM
+        M1 voxel, in which case 'outside'.
+    MEBRAINS:
+      name: MEBRAINSAtlasCoordinates
+      description: >-
+        Recording electrode coordinates in MEBRAINS 1.0 (population-based macaque template; Balan et al. 2024) atlas
+        space (RAS orientation, mm; origin at the anterior commissure). Coordinates are derived by nonlinear warping of
+        the author's D99 coordinate into MEBRAINS space. See https://doi.org/10.1162/imag_a_00077
+      method: >-
+        COORDINATE ORIGIN (per-electrode x/y/z). The author-provided D99 coordinate (geometric transform by Dr. Robert
+        Turner, no MRI registration) is warped into MEBRAINS space using the RheMAP pre-computed nonlinear composite
+        warp (MEBRAINS_to_D99_CompositeWarp.nii.gz, applied in reverse for point transforms; RAS<->LPS conversion
+        around the ANTs call; https://gin.g-node.org/ChrisKlink/RheMAP). The MEBRAINS coordinate inherits the
+        uncertainty of the source D99 geometric transform and adds the RheMAP warp uncertainty on top. REGION
+        ANNOTATION (brain_region_id and voxel_label_id columns). Computed by the conversion pipeline, not provided by
+        the data author. 'voxel_label_id' is the raw MEBRAINS voxel label at the coordinate (honest atlas answer,
+        numeric string form of the Julich Brain Macaque label ID). 'brain_region_id' is a curated M1-constrained label:
+        if the raw voxel is 4a (301) or 4p (303), it is preserved (both are M1 subdivisions, anterior vs posterior);
+        otherwise the nearest M1 voxel (4a or 4p) within 5 mm is chosen, with the distance in
+        'brain_region_distance_mm' and the flag in 'brain_region_lookup_method'. MEBRAINS has wider sulcal gaps than
+        D99 due to post-mortem tissue processing, causing many electrodes to land in unlabeled voxels at the central
+        sulcus fundus; the curation absorbs this. AUTHORITY. The curated label reflects the ICMS-verified motor
+        identity of the recording site (see 'icms_threshold_uA' on the electrodes table). MEBRAINS is the only atlas of
+        the three whose native parcellation subdivides M1, so the 4a/4p distinction is the finest-granularity M1
+        anatomical position this dataset carries. The M1-constrained curation is a dataset-specific convenience for
+        dandiset 001636.
+      brain_region_id: >-
+        Curated MEBRAINS M1 label (viewer-facing, numeric string form). '301' for 4a left (anterior M1), '303' for 4p
+        left (posterior M1). 'outside' only if the electrode coordinate is > 5 mm from any MEBRAINS M1 voxel.
+  ProcessingModule:
+    name: ecephys
+    description: Processed extracellular electrophysiology data
+  LFP:
+    name: LFP
+    description: >-
+      Local field potential from M1 microelectrode. Recorded simultaneously with single-unit activity during
+      visuomotor task. Signal processing: 10k gain, 1-100 Hz bandpass filtered.
+    comments: >-
+      Raw 12-bit unsigned A/D counts (centered ~2048). No voltage calibration applied: the LFP digitizer's ADC range
+      is undocumented, and the lab confirmed that no voltage calibration is available. LFP from same electrode as
+      spike recordings (electrode metadata available in nwbfile.electrodes). Trials concatenated with inter-trial
+      gaps.
+
+Units:
+  description: >-
+    Single units isolated online, during each recording session, by template-matching spike sorting hardware
+    (MultiSpike Detector, Alpha Omega Engineering). The lab confirmed that spike waveforms were not saved, so unit
+    isolation cannot be reassessed from these files. The antidromic stimulation sweeps hold the only recorded samples
+    of the units' waveforms.
+  columns:
+    neuron_projection_type: >-
+      Classification of layer 5 M1 neurons based on axonal projection target, determined through antidromic
+      activation (electrical stimulation at target sites evoking backward-traveling spikes). Values: |
+      'pyramidal_tract_neuron': Large layer 5b neurons projecting to spinal cord via corticospinal tract, identified by
+      cerebral peduncle stimulation (latency 0.6-2.5 ms) | 'corticostriatal_neuron': Intratelencephalic-type neurons
+      projecting to posterolateral putamen, identified by striatal stimulation (latency 2.0-20 ms) | 'no_response':
+      Antidromic stimulation attempted at one or both sites but neuron did not respond | 'not_tested': Antidromic
+      identification was not performed for this neuron | 'pyramidal_tract_and_corticostriatal_neuron':
+      Dual-projecting neuron responding to both sites | 'pyramidal_tract_and_thalamic_neuron': Neuron projecting to
+      both pyramidal tract and thalamus | 'thalamic_projection_neuron': Neuron projecting to thalamus |
+      'subthalamic_projection_neuron': Neuron projecting to subthalamic nucleus |
+      'subthalamic_and_corticostriatal_neuron': Neuron projecting to both STN and striatum |
+      'subthalamic_and_thalamic_neuron': Neuron projecting to both STN and thalamus |
+      'pyramidal_tract_and_subthalamic_neuron': Neuron projecting to both pyramidal tract and STN
+    antidromic_stimulation_sites: >-
+      Anatomical sites where antidromic stimulation was delivered via chronically implanted electrodes to identify
+      neuron projection targets. Values: | 'cerebral_peduncle': Stimulation of corticospinal tract fibers to identify
+      pyramidal tract neurons (100-400 uA, 0.2 ms biphasic pulses) | 'posterolateral_striatum': Stimulation of
+      putamen to identify corticostriatal neurons (100-600 uA, 0.2 ms biphasic pulses) |
+      'cerebral_peduncle_and_posterolateral_striatum': Both stimulation sites were tested | 'subthalamic_nucleus':
+      Stimulation of subthalamic nucleus (STN) | 'cerebral_peduncle_and_subthalamic_nucleus': Both peduncle and STN
+      sites were tested | '': The lab's metadata table does not list the stimulation sites for this neuron. This
+      includes neurons that were tested; neuron_projection_type gives the test result
+    antidromic_latency_ms: >-
+      Latency from stimulation to antidromic spike arrival at the recording electrode (in milliseconds) for the
+      primary stimulation site. Reflects axon conduction velocity: PTNs have shorter latencies (0.6-2.5 ms) due to
+      large, fast-conducting axons; CSNs have longer latencies (2.0-20 ms) due to smaller axons. Classification
+      required fixed latency, high-frequency following (>200 Hz), and collision test confirmation.
+    antidromic_threshold: >-
+      Minimum stimulation current (in microamps) required to reliably evoke antidromic activation at the primary
+      stimulation site. Lower thresholds indicate electrode proximity to the axon or larger axon diameter. Typical
+      ranges: 100-400 uA for cerebral peduncle, 100-600 uA for striatum.
+    antidromic_latency_2_ms: >-
+      Antidromic response latency (in milliseconds) from secondary stimulation site, for neurons with dual
+      projections (e.g., pyramidal_tract_and_corticostriatal_neuron). NaN if not applicable.
+    antidromic_threshold_2: >-
+      Minimum stimulation current (in microamps) for antidromic activation at the secondary stimulation site. NaN if
+      neuron does not have dual projections or secondary site was not tested.
+    receptive_field_location: >-
+      Body region comprising this neuron's somatosensory receptive field, determined through qualitative
+      sensorimotor examination. The experimenter manually manipulated the monkey's contralateral arm (passive joint
+      movement, skin contact) while monitoring neural activity on an audio speaker. Values: | 'hand': Receptive field
+      on the hand | 'wrist': Receptive field at the wrist joint | 'elbow': Receptive field at the elbow joint |
+      'forearm': Receptive field on the forearm | 'shoulder': Receptive field at the shoulder | 'finger': Receptive
+      field on digit(s) | Combinations (e.g., 'hand / wrist'): Neuron responds to multiple body regions |
+      'no_response': Sensory testing performed but no response detected | 'not_tested': Sensory mapping not
+      performed (limited recording time)
+    receptive_field_stimulus: >-
+      Specific sensory stimulus or manipulation that activated this neuron during qualitative receptive field mapping
+      (qualitative observer assessment, not quantified). Values: | 'ext': Joint extension (proprioceptive) | 'flex':
+      Joint flexion (proprioceptive) | 'pron': Forearm pronation (proprioceptive) | 'sup': Forearm supination
+      (proprioceptive) | 'light touch': Light tactile stimulation | 'palm probe': Pressure on palm | 'finger tap':
+      Tapping on digit(s) | 'cut stim': Cutaneous (skin) stimulation | 'active': Firing during voluntary movement |
+      'active grip': Firing during voluntary grip | 'active hand': Firing during voluntary hand movement |
+      Combinations (e.g., 'finger ext & elbow ext'): Multi-joint responses | 'NR': No response to any stimulus tested
+      | 'NT': Sensory testing not performed | '': Testing data not recorded
+    unit_name: >-
+      Source of this unit in the lab's MATLAB files, as '{file}.{unit}': the file name and the unit number within it,
+      matching FName1/UnitNum1 of the lab's metadata table (e.g. 'v0502.1' is unit 1 of file v0502). A neuron
+      recorded across several files of the same day lists those files in recording order joined by '+' (e.g.
+      'v2701.1+v2702.2'); only files that contribute trials are listed.
+    is_post_mptp: >-
+      Boolean indicating parkinsonian state at time of recording. MPTP (1-methyl-4-phenyl-1,2,3,6-tetrahydropyridine)
+      was administered once via unilateral left internal carotid artery injection (0.5 mg/kg), inducing selective
+      dopaminergic cell death in the ipsilateral substantia nigra and producing stable contralateral
+      hemiparkinsonian symptoms. Comparing pre/post recordings reveals how parkinsonism affects cortical motor
+      encoding, particularly in pyramidal tract neurons. Values: | False: Pre-MPTP baseline recording (healthy motor
+      control) | True: Post-MPTP recording after parkinsonian symptoms stabilized (bradykinesia, rigidity, movement
+      initiation deficits)
+
+# Descriptions of the trial columns without HED tags; the others are in assets/trials_hed_sidecar.json
+Trials:
+  columns:
+    movement_type: flexion or extension
+    source_file: >-
+      Source MATLAB file of this trial, without the unit number (e.g. 'v1501' for v1501.1.mat). Sessions merged from
+      several files of the same day list each trial's own file.
+    torque_perturbation_type: >-
+      direction of torque perturbation causing muscle stretch (flexion/extension/none). 'not_available' in monkey L
+      files, whose source data contain no perturbation times.
+
+Behavior:
+  ProcessingModule:
+    name: behavior
+    description: Behavioral data
+  Manipulandum:
+    angle:
+      description: Raw manipulandum angle from sensor during visuomotor flexion/extension task
+      reference_frame: Anatomical flexion/extension axis, 0 degrees = neutral position, positive = flexion
+  EMG:
+    # Each muscle of the lab's metadata table: the series name after "EMG" and its description
+    muscles:
+      triceps long.:
+        name: TricepsLongus
+        description: Triceps longus (long head) - elbow extensor
+      triceps lat.:
+        name: TricepsLateralis
+        description: Triceps lateralis (lateral head) - elbow extensor
+      brachioradialis:
+        name: Brachioradialis
+        description: Brachioradialis - elbow flexor and forearm supinator/pronator
+      trapezius:
+        name: Trapezius
+        description: Trapezius - shoulder and scapula stabilizer
+      deltoid post.:
+        name: DeltoidPosterior
+        description: Posterior deltoid - shoulder extensor and external rotator
+      flexor carpi ulnaris:
+        name: FlexorCarpiUlnaris
+        description: Flexor carpi ulnaris - wrist flexor and ulnar deviator
+      flexor carpi radialis:
+        name: FlexorCarpiRadialis
+        description: Flexor carpi radialis - wrist flexor and radial deviator
+      biceps longus:
+        name: BicepsLongus
+        description: Biceps brachii (long head) - elbow flexor and forearm supinator
+    description: >-
+      Preprocessed EMG from {muscle_description}.{duplicate_note}{inferred_compartment_note} Recording:
+      chronically-implanted Teflon-insulated multistranded stainless steel wire electrodes. Signal processing
+      (Pasquereau and Turner 2013): differentially amplified (gain = 10,000), band-pass filtered (20 Hz to 5 kHz),
+      rectified and then low-pass filtered (100 Hz), then digitized.
+    # For a muscle recorded on more than one channel (monkey V has two triceps longus channels)
+    duplicate_note: >-
+      Channel {channel} of {n_channels} separate electrodes placed in different compartments of {muscle}. The
+      numeric suffix reflects channel order in the source mapping, not a known anatomical position.
+    # The two triceps longus channels: compartments inferred from the data (scripts/triceps_compartment_analysis/),
+    # not confirmed by the lab, so they are in the descriptions and not in the series names
+    inferred_compartment_notes:
+      EMGTricepsLongus1: >-
+        Inferred compartment: distal (provisional). Empirical analysis across ~280 Venus sessions, using
+        cross-correlation lead-lag and posterior-deltoid correlation between the two triceps longus channels (see
+        scripts/triceps_compartment_analysis/), suggests this channel is the more distal of the two compartments. The
+        assignment is not confirmed by the original investigators and is intentionally not encoded in the channel
+        name.
+      EMGTricepsLongus2: >-
+        Inferred compartment: proximal (provisional). Empirical analysis across ~280 Venus sessions, using
+        cross-correlation lead-lag and posterior-deltoid correlation between the two triceps longus channels (see
+        scripts/triceps_compartment_analysis/), suggests this channel is the more proximal of the two compartments. The
+        assignment is not confirmed by the original investigators and is intentionally not encoded in the channel
+        name.
+    comments: >-
+      Data are uncalibrated A/D converter values (centered ~2048, consistent with 12-bit digitization). The lab
+      confirmed that no voltage calibration is available for the EMG. Values represent relative muscle activation
+      magnitude.
+
+AntidromicIdentification:
+  ProcessingModule:
+    name: antidromic_identification
+    description: >-
+      Antidromic stimulation tests for neuron classification. Contains consolidated electrical stimulation and neural
+      response recordings (50ms sweeps at 20kHz) from chronically implanted electrodes used to identify pyramidal
+      tract neurons (PTNs) and corticostriatal neurons (CSNs) via collision tests and frequency-following tests. Data
+      is organized as one response series and one stimulation series per unit/location combination, with the
+      intervals table (AntidromicSweepsIntervals) providing TimeSeriesReference columns to access individual sweeps
+      within the consolidated series.
+  StimulationElectrodesTable:
+    name: StimulationElectrodesTable
+    description: >-
+      Chronically implanted multi-contact macroelectrodes (custom-built PtIr microwires) for antidromic neuron
+      identification. These electrodes were surgically implanted and present for all recording sessions, though
+      antidromic testing was not performed for every recorded neuron. Used to classify M1 neurons as PTNs (peduncle),
+      CSNs (putamen), thalamocortical neurons (thalamus), or STN-projecting neurons (subthalamic nucleus). Per-animal
+      complement confirmed by R. Turner (personal communication, 2026-05-04). {row_summary}
+    columns:
+      location: Anatomical location of stimulation site
+      device_name: Name of the device in nwbfile.devices
+      n_contacts: Number of stimulation contacts on this multi-contact electrode.
+      notes: Additional electrode-specific notes
+  SweepsTable:
+    name: AntidromicSweepsIntervals
+    description: >-
+      Intervals table for antidromic stimulation sweeps. Each row represents one sweep with TimeSeriesReference
+      columns linking to specific sample ranges within the consolidated response and stimulation series. Use the
+      'response' and 'stimulation' columns to extract data for individual sweeps. Filter by 'stimulation_protocol',
+      'location', or 'unit_name' to select specific sweep types. The 50ms sweeps are centered at t=0 (pulse_time),
+      with 25ms pre-stimulation and 25ms post-stimulation windows.
+    columns:
+      stimulation_onset_time: >-
+        Time of electrical stimulation pulse delivery (t=0 in the original MATLAB sweep). The 50ms sweep extends from
+        stimulation_onset_time-0.025s to stimulation_onset_time+0.025s. Corresponds to the center point of the sweep
+        where the stimulation current is injected.
+      unit_name: unit_name of the unit (units table) whose antidromic test this sweep belongs to
+      unit: Row of the units table for the unit whose antidromic test this sweep belongs to
+      location: "Anatomical location of stimulation electrode: 'Striatum', 'Peduncle', 'Thalamus', or 'STN'"
+      stimulation_protocol: >-
+        Antidromic stimulation protocol used, from the sweep's label in the source (source_label): 'Collision' (paired
+        spontaneous and antidromic spikes), 'FrequencyFollowing' (high-frequency train), 'Orthodromic' (sub-threshold
+        control), or 'unspecified' where the label names the stimulation site instead of the test
+      source_label: Label of the sweep in the source MATLAB file (TraceName), e.g. 'COLL_3'
+      sweep_number: Sweep index number within the series for this unit/location combination (0-based)
+      response: >-
+        Reference to neural voltage response segment for this sweep. Contains (idx_start, count, timeseries) tuple
+        pointing to the specific sample range within the consolidated response ElectricalSeries. Access data with:
+        series.data[idx_start:idx_start+count] * series.conversion
+      stimulation: >-
+        Reference to stimulation current segment for this sweep. Contains (idx_start, count, timeseries) tuple
+        pointing to the specific sample range within the consolidated stimulation TimeSeries. Access data with:
+        series.data[idx_start:idx_start+count] * series.conversion
+      stimulation_electrode: Index into StimulationElectrodesTable indicating which electrode delivered the stimulation
+  # One response and one stimulation series per source file and stimulation site
+  ResponseSeries:
+    name: "AntidromicResponse_{file_label}_{location}"
+    description: >-
+      Consolidated neural responses from M1 to {location_lower} stimulation for unit {unit_name} (sweeps from
+      {file_label}.mat). Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep}
+      samples. Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. Data in
+      volts. Original device calibration from the source data was not available; the conversion factor was derived to
+      accurately display antidromic responses in the tutorial plots and confirmed with the original authors.
+    electrodes_description: Recording electrode in M1
+  StimulationSeries:
+    name: "AntidromicStimulation_{file_label}_{location}"
+    description: >-
+      Consolidated stimulation currents delivered to {location_lower} for unit {unit_name} (sweeps from
+      {file_label}.mat). Contains {n_sweeps} concatenated 50ms sweeps at 20kHz. Each sweep is {n_samples_per_sweep}
+      samples. Use the AntidromicSweepsIntervals table to access individual sweeps via TimeSeriesReference. Data in
+      amperes. Original device calibration from the source data was not available; the conversion factor was derived
+      to accurately display antidromic stimulation currents in the tutorial plots and confirmed with the original
+      authors.
+  series_comments: >-
+    Concatenated sweeps for unit {unit_name}, {location} stimulation. Sweep boundaries every {n_samples_per_sweep}
+    samples.
