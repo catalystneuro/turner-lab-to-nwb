@@ -6,7 +6,7 @@ For depth on any specific stage, the deep-dive documents are:
 
 - [`anatomical_coordinates.md`](anatomical_coordinates.md): chamber coordinate system, the 35° tilt geometry, atlas descriptions (D99 / NMT / MEBRAINS), the NWB column schema, and what we deliberately do not store and why.
 - [`cross_template_coordinate_conversion.md`](cross_template_coordinate_conversion.md): the D99 -> NMT and D99 -> MEBRAINS warps (RheMAP), ANTs point-vs-image convention, RAS/LPS handling.
-- [`nearest_neighbor_region_labeling.md`](nearest_neighbor_region_labeling.md): the strict M1-only nearest-neighbour curation policy, the fallback target per atlas, why unconstrained NN was rejected, the distribution of curated labels across the 447 files.
+- [`nearest_neighbor_region_labeling.md`](nearest_neighbor_region_labeling.md): the strict M1-only nearest-neighbour curation policy, the fallback target per atlas, why unconstrained NN was rejected, the distribution of curated labels across the 439 files.
 
 ## The pipeline in one diagram
 
@@ -212,7 +212,7 @@ ICMS threshold (`icms_threshold_uA` on the electrodes table) sits alongside all 
 
 For each electrode the curated `(x, y, z)` differs from `(x_raw, y_raw, z_raw)` by the distance below (Euclidean mm). This is the amount the viewer dot shifts toward the M1 mesh under curation:
 
-| Atlas | Venus (n=298) median / max | Leu (n=149) median / max |
+| Atlas | Venus (n=292) median / max | Leu (n=148) median / max |
 |---|---|---|
 | D99v2 | 0.14 / 2.73 | 2.10 / 3.89 |
 | NMTv2 | 0.13 / 2.71 | 1.63 / 3.71 |
@@ -224,16 +224,16 @@ Venus median is tiny (~0.13 mm) because the snap quantises to voxel centers on a
 
 The curated D99 coord is the center of an F1_(4) voxel, so on the D99 viewer the dot lands exactly on the atlas's own M1 mesh. For NMT and MEBRAINS the curated coord is the **RheMAP warp of that curated D99 point**, not a point directly snapped to the downstream atlas's own M1. So the curated NMT coord lands close to a CHARM M1 voxel but usually not *exactly* on one, and similarly for MEBRAINS / 4a-4p. This section quantifies that residual and explains why it is intentionally left as-is.
 
-### Empirical residual on 447 electrodes
+### Empirical residual on 440 electrodes
 
 Indexing each curated NMT / MEBRAINS coord against the target atlas's own M1 parcellation:
 
 | Atlas / subject | Residual median (mm) | Residual max (mm) | Lands on atlas's native M1 voxel? |
 |---|---|---|---|
 | NMT / Venus | 0.194 | 0.675 | 45% direct hit, 37% adjacent unlabeled, 18% neighbouring motor (CHARM PM / SI) |
-| NMT / Leu | 0.456 | 0.583 | 0% direct hit (all 149 land on unlabeled adjacent voxels) |
+| NMT / Leu | 0.455 | 0.583 | 0% direct hit (all 148 land on unlabeled adjacent voxels) |
 | MEBRAINS / Venus | 0.311 | 0.943 | 45% direct hit, 47% adjacent unlabeled, 8% F4d (307) |
-| MEBRAINS / Leu | 0.737 | 0.886 | 0% direct hit (all 149 land on unlabeled adjacent voxels) |
+| MEBRAINS / Leu | 0.737 | 0.886 | 0% direct hit (all 148 land on unlabeled adjacent voxels) |
 
 The residual is always sub-millimeter (max 0.94 mm across the whole dataset). On a 0.25 mm NMT voxel grid that is 1-4 voxel widths; on the 0.20 mm MEBRAINS grid it is 1-5 voxel widths. Visually, at typical viewer zoom where the rendered dot is comparable in size to the voxel, the dot overlaps the mesh even when offset by a few voxels.
 
@@ -299,7 +299,7 @@ Macaque atlases sit at the 0.20-0.25 mm voxel regime. Sub-mm residuals on these 
 
 ## Current table shape (example rows)
 
-Across all 447 NWB files in dandiset 001636, each `AnatomicalCoordinatesTable` has exactly one row (single recording electrode per session) with the 13 columns documented in Stage 6. The tables below show two representative sessions side by side per atlas: **Venus v0502** hits M1 exactly on all three atlases (raw and curated coords almost identical), and **Leu l10001** requires the nearest-neighbour fallback on all three (curated coord shifts ~1-2 mm from raw toward the M1 mesh).
+Across the 439 NWB files of version 0.261124.1906 of dandiset 001636, each `AnatomicalCoordinatesTable` has one row per recording electrode: one row in every session except `v3204`, which merges files recorded at two depths and has two. Each row has the 13 columns documented in Stage 6. The tables below show two representative sessions side by side per atlas: **Venus v0502** hits M1 exactly on all three atlases (raw and curated coords almost identical), and **Leu l10001** requires the nearest-neighbour fallback on all three (curated coord shifts ~1-2 mm from raw toward the M1 mesh).
 
 ### `D99v2AtlasCoordinates`
 
@@ -372,11 +372,11 @@ Venus v0502 and Leu l10001 record the same functional target (arm-representation
 
 The invariant holds in both rows: `method == "exact"` iff `brain_region_id == voxel_label_id`.
 
-### Aggregate distribution across 447 sessions
+### Aggregate distribution across 439 sessions
 
-All 447 sessions emit the same `brain_region_id` per atlas, which is the point of the strict-M1 policy:
+All 439 sessions (440 electrodes) emit the same `brain_region_id` per atlas, which is the point of the strict-M1 policy:
 
-| Atlas | `brain_region_id` on all 447 rows |
+| Atlas | `brain_region_id` on all 440 rows |
 |---|---|
 | D99v2 | `F1_(4)` |
 | NMTv2 | `M1` |
@@ -386,11 +386,11 @@ All 447 sessions emit the same `brain_region_id` per atlas, which is the point o
 
 | Atlas | Subject | exact | nearest_neighbor | no_m1_within_5mm | NN distance median / max (mm) |
 |---|---|---:|---:|---:|---:|
-| D99v2 | Venus | 182 | 116 | 0 | 0.81 / 2.73 |
-| D99v2 | Leu | 2 | 147 | 0 | 2.10 / 3.89 |
-| NMTv2 | Venus | 136 | 162 | 0 | 0.80 / 3.25 |
-| NMTv2 | Leu | 0 | 149 | 0 | 1.98 / 3.60 |
-| MEBRAINS | Venus | 122 | 176 | 0 | 0.70 / 3.43 |
-| MEBRAINS | Leu | 0 | 149 | 0 | 2.47 / 4.18 |
+| D99v2 | Venus | 178 | 114 | 0 | 0.81 / 2.73 |
+| D99v2 | Leu | 2 | 146 | 0 | 2.12 / 3.89 |
+| NMTv2 | Venus | 133 | 159 | 0 | 0.81 / 3.25 |
+| NMTv2 | Leu | 0 | 148 | 0 | 1.99 / 3.60 |
+| MEBRAINS | Venus | 119 | 173 | 0 | 0.70 / 3.43 |
+| MEBRAINS | Leu | 0 | 148 | 0 | 2.48 / 4.18 |
 
-The `no_m1_within_5mm` sentinel is never emitted — max observed NN distance across all 894 NN rows is 4.18 mm against a 5 mm cap. The per-session manifest of all 447 rows (30 columns, including raw x/y/z in every atlas) is at `location_manifest.csv` at the repo root.
+The `no_m1_within_5mm` sentinel is never emitted — max observed NN distance across all 888 NN rows is 4.18 mm against a 5 mm cap. The per-electrode manifest of all 440 rows (30 columns, including raw x/y/z in every atlas) is at `location_manifest.csv` at the repo root.

@@ -372,15 +372,15 @@ The community recommendation for NWB annotation is to include CHARM/SARM labels 
 
 **Not stored as a numeric column.** No individual MRI was used in this dataset, so there is no warp quality metric (e.g., Dice coefficient, Jacobian determinant) to report. The table-level `method` attribute on each `AnatomicalCoordinatesTable` describes the geometric-only approach and its limitations. The `brain_region_lookup_method` and `brain_region_distance_mm` per-row columns function as an anatomically meaningful proxy: electrodes where the curated label came from an `exact` raw-voxel hit are well-registered to the atlas's native M1 territory; electrodes that required `nearest_neighbor` fallback reveal how far the coordinate landed from labeled M1 (warp uncertainty, sulcal-gap artifact, or cytoarchitectonic boundary offset).
 
-Across all 447 sessions, raw atlas voxel lookups (`voxel_label_id`) give the following breakdown (computed from the locally converted NWB files; see `nearest_neighbor_region_labeling.md` for the full analysis):
+Across the 439 sessions of version 0.261124.1906 (440 electrodes), raw atlas voxel lookups (`voxel_label_id`) give the following breakdown (computed from the published NWB files; see `nearest_neighbor_region_labeling.md` for the full analysis):
 
 | Atlas | Venus exact M1 hit | Venus non-motor / unlabeled | Leu exact M1 hit | Leu non-motor / unlabeled |
 |-------|-------------------:|---------------------------:|-----------------:|--------------------------:|
-| D99 v2.0 (F1_(4)) | 61.1% | 38.9% | 1.3% | 98.7% |
-| NMT CHARM-4 (M1) | 45.6% | 54.4% | 0.0% | 100.0% |
-| MEBRAINS (4a/4p -> always 4p in practice) | 40.9% | 59.1% | 0.0% | 100.0% |
+| D99 v2.0 (F1_(4)) | 61.0% | 39.0% | 1.4% | 98.6% |
+| NMT CHARM-4 (M1) | 45.5% | 54.5% | 0.0% | 100.0% |
+| MEBRAINS (4a/4p -> always 4p in practice) | 40.8% | 59.2% | 0.0% | 100.0% |
 
-All non-exact hits within 5 mm of labeled M1 are recovered by the M1-constrained NN fallback (max observed distance: 4.47 mm), so no electrodes hit the `no_m1_within_5mm` sentinel on this dataset. Leu's higher fallback rate reflects more dorsal electrode placement at the central sulcus fundus (D99 S range: 16.9-23.1 mm for Leu vs 13.2-19.6 mm for Venus) and the post-mortem sulcal-gap artifact that affects all three templates at that depth.
+All non-exact hits within 5 mm of labeled M1 are recovered by the M1-constrained NN fallback (max observed distance: 4.18 mm), so no electrodes hit the `no_m1_within_5mm` sentinel on this dataset. Leu's higher fallback rate reflects more dorsal electrode placement at the central sulcus fundus (D99 S range: 17.0-23.1 mm for Leu vs 13.2-19.6 mm for Venus) and the post-mortem sulcal-gap artifact that affects all three templates at that depth.
 
 ### Julich Brain Macaque Maps Labels
 

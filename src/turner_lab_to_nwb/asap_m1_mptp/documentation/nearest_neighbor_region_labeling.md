@@ -48,11 +48,11 @@ The `voxel_label_id` column preserves the original F2 / PM / preSMA hits so that
 
 MEBRAINS is the only atlas whose native parcellation subdivides M1 (anterior vs posterior area 4). The NN picks whichever subdivision is closer, preserving the A-P position information. CHARM never subdivides M1 (a single label at every level 4-6). D99 does not subdivide F1.
 
-**On this dataset the 4a/4p granularity collapses to a single value.** Every one of the 447 electrodes is closer to 4p (303) than to 4a (301), with a median margin of 2.62 mm (minimum 0.56 mm, maximum 6.30 mm) and 4a often beyond the 5 mm cap entirely (100/447 electrodes have no 4a voxel within reach). The anatomical reason is that 4a sits on the precentral gyrus crown while 4p extends into the anterior bank of the central sulcus; the Turner chamber is tilted 35° coronal and aims electrodes at the arm representation on the sulcal bank, putting every recording site on the 4p side of the 4a/4p boundary. `brain_region_id` on the MEBRAINS table is therefore `"303"` (4p left) for every session in dandiset 001636. The subdivision advantage of MEBRAINS remains real in principle, but only materialises if a future dandiset's electrodes span the crown-vs-bank boundary.
+**On this dataset the 4a/4p granularity collapses to a single value.** Every one of the 440 electrodes is closer to 4p (303) than to 4a (301), with a median margin of 2.62 mm (minimum 0.56 mm, maximum 6.30 mm) and 4a often beyond the 5 mm cap entirely (99/440 electrodes have no 4a voxel within reach). The anatomical reason is that 4a sits on the precentral gyrus crown while 4p extends into the anterior bank of the central sulcus; the Turner chamber is tilted 35° coronal and aims electrodes at the arm representation on the sulcal bank, putting every recording site on the 4p side of the 4a/4p boundary. `brain_region_id` on the MEBRAINS table is therefore `"303"` (4p left) for every session in dandiset 001636. The subdivision advantage of MEBRAINS remains real in principle, but only materialises if a future dandiset's electrodes span the crown-vs-bank boundary.
 
 ## Cap
 
-5 mm. If the nearest M1 voxel is farther than 5 mm, emit `brain_region_id = "outside"` and `brain_region_lookup_method = "no_m1_within_5mm"` (the `"outside"` sentinel maps to OUTSIDE_ID in the dandi-atlas viewer). This does not fire on this dataset (max observed distance is 4.47 mm in Leu MEBRAINS) but the schema supports it.
+5 mm. If the nearest M1 voxel is farther than 5 mm, emit `brain_region_id = "outside"` and `brain_region_lookup_method = "no_m1_within_5mm"` (the `"outside"` sentinel maps to OUTSIDE_ID in the dandi-atlas viewer). This does not fire on this dataset (max observed distance is 4.18 mm in Leu MEBRAINS) but the schema supports it.
 
 The 5 mm cap is a sanity limit, not a tuned parameter. On this dataset any electrode that required >5 mm to reach labeled M1 would be a sign of something wrong upstream (coordinate corruption, mismatched atlas, wrong subject). Smaller caps were considered but would cut into the legitimate sulcal-gap cases; the worst genuine gap on Leu MEBRAINS is 4.18 mm.
 
@@ -66,21 +66,21 @@ M1-constrained NN deliberately ignores closer non-motor labels and searches only
 
 This policy is **specific to dandiset 001636** (ICMS-verified motor cortex recordings). It is not a general pattern for NWB conversion. If the same pipeline is applied to a dataset with mixed cortical targets (e.g., M1 + S1 + PMd), the fallback must either be disabled or use a per-electrode-class target derived from some other ground truth. The table-level `method` string on each `AnatomicalCoordinatesTable` documents this scope explicitly, so downstream users know the curated label is a convenience, not atlas authority.
 
-## Distribution on the 447 files (after reupload)
+## Distribution on the 439 files of version 0.261124.1906
 
-Expected `brain_region_lookup_method` distribution per atlas, computed from the locally converted NWB files:
+`brain_region_lookup_method` distribution per atlas, computed from the 440 electrodes of the 439 published files (`v3204` merges files recorded at two depths and has two electrodes):
 
-| | Venus (n=298) | Leu (n=149) |
+| | Venus (n=292) | Leu (n=148) |
 |---|---|---|
-| **D99** exact | 61.1% | 1.3% |
-| **D99** nearest_neighbor | 38.9% | 98.7% |
+| **D99** exact | 61.0% | 1.4% |
+| **D99** nearest_neighbor | 39.0% | 98.6% |
 | **D99** no_m1_within_5mm | 0% | 0% |
-| **NMT (CHARM M1)** exact | 45.6% | 0.0% |
-| **NMT (CHARM M1)** nearest_neighbor | 54.4% | 100.0% |
-| **MEBRAINS (4a/4p)** exact | 40.9% | 0.0% |
-| **MEBRAINS (4a/4p)** nearest_neighbor | 59.1% | 100.0% |
+| **NMT (CHARM M1)** exact | 45.5% | 0.0% |
+| **NMT (CHARM M1)** nearest_neighbor | 54.5% | 100.0% |
+| **MEBRAINS (4a/4p)** exact | 40.8% | 0.0% |
+| **MEBRAINS (4a/4p)** nearest_neighbor | 59.2% | 100.0% |
 
-Median NN distances: Venus 0.4-0.8 mm across atlases; Leu 0.6-2.5 mm across atlases. Max observed: 4.47 mm (Leu MEBRAINS).
+Median NN distances: Venus 0.7-0.8 mm across atlases; Leu 2.0-2.5 mm across atlases. Max observed: 4.18 mm (Leu MEBRAINS).
 
 ## Future work
 
